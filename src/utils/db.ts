@@ -131,31 +131,7 @@ export const startRealtimeSync = (orgId: string, handlers: SyncHandlers) => {
 };
 
 // One-time migration: copy data from old per-user path users/{userUid} to shared org path orgs/{orgId}
-export const migrateUserToOrgIfEmpty = async (userUid: string, orgId: string) => {
-  if (!userUid || !orgId) return;
-  try {
-    // Always merge current user's legacy data into org (idempotent)
-    const [userExpensesSnap, userDebitsSnap, userLoansSnap, userContactsSnap, userBalanceSnap] = await Promise.all([
-      getDocs(collection(db, 'users', userUid, 'expenses')),
-      getDocs(collection(db, 'users', userUid, 'debits')),
-      getDocs(collection(db, 'users', userUid, 'loans')),
-      getDocs(collection(db, 'users', userUid, 'contacts')),
-      getDoc(doc(db, 'users', userUid, 'meta', 'balance')),
-    ]);
-
-    const writes: Promise<any>[] = [];
-    userExpensesSnap.forEach(d => writes.push(setDoc(docRef(orgId, 'expenses', d.id), { ...d.data() }, { merge: true })));
-    userDebitsSnap.forEach(d => writes.push(setDoc(docRef(orgId, 'debits', d.id), { ...d.data() }, { merge: true })));
-    userLoansSnap.forEach(d => writes.push(setDoc(docRef(orgId, 'loans', d.id), { ...d.data() }, { merge: true })));
-    userContactsSnap.forEach(d => writes.push(setDoc(docRef(orgId, 'contacts', d.id), { ...d.data() }, { merge: true })));
-    if (userBalanceSnap.exists()) {
-      writes.push(setDoc(metaDocRef(orgId, 'balance'), userBalanceSnap.data() as any, { merge: true }));
-    }
-    await Promise.all(writes);
-  } catch (_e) {
-    // ignore errors; migration is best-effort
-  }
-};
+// Removed automatic migration to prevent re-appearing entries after reset
 
 // Danger: deletes all docs in org's top-level collections and resets balance
 export const clearOrgData = async (orgId: string) => {

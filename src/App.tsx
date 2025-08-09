@@ -76,8 +76,6 @@ const App: React.FC = () => {
       setAuthReady(true);
       if (stopSync) { stopSync(); stopSync = null; }
       if (newOrgId) {
-        // Best-effort migration from old per-user paths to shared org
-        if (u?.uid) { migrateUserToOrgIfEmpty(u.uid, newOrgId); }
         stopSync = startRealtimeSync(newOrgId, {
           onExpenses: setExpenses,
           onDebits: setDebits,
