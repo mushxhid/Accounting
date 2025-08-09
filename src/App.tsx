@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Home, List, Plus, TrendingUp, RotateCcw, Users, UserCheck, Activity } from 'lucide-react';
+import { Home, List, Plus, TrendingUp, RotateCcw, Users, UserCheck } from 'lucide-react';
 import { Expense, Debit, Contact, Loan, ExpenseFormData, DebitFormData, ContactFormData, LoanFormData, LoanRepaymentFormData, LoanRepayment } from './types';
 import LoanRepaymentForm from './components/LoanRepaymentForm';
 import { generateId } from './utils/helpers';
@@ -494,20 +494,10 @@ const App: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center">
-              <h1 className="text-xl font-bold text-gray-900">eCom Gliders account</h1>
+              <h1 className="text-xl font-bold text-gray-900">eCom Gliders</h1>
             </div>
             
             <div className="flex items-center space-x-4">
-              <button
-                onClick={() => {
-                  // fire a custom event the Dashboard can listen for
-                  try { (window as any).dispatchEvent(new Event('scrollToAudit')); } catch {}
-                }}
-                className="hidden md:inline-flex items-center px-3 py-2 rounded-lg text-sm font-medium bg-primary-600 text-white hover:bg-primary-700"
-                title="View logs"
-              >
-                Logs
-              </button>
               {currentUserName && (
                 <div className="hidden sm:flex items-center px-3 py-1 rounded-lg bg-gray-100 text-gray-700 text-sm">
                   {currentUserName}
@@ -587,18 +577,6 @@ const App: React.FC = () => {
               >
                 <Users size={16} className="mr-2" />
                 Contacts
-              </button>
-              <button
-                onClick={() => setCurrentView('logs')}
-                className={`flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  currentView === 'logs'
-                    ? 'bg-primary-100 text-primary-700'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-                title="View Logs"
-              >
-                <Activity size={16} className="mr-2" />
-                Logs
               </button>
             </div>
           </div>
