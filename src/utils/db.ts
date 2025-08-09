@@ -152,6 +152,11 @@ export const clearOrgData = async (orgId: string) => {
       snap.forEach((d) => deletes.push(deleteDoc(docRef(orgId, name, d.id))));
       await Promise.all(deletes);
     }
+    // Clear meta docs (e.g., balance) then set to 0
+    const metaSnap = await getDocs(collection(db, 'orgs', orgId, 'meta'));
+    const metaDeletes: Promise<void>[] = [];
+    metaSnap.forEach((d) => metaDeletes.push(deleteDoc(doc(db, 'orgs', orgId, 'meta', d.id))));
+    await Promise.all(metaDeletes);
     await setBalance(orgId, 0);
     console.log('[DB] clearOrgData done', orgId);
   } catch (e) {

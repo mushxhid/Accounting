@@ -152,7 +152,9 @@ const App: React.FC = () => {
 
       // Clear shared org data in Firestore so both admins see reset
       if (orgId) {
-        clearOrgData(orgId).catch(() => {/* already logged in db util */});
+        clearOrgData(orgId)
+          .then(() => console.log('[Reset] org cleared'))
+          .catch(() => {/* already logged in db util */});
       }
     }
   };
