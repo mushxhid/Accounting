@@ -465,6 +465,16 @@ const App: React.FC = () => {
             </div>
             
             <div className="flex items-center space-x-4">
+              <button
+                onClick={() => {
+                  // fire a custom event the Dashboard can listen for
+                  try { (window as any).dispatchEvent(new Event('scrollToAudit')); } catch {}
+                }}
+                className="hidden md:inline-flex items-center px-3 py-2 rounded-lg text-sm font-medium bg-primary-600 text-white hover:bg-primary-700"
+                title="View logs"
+              >
+                Logs
+              </button>
               {currentUserName && (
                 <div className="hidden sm:flex items-center px-3 py-1 rounded-lg bg-gray-100 text-gray-700 text-sm">
                   {currentUserName}

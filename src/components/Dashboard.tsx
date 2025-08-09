@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { DollarSign, TrendingDown, Calendar, Trash2, Wallet, Edit, TrendingUp as TrendingUpIcon, UserCheck } from 'lucide-react';
 import { Expense, Debit, Loan } from '../types';
 import { calculateTotalExpenses } from '../utils/helpers';
@@ -122,6 +122,11 @@ const Dashboard: React.FC<DashboardProps> = ({
   };
 
   const auditRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const handler = () => auditRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    window.addEventListener('scrollToAudit' as any, handler);
+    return () => window.removeEventListener('scrollToAudit' as any, handler);
+  }, []);
 
   return (
     <div className="space-y-6">
