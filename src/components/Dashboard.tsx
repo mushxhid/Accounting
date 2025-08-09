@@ -248,12 +248,12 @@ const Dashboard: React.FC<DashboardProps> = ({
        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
          {/* Recent Expenses */}
          <div className="card">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-6" onClick={() => onNavigate && onNavigate('expenses')} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { onNavigate && onNavigate('expenses'); } }}>
             <div>
               <h2 className="text-xl font-semibold text-gray-900">Recent Expenses</h2>
               <p className="text-sm text-gray-600 mt-1">{getCurrentMonthName()} only</p>
             </div>
-            <button type="button" className="text-primary-600 hover:text-primary-700 font-medium text-sm" onClick={() => { console.log('[Nav] View All → expenses'); onNavigate && onNavigate('expenses'); }}>
+            <button type="button" className="text-primary-600 hover:text-primary-700 font-medium text-sm" onClick={(e) => { e.stopPropagation(); console.log('[Nav] View All → expenses'); onNavigate && onNavigate('expenses'); }}>
               View All
             </button>
           </div>
@@ -318,12 +318,12 @@ const Dashboard: React.FC<DashboardProps> = ({
 
         {/* Recent Income */}
         <div className="card">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-6" onClick={() => onNavigate && onNavigate('credits')} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { onNavigate && onNavigate('credits'); } }}>
             <div>
               <h2 className="text-xl font-semibold text-gray-900">Recent Income</h2>
               <p className="text-sm text-gray-600 mt-1">{getCurrentMonthName()} only</p>
             </div>
-            <button type="button" className="text-primary-600 hover:text-primary-700 font-medium text-sm" onClick={() => { console.log('[Nav] View All → credits'); onNavigate && onNavigate('credits'); }}>
+            <button type="button" className="text-primary-600 hover:text-primary-700 font-medium text-sm" onClick={(e) => { e.stopPropagation(); console.log('[Nav] View All → credits'); onNavigate && onNavigate('credits'); }}>
               View All
             </button>
           </div>
@@ -388,12 +388,12 @@ const Dashboard: React.FC<DashboardProps> = ({
 
          {/* Recent Loans */}
          <div className="card">
-           <div className="flex items-center justify-between mb-6">
+           <div className="flex items-center justify-between mb-6" onClick={() => onNavigate && onNavigate('loans')} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { onNavigate && onNavigate('loans'); } }}>
              <div>
                <h2 className="text-xl font-semibold text-gray-900">Recent Loans</h2>
                <p className="text-sm text-gray-600 mt-1">{getCurrentMonthName()} only</p>
              </div>
-             <button type="button" className="text-primary-600 hover:text-primary-700 font-medium text-sm" onClick={() => { console.log('[Nav] View All → loans'); onNavigate && onNavigate('loans'); }}>
+             <button type="button" className="text-primary-600 hover:text-primary-700 font-medium text-sm" onClick={(e) => { e.stopPropagation(); console.log('[Nav] View All → loans'); onNavigate && onNavigate('loans'); }}>
                View All
              </button>
            </div>
