@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Home, List, Plus, TrendingUp, RotateCcw, Users, UserCheck } from 'lucide-react';
+import { Home, List, Plus, TrendingUp, RotateCcw, Users, UserCheck, Activity } from 'lucide-react';
 import { Expense, Debit, Contact, Loan, ExpenseFormData, DebitFormData, ContactFormData, LoanFormData, LoanRepaymentFormData, LoanRepayment } from './types';
 import LoanRepaymentForm from './components/LoanRepaymentForm';
 import { generateId } from './utils/helpers';
@@ -587,6 +587,7 @@ const App: React.FC = () => {
                 }`}
                 title="Logs"
               >
+                <Activity size={16} className="mr-2" />
                 Logs
               </button>
             </div>
