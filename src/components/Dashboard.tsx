@@ -19,6 +19,7 @@ interface DashboardProps {
   onUpdateBalance: (newBalance: number) => void;
   // New: handler to switch view in parent
   onNavigate?: (view: 'expenses' | 'credits' | 'loans') => void;
+  audit?: any[];
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ 
@@ -458,6 +459,43 @@ const Dashboard: React.FC<DashboardProps> = ({
           onSubmit={handleUpdateBalance}
           onCancel={() => setShowBalanceModal(false)}
         />
+      )}
+
+      {/* Audit Log */}
+      {Array.isArray(audit) && (
+        <div className="card mt-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-gray-900">Activity (both admins)</h2>
+          </div>
+          {audit.length === 0 ? (
+            <div className="text-sm text-gray-500">No recent activity.</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200 text-sm">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-2 text-left text-gray-600">When</th>
+                    <th className="px-4 py-2 text-left text-gray-600">Action</th>
+                    <th className="px-4 py-2 text-left text-gray-600">Entity</th>
+                    <th className="px-4 py-2 text-left text-gray-600">By</th>
+                    <th className="px-4 py-2 text-left text-gray-600">Details</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {audit.map((e: any) => (
+                    <tr key={e.id}>
+                      <td className="px-4 py-2">{new Date(e.timestamp || e._createdAt?.toDate?.() || Date.now()).toLocaleString()}</td>
+                      <td className="px-4 py-2 font-medium">{e.action}</td>
+                      <td className="px-4 py-2">{e.entity}</td>
+                      <td className="px-4 py-2">{e.actor?.email || '-'}</td>
+                      <td className="px-4 py-2 text-gray-600">{e.details ? JSON.stringify(e.details) : '-'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       )}
 
       {/* Debit Modal */}

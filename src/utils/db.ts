@@ -1,11 +1,11 @@
-import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, Firestore, serverTimestamp, getDocs, getDoc, updateDoc, arrayUnion, increment } from 'firebase/firestore';
+import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, Firestore, serverTimestamp, getDocs, getDoc, updateDoc, arrayUnion, increment, addDoc, query, orderBy, limit } from 'firebase/firestore';
 import { Expense, Debit, Loan, Contact } from '../types';
 
 const db: Firestore = getFirestore();
 
 // Use a shared org-scoped path so multiple admins see the same data
-const colRef = (orgId: string, name: 'expenses' | 'debits' | 'loans' | 'contacts') => collection(db, 'orgs', orgId, name);
-const docRef = (orgId: string, name: 'expenses' | 'debits' | 'loans' | 'contacts', id: string) => doc(db, 'orgs', orgId, name, id);
+const colRef = (orgId: string, name: 'expenses' | 'debits' | 'loans' | 'contacts' | 'audit') => collection(db, 'orgs', orgId, name);
+const docRef = (orgId: string, name: 'expenses' | 'debits' | 'loans' | 'contacts' | 'audit', id: string) => doc(db, 'orgs', orgId, name, id);
 const metaDocRef = (orgId: string, name: string) => doc(db, 'orgs', orgId, 'meta', name);
 
 export const upsertExpense = async (orgId: string, expense: Expense) => {
@@ -85,6 +85,7 @@ type SyncHandlers = {
   onLoans?: (items: Loan[]) => void;
   onContacts?: (items: Contact[]) => void;
   onBalance?: (value: number) => void;
+  onAudit?: (items: any[]) => void;
 };
 
 export const startRealtimeSync = (orgId: string, handlers: SyncHandlers) => {
@@ -126,8 +127,25 @@ export const startRealtimeSync = (orgId: string, handlers: SyncHandlers) => {
       if (data && typeof data.currentBalance === 'number') handlers.onBalance!(data.currentBalance);
     }));
   }
+  if (handlers.onAudit) {
+    const q = query(colRef(orgId, 'audit'), orderBy('timestamp', 'desc'), limit(500));
+    unsubs.push(onSnapshot(q, (snap) => {
+      const list = snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
+      handlers.onAudit!(list);
+    }));
+  }
 
   return () => unsubs.forEach((u) => u());
+};
+
+export const recordAuditEvent = async (orgId: string, event: any) => {
+  if (!orgId) return;
+  const payload = { ...event, timestamp: new Date().toISOString(), _createdAt: serverTimestamp() };
+  try {
+    await addDoc(colRef(orgId, 'audit'), payload);
+  } catch (e) {
+    console.warn('[DB] recordAuditEvent failed', e);
+  }
 };
 
 // One-time migration: copy data from old per-user path users/{userUid} to shared org path orgs/{orgId}
