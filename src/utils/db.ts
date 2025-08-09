@@ -1,4 +1,4 @@
-import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, Firestore, serverTimestamp, getDocs, getDoc, updateDoc, arrayUnion, increment, addDoc, query, orderBy, limit } from 'firebase/firestore';
+import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, Firestore, serverTimestamp, getDocs, updateDoc, arrayUnion, increment, addDoc, query, orderBy, limit } from 'firebase/firestore';
 import { Expense, Debit, Loan, Contact } from '../types';
 
 const db: Firestore = getFirestore();

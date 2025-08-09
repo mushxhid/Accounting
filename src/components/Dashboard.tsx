@@ -128,6 +128,8 @@ const Dashboard: React.FC<DashboardProps> = ({
     return () => window.removeEventListener('scrollToAudit' as any, handler);
   }, []);
 
+  const auditList = (props as any).audit as any[] | undefined;
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -479,12 +481,12 @@ const Dashboard: React.FC<DashboardProps> = ({
       )}
 
       {/* Audit Log */}
-      {Array.isArray(audit) && (
+      {Array.isArray(auditList) && (
         <div className="card mt-6" ref={auditRef}>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold text-gray-900">Activity (both admins)</h2>
           </div>
-          {audit.length === 0 ? (
+          {auditList.length === 0 ? (
             <div className="text-sm text-gray-500">No recent activity.</div>
           ) : (
             <div className="overflow-x-auto">
@@ -499,7 +501,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
-                  {audit.map((e: any) => (
+                  {auditList.map((e: any) => (
                     <tr key={e.id}>
                       <td className="px-4 py-2">{new Date(e.timestamp || e._createdAt?.toDate?.() || Date.now()).toLocaleString()}</td>
                       <td className="px-4 py-2 font-medium">{e.action}</td>

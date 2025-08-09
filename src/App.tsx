@@ -24,7 +24,6 @@ import {
   setBalance as dbSetBalance,
   upsertContact as dbUpsertContact,
   deleteContact as dbDeleteContact,
-  migrateUserToOrgIfEmpty,
     clearOrgData,
   appendRepayment,
     clearAllLegacyUsersData,
