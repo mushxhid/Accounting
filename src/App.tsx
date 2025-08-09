@@ -106,6 +106,19 @@ const App: React.FC = () => {
     dbSetBalance(orgId, currentBalance);
   }, [currentBalance, orgId]);
 
+  // Auto-recalculate USD balance from transactions to avoid stale or zero meta balance
+  useEffect(() => {
+    if (!orgId) return;
+    const derived =
+      debits.reduce((sum, d) => sum + (d.usdAmount || 0), 0) -
+      expenses.reduce((sum, e) => sum + (e.usdAmount || 0), 0) -
+      loans.reduce((sum, l) => sum + (l.usdAmount || 0), 0);
+    if (Number.isFinite(derived) && Math.abs(derived - currentBalance) > 0.001) {
+      setCurrentBalance(derived);
+      dbSetBalance(orgId, derived);
+    }
+  }, [orgId, expenses, debits, loans]);
+
   const handleReset = () => {
     if (window.confirm('Are you sure you want to reset everything? This will:\n\n• Set balance to $0\n• Delete all expenses\n• Delete all income\n• Delete all loans\n• Delete all contacts\n\nThis action cannot be undone.')) {
       setExpenses([]);
