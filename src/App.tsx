@@ -170,7 +170,17 @@ const App: React.FC = () => {
 
     setExpenses(prev => [newExpense, ...prev]);
     setCurrentBalance(newBalance);
-    if (orgId) { dbUpsertExpense(orgId, newExpense); dbSetBalance(orgId, newBalance); recordAuditEvent(orgId, { action: 'create', entity: 'expense', actor: { email: currentUserEmail }, details: { id: newExpense.id, name: newExpense.name, amount: newExpense.amount }, timestamp: new Date().toISOString() }); } else { console.warn('[AddExpense] Missing orgId, write skipped'); }
+    if (orgId) {
+      dbUpsertExpense(orgId, newExpense);
+      dbSetBalance(orgId, newBalance);
+      recordAuditEvent(orgId, {
+        action: 'create',
+        entity: 'expense',
+        actor: { email: currentUserEmail },
+        details: { id: newExpense.id, name: newExpense.name, amountPKR: newExpense.amount, amountUSD: newExpense.usdAmount },
+        timestamp: new Date().toISOString(),
+      });
+    } else { console.warn('[AddExpense] Missing orgId, write skipped'); }
     sendAudit({ action: 'create', entity: 'expense', details: { id: newExpense.id, name: newExpense.name, amount: newExpense.amount } });
     setShowExpenseForm(false);
   };
@@ -197,7 +207,15 @@ const App: React.FC = () => {
 
     setDebits(prev => [newDebit, ...prev]);
     setCurrentBalance(newBalance);
-    if (orgId) { dbUpsertDebit(orgId, newDebit); dbSetBalance(orgId, newBalance); recordAuditEvent(orgId, { action: 'create', entity: 'debit', actor: { email: currentUserEmail }, details: { id: newDebit.id, source: newDebit.source, amount: newDebit.amount }, timestamp: new Date().toISOString() }); } else { console.warn('[AddDebit] Missing orgId, write skipped'); }
+    if (orgId) {
+      dbUpsertDebit(orgId, newDebit);
+      dbSetBalance(orgId, newBalance);
+      recordAuditEvent(orgId, {
+        action: 'create', entity: 'debit', actor: { email: currentUserEmail },
+        details: { id: newDebit.id, name: newDebit.source, amountPKR: newDebit.amount, amountUSD: newDebit.usdAmount },
+        timestamp: new Date().toISOString(),
+      });
+    } else { console.warn('[AddDebit] Missing orgId, write skipped'); }
     sendAudit({ action: 'create', entity: 'debit', details: { id: newDebit.id, amount: newDebit.amount, source: newDebit.source } });
     setShowDebitForm(false);
   };
@@ -227,7 +245,15 @@ const App: React.FC = () => {
 
     setLoans(prev => [newLoan, ...prev]);
     setCurrentBalance(newBalance);
-    if (orgId) { dbUpsertLoan(orgId, newLoan); dbSetBalance(orgId, newBalance); recordAuditEvent(orgId, { action: 'create', entity: 'loan', actor: { email: currentUserEmail }, details: { id: newLoan.id, partnerName: newLoan.partnerName, amount: newLoan.amount }, timestamp: new Date().toISOString() }); } else { console.warn('[AddLoan] Missing orgId, write skipped'); }
+    if (orgId) {
+      dbUpsertLoan(orgId, newLoan);
+      dbSetBalance(orgId, newBalance);
+      recordAuditEvent(orgId, {
+        action: 'create', entity: 'loan', actor: { email: currentUserEmail },
+        details: { id: newLoan.id, name: newLoan.partnerName, amountPKR: newLoan.amount, amountUSD: newLoan.usdAmount },
+        timestamp: new Date().toISOString(),
+      });
+    } else { console.warn('[AddLoan] Missing orgId, write skipped'); }
     sendAudit({ action: 'create', entity: 'loan', details: { id: newLoan.id, partnerName: newLoan.partnerName, amount: newLoan.amount } });
     setShowLoanForm(false);
   };
@@ -270,7 +296,14 @@ const App: React.FC = () => {
       appendRepayment(orgId, loanId, repayment).catch(() => dbUpsertLoan(orgId, updatedLoanForDb!));
       dbSetBalance(orgId, newBalance);
     } else { console.warn('[RepayLoan] Missing orgId'); }
-    if (orgId) recordAuditEvent(orgId, { action: 'repayment', entity: 'loan', actor: { email: currentUserEmail }, details: { loanId, amount: pkrAmount }, timestamp: new Date().toISOString() });
+    if (orgId) {
+      const loan = loans.find(l => l.id === loanId);
+      recordAuditEvent(orgId, {
+        action: 'repayment', entity: 'loan', actor: { email: currentUserEmail },
+        details: { loanId, name: loan?.partnerName, amountPKR: pkrAmount, amountUSD: usdAmount },
+        timestamp: new Date().toISOString(),
+      });
+    }
     sendAudit({ action: 'create', entity: 'repayment', details: { loanId, amount: pkrAmount } });
   };
 
@@ -335,7 +368,7 @@ const App: React.FC = () => {
         setCurrentBalance(prev => prev + expenseToDelete.usdAmount);
       }
       setExpenses(prev => prev.filter(expense => expense.id !== id));
-      if (orgId) { dbDeleteExpense(orgId, id); recordAuditEvent(orgId, { action: 'delete', entity: 'expense', actor: { email: currentUserEmail }, details: { id }, timestamp: new Date().toISOString() }); }
+      if (orgId) { dbDeleteExpense(orgId, id); recordAuditEvent(orgId, { action: 'delete', entity: 'expense', actor: { email: currentUserEmail }, details: { id, name: expenseToDelete?.name, amountPKR: expenseToDelete?.amount, amountUSD: expenseToDelete?.usdAmount }, timestamp: new Date().toISOString() }); }
       sendAudit({ action: 'delete', entity: 'expense', details: { id } });
     }
   };
@@ -348,7 +381,7 @@ const App: React.FC = () => {
         setCurrentBalance(prev => prev - debitToDelete.usdAmount);
       }
       setDebits(prev => prev.filter(debit => debit.id !== id));
-      if (orgId) { dbDeleteDebit(orgId, id); recordAuditEvent(orgId, { action: 'delete', entity: 'debit', actor: { email: currentUserEmail }, details: { id }, timestamp: new Date().toISOString() }); }
+      if (orgId) { dbDeleteDebit(orgId, id); recordAuditEvent(orgId, { action: 'delete', entity: 'debit', actor: { email: currentUserEmail }, details: { id, name: debitToDelete?.source, amountPKR: debitToDelete?.amount, amountUSD: debitToDelete?.usdAmount }, timestamp: new Date().toISOString() }); }
       sendAudit({ action: 'delete', entity: 'debit', details: { id } });
     }
   };
@@ -361,7 +394,7 @@ const App: React.FC = () => {
         setCurrentBalance(prev => prev + loanToDelete.usdAmount);
       }
       setLoans(prev => prev.filter(loan => loan.id !== id));
-      if (orgId) { dbDeleteLoan(orgId, id); recordAuditEvent(orgId, { action: 'delete', entity: 'loan', actor: { email: currentUserEmail }, details: { id }, timestamp: new Date().toISOString() }); }
+      if (orgId) { dbDeleteLoan(orgId, id); recordAuditEvent(orgId, { action: 'delete', entity: 'loan', actor: { email: currentUserEmail }, details: { id, name: loanToDelete?.partnerName, amountPKR: loanToDelete?.amount, amountUSD: loanToDelete?.usdAmount }, timestamp: new Date().toISOString() }); }
       sendAudit({ action: 'delete', entity: 'loan', details: { id } });
     }
   };
@@ -369,7 +402,7 @@ const App: React.FC = () => {
   const handleDeleteContact = (id: string) => {
     if (window.confirm('Are you sure you want to delete this contact?')) {
       setContacts(prev => prev.filter(contact => contact.id !== id));
-      if (orgId) { dbDeleteContact(orgId, id); recordAuditEvent(orgId, { action: 'delete', entity: 'contact', actor: { email: currentUserEmail }, details: { id }, timestamp: new Date().toISOString() }); }
+      if (orgId) { dbDeleteContact(orgId, id); recordAuditEvent(orgId, { action: 'delete', entity: 'contact', actor: { email: currentUserEmail }, details: { id, name: contacts.find(c=>c.id===id)?.name }, timestamp: new Date().toISOString() }); }
     sendAudit({ action: 'delete', entity: 'contact', details: { id } });
     }
   };

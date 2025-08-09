@@ -498,7 +498,15 @@ const Dashboard: React.FC<DashboardProps> = ({
                       <td className="px-4 py-2 font-medium">{e.action}</td>
                       <td className="px-4 py-2">{e.entity}</td>
                       <td className="px-4 py-2">{e.actor?.email || '-'}</td>
-                      <td className="px-4 py-2 text-gray-600">{e.details ? JSON.stringify(e.details) : '-'}</td>
+                      <td className="px-4 py-2 text-gray-600">
+                        {e.details ? (
+                          <span>
+                            {e.details.name ? `${e.details.name} ` : ''}
+                            {typeof e.details.amountPKR === 'number' ? `PKR ${e.details.amountPKR.toLocaleString()} ` : ''}
+                            {typeof e.details.amountUSD === 'number' ? `(USD ${e.details.amountUSD.toFixed(2)})` : ''}
+                          </span>
+                        ) : '-' }
+                      </td>
                     </tr>
                   ))}
                 </tbody>
