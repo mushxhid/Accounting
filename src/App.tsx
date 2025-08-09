@@ -605,12 +605,18 @@ const App: React.FC = () => {
               const repayment = loan?.repayments?.find(r => r.id === repaymentId);
               if (!loan || !repayment) return;
               if (!window.confirm('Delete this repayment?')) return;
-              setCurrentBalance(prev => prev - repayment.usdAmount);
-              setLoans(prev => prev.map(l => {
-                if (l.id !== loanId) return l;
-                const updatedRepayments = (l.repayments || []).filter(r => r.id !== repaymentId);
-                return { ...l, usdAmount: l.usdAmount + repayment.usdAmount, amount: l.amount + repayment.amount, repayments: updatedRepayments };
-              }));
+              const newBalance = currentBalance - repayment.usdAmount;
+              setCurrentBalance(newBalance);
+              const updatedRepayments = (loan.repayments || []).filter(r => r.id !== repaymentId);
+              const updatedLoan: Loan = {
+                ...loan,
+                usdAmount: loan.usdAmount + repayment.usdAmount,
+                amount: loan.amount + repayment.amount,
+                repayments: updatedRepayments,
+                updatedAt: new Date().toISOString(),
+              };
+              setLoans(prev => prev.map(l => (l.id === loanId ? updatedLoan : l)));
+              if (orgId) { dbUpsertLoan(orgId, updatedLoan); dbSetBalance(orgId, newBalance); }
             }}
           />
         ) : (
@@ -690,13 +696,12 @@ const App: React.FC = () => {
                 const newPkr = parseFloat(data.amount || '0');
                 const deltaUsd = newUsd - oldUsd;
                 setCurrentBalance(prev => prev + deltaUsd);
-                setLoans(prev => prev.map(l => {
-                  if (l.id !== loan.id) return l;
-                  const updatedRepayments = (l.repayments || []).map(r => r.id === repayment.id ? { ...r, amount: newPkr, usdAmount: newUsd, date: data.date, description: data.description, updatedAt: new Date().toISOString() } : r);
-                  const usdOutstanding = Math.max(0, (l.usdAmount + oldUsd) - newUsd);
-                  const pkrOutstanding = Math.max(0, (l.amount + oldPkr) - newPkr);
-                  return { ...l, usdAmount: usdOutstanding, amount: pkrOutstanding, repayments: updatedRepayments };
-                }));
+                const updatedRepayments = (loan.repayments || []).map(r => r.id === repayment.id ? { ...r, amount: newPkr, usdAmount: newUsd, date: data.date, description: data.description, updatedAt: new Date().toISOString() } : r);
+                const usdOutstanding = Math.max(0, (loan.usdAmount + oldUsd) - newUsd);
+                const pkrOutstanding = Math.max(0, (loan.amount + oldPkr) - newPkr);
+                const updatedLoan: Loan = { ...loan, usdAmount: usdOutstanding, amount: pkrOutstanding, repayments: updatedRepayments, updatedAt: new Date().toISOString() };
+                setLoans(prev => prev.map(l => (l.id === loan.id ? updatedLoan : l)));
+                if (orgId) { dbUpsertLoan(orgId, updatedLoan); dbSetBalance(orgId, currentBalance + deltaUsd); }
                 closeRepayModal();
               }}
               onCancel={closeRepayModal}
