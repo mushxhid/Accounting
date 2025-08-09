@@ -14,6 +14,8 @@ interface ExpenseListProps {
 
 const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, onDelete, onAddExpense }) => {
   const [selectedMonth, setSelectedMonth] = useState<string>('all');
+  const [startDate, setStartDate] = useState<string>('');
+  const [endDate, setEndDate] = useState<string>('');
   const [selectedContact, setSelectedContact] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'date' | 'amount' | 'name' | 'accountNumber'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
@@ -62,7 +64,7 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, onDelete,
     return acc;
   }, [] as Contact[]);
 
-  // Filter expenses by selected month and contact
+  // Filter expenses by selected month/contact and date range
   const filteredExpenses = expenses.filter(expense => {
     // Month filter
     if (selectedMonth !== 'all') {
@@ -74,6 +76,17 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, onDelete,
     if (selectedContact !== 'all') {
       const contact = contacts.find(c => c.id === selectedContact);
       if (contact && expense.accountNumber !== contact.accountNumber) return false;
+    }
+
+    // Date range filter (inclusive)
+    const t = new Date(expense.date).getTime();
+    if (startDate) {
+      const s = new Date(startDate).setHours(0,0,0,0);
+      if (t < s) return false;
+    }
+    if (endDate) {
+      const e = new Date(endDate).setHours(23,59,59,999);
+      if (t > e) return false;
     }
 
     return true;
@@ -263,6 +276,12 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, onDelete,
               <option value="accountNumber-asc">Account (A-Z)</option>
               <option value="accountNumber-desc">Account (Z-A)</option>
             </select>
+          </div>
+          <div className="flex items-center space-x-2 pt-4 lg:pt-0">
+            <span className="text-sm font-medium text-gray-700">Date:</span>
+            <input type="date" value={startDate} onChange={(e)=>setStartDate(e.target.value)} className="input-field" />
+            <span className="text-sm text-gray-500">to</span>
+            <input type="date" value={endDate} onChange={(e)=>setEndDate(e.target.value)} className="input-field" />
           </div>
         </div>
       </div>

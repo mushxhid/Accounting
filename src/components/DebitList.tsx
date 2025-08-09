@@ -39,6 +39,8 @@ const DebitList: React.FC<DebitListProps> = ({ debits, onDelete, onAddDebit }) =
 
   //
   const [selectedMonth, setSelectedMonth] = useState<string>('all');
+  const [startDate, setStartDate] = useState<string>('');
+  const [endDate, setEndDate] = useState<string>('');
   const [sortBy, setSortBy] = useState<'date' | 'amount' | 'source' | 'description'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
@@ -51,11 +53,22 @@ const DebitList: React.FC<DebitListProps> = ({ debits, onDelete, onAddDebit }) =
     return acc;
   }, [] as string[]);
 
-  // Filter debits by selected month
+  // Filter debits by selected month and date range
   const filteredDebits = debits.filter(debit => {
-    if (selectedMonth === 'all') return true;
-    const debitMonth = new Date(debit.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
-    return debitMonth === selectedMonth;
+    if (selectedMonth !== 'all') {
+      const debitMonth = new Date(debit.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
+      if (debitMonth !== selectedMonth) return false;
+    }
+    const t = new Date(debit.date).getTime();
+    if (startDate) {
+      const s = new Date(startDate).setHours(0,0,0,0);
+      if (t < s) return false;
+    }
+    if (endDate) {
+      const e = new Date(endDate).setHours(23,59,59,999);
+      if (t > e) return false;
+    }
+    return true;
   });
 
   // Sort debits
@@ -214,6 +227,12 @@ const DebitList: React.FC<DebitListProps> = ({ debits, onDelete, onAddDebit }) =
                 <option value="description-asc">Description (A-Z)</option>
                 <option value="description-desc">Description (Z-A)</option>
               </select>
+          </div>
+          <div className="flex items-center space-x-2 pt-4 sm:pt-0">
+            <span className="text-sm font-medium text-gray-700">Date:</span>
+            <input type="date" value={startDate} onChange={(e)=>setStartDate(e.target.value)} className="input-field" />
+            <span className="text-sm text-gray-500">to</span>
+            <input type="date" value={endDate} onChange={(e)=>setEndDate(e.target.value)} className="input-field" />
           </div>
         </div>
       </div>

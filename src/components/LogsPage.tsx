@@ -26,6 +26,8 @@ const LogsPage: React.FC<LogsPageProps> = ({ audit }) => {
   const [query, setQuery] = useState('');
   const [sortBy, setSortBy] = useState<'time' | 'action' | 'entity' | 'name' | 'amountPKR'>('time');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [startDate, setStartDate] = useState<string>('');
+  const [endDate, setEndDate] = useState<string>('');
 
   const normalized = useMemo(() => {
     return (audit || []).map((e) => ({
@@ -45,7 +47,19 @@ const LogsPage: React.FC<LogsPageProps> = ({ audit }) => {
             .some((s) => String(s).toLowerCase().includes(q))
         )
       : normalized;
-    const sorted = [...list].sort((a, b) => {
+    const inRange = list.filter((e) => {
+      const t = e.timeMs || 0;
+      if (startDate) {
+        const s = new Date(startDate).setHours(0,0,0,0);
+        if (t < s) return false;
+      }
+      if (endDate) {
+        const ed = new Date(endDate).setHours(23,59,59,999);
+        if (t > ed) return false;
+      }
+      return true;
+    });
+    const sorted = [...inRange].sort((a, b) => {
       let cmp = 0;
       switch (sortBy) {
         case 'time':
@@ -106,6 +120,12 @@ const LogsPage: React.FC<LogsPageProps> = ({ audit }) => {
               placeholder="Search action, entity, name, email"
               className="outline-none text-sm"
             />
+          </div>
+          <div className="hidden sm:flex items-center gap-2">
+            <span className="text-sm text-gray-700">Date:</span>
+            <input type="date" value={startDate} onChange={(e)=>setStartDate(e.target.value)} className="input-field" />
+            <span className="text-sm text-gray-500">to</span>
+            <input type="date" value={endDate} onChange={(e)=>setEndDate(e.target.value)} className="input-field" />
           </div>
           <button onClick={exportCSV} className="btn-secondary flex items-center">
             <Download size={18} className="mr-2" /> Export CSV

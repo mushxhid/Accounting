@@ -16,6 +16,8 @@ interface LoanListProps {
 
 const LoanList: React.FC<LoanListProps> = ({ loans, onDelete, onAddLoan, onOpenRepay, onEditRepayment, onDeleteRepayment }) => {
   const [selectedMonth, setSelectedMonth] = useState<string>('all');
+  const [startDate, setStartDate] = useState<string>('');
+  const [endDate, setEndDate] = useState<string>('');
   const [sortBy, setSortBy] = useState<'date' | 'amount' | 'partnerName'>('partnerName');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
@@ -55,13 +57,22 @@ const LoanList: React.FC<LoanListProps> = ({ loans, onDelete, onAddLoan, onOpenR
 
   // Filter loans by selected month
   const filteredLoans = useMemo(() => {
-    if (selectedMonth === 'all') return loans;
-    
-    return loans.filter(loan => {
+    const base = loans.filter(loan => {
       const date = new Date(loan.date);
       const monthYear = date.toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
-      return monthYear === selectedMonth;
+      if (selectedMonth !== 'all' && monthYear !== selectedMonth) return false;
+      const t = date.getTime();
+      if (startDate) {
+        const s = new Date(startDate).setHours(0,0,0,0);
+        if (t < s) return false;
+      }
+      if (endDate) {
+        const e = new Date(endDate).setHours(23,59,59,999);
+        if (t > e) return false;
+      }
+      return true;
     });
+    return base;
   }, [loans, selectedMonth]);
 
   // Sort filtered loans
@@ -171,7 +182,7 @@ const LoanList: React.FC<LoanListProps> = ({ loans, onDelete, onAddLoan, onOpenR
 
       {/* Filters */}
       <div className="bg-white rounded-lg shadow p-4">
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center flex-wrap gap-3">
           <div className="flex items-center space-x-2">
             <Filter size={16} className="text-gray-500" />
             <span className="text-sm font-medium text-gray-700">Filter:</span>
@@ -187,6 +198,13 @@ const LoanList: React.FC<LoanListProps> = ({ loans, onDelete, onAddLoan, onOpenR
               <option key={month} value={month}>{month}</option>
             ))}
           </select>
+
+          <div className="flex items-center space-x-2">
+            <span className="text-sm font-medium text-gray-700">Date:</span>
+            <input type="date" value={startDate} onChange={(e)=>setStartDate(e.target.value)} className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
+            <span className="text-sm text-gray-500">to</span>
+            <input type="date" value={endDate} onChange={(e)=>setEndDate(e.target.value)} className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
+          </div>
         </div>
       </div>
 
