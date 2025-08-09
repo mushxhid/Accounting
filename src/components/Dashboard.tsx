@@ -128,17 +128,19 @@ const Dashboard: React.FC<DashboardProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => auditRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+              className="px-3 py-1 rounded bg-primary-600 text-white text-sm hover:bg-primary-700"
+              title="View activity logs"
+            >
+              Logs
+            </button>
+            <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+          </div>
           <p className="text-gray-600 mt-1">Track your Amazon agency expenses</p>
         </div>
-        <button
-          type="button"
-          onClick={() => auditRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-          className="text-sm font-medium text-white/90 bg-white/20 hover:bg-white/30 rounded px-3 py-2"
-          title="Jump to activity logs"
-        >
-          View Logs
-        </button>
       </div>
 
       {/* Current Balance Section */}
