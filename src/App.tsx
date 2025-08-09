@@ -578,6 +578,17 @@ const App: React.FC = () => {
                 <Users size={16} className="mr-2" />
                 Contacts
               </button>
+              <button
+                onClick={() => setCurrentView('logs')}
+                className={`flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  currentView === 'logs'
+                    ? 'bg-primary-100 text-primary-700'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+                title="Logs"
+              >
+                Logs
+              </button>
             </div>
           </div>
         </div>
