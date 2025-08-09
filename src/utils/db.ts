@@ -156,7 +156,7 @@ export const clearOrgData = async (orgId: string) => {
   if (!orgId) return;
   try {
     console.log('[DB] clearOrgData start', orgId);
-    const collNames: Array<'expenses' | 'debits' | 'loans' | 'contacts'> = ['expenses', 'debits', 'loans', 'contacts'];
+    const collNames: Array<'expenses' | 'debits' | 'loans' | 'contacts' | 'audit'> = ['expenses', 'debits', 'loans', 'contacts', 'audit'];
     for (const name of collNames) {
       const snap = await getDocs(colRef(orgId, name));
       const deletes: Promise<void>[] = [];
