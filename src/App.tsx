@@ -44,6 +44,7 @@ const App: React.FC = () => {
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
   const [currentBalance, setCurrentBalance] = useState<number>(0); // Reset to 0
   const [currentUserEmail, setCurrentUserEmail] = useState<string>('');
+  const [currentUserName, setCurrentUserName] = useState<string>('');
   const [currentUserId, setCurrentUserId] = useState<string>('');
   const [orgId, setOrgId] = useState<string>('');
   const [authReady, setAuthReady] = useState<boolean>(false);
@@ -60,6 +61,15 @@ const App: React.FC = () => {
     const unsub = observeAuth((u) => {
       setCurrentUserEmail(u?.email || '');
       setCurrentUserId(u?.uid || '');
+      // Friendly name for header
+      const email = (u?.email || '').toLowerCase();
+      let name = (u as any)?.displayName as string | undefined;
+      if (!name || name.trim() === '') {
+        if (email === 'mushahidyaseen56@gmail.com') name = 'Mushahid';
+        else if (email === 'rizwanelahi481@gmail.com') name = 'Rizwan';
+        else if (email.includes('@')) name = email.split('@')[0];
+      }
+      setCurrentUserName(name || '');
       const newOrgId = getOrgIdForUser(u);
       setOrgId(newOrgId);
       setAuthReady(true);
@@ -98,25 +108,32 @@ const App: React.FC = () => {
 
   // Save expenses, debits, loans, contacts and balance to localStorage whenever they change
   useEffect(() => {
+    if (orgId) return; // skip persisting when using shared org
     localStorage.setItem('amazon-agency-expenses', JSON.stringify(expenses));
-  }, [expenses]);
+  }, [expenses, orgId]);
 
   useEffect(() => {
+    if (orgId) return;
     localStorage.setItem('amazon-agency-debits', JSON.stringify(debits));
-  }, [debits]);
+  }, [debits, orgId]);
 
   useEffect(() => {
+    if (orgId) return;
     localStorage.setItem('amazon-agency-loans', JSON.stringify(loans));
-  }, [loans]);
+  }, [loans, orgId]);
 
   useEffect(() => {
+    if (orgId) return;
     localStorage.setItem('amazon-agency-contacts', JSON.stringify(contacts));
-  }, [contacts]);
+  }, [contacts, orgId]);
 
   useEffect(() => {
-    localStorage.setItem('amazon-agency-balance', currentBalance.toString());
-    if (orgId) dbSetBalance(orgId, currentBalance);
-  }, [currentBalance]);
+    if (!orgId) {
+      localStorage.setItem('amazon-agency-balance', currentBalance.toString());
+    } else {
+      dbSetBalance(orgId, currentBalance);
+    }
+  }, [currentBalance, orgId]);
 
   const handleReset = () => {
     if (window.confirm('Are you sure you want to reset everything? This will:\n\n• Set balance to $0\n• Delete all expenses\n• Delete all income\n• Delete all loans\n• Delete all contacts\n\nThis action cannot be undone.')) {
@@ -454,18 +471,15 @@ const App: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center">
-              <h1 className="text-xl font-bold text-gray-900">Amazon Agency Accounting</h1>
+              <h1 className="text-xl font-bold text-gray-900">eCom Gliders account</h1>
             </div>
             
             <div className="flex items-center space-x-4">
-              {currentUserEmail && (
+              {currentUserName && (
                 <div className="hidden sm:flex items-center px-3 py-1 rounded-lg bg-gray-100 text-gray-700 text-sm">
-                  {currentUserEmail}
+                  {currentUserName}
                 </div>
               )}
-              <div className="hidden md:flex items-center px-3 py-1 rounded-lg bg-blue-50 text-blue-700 text-sm" title="Organization scope">
-                Org: {orgId || 'none'}
-              </div>
               <button
                 onClick={() => logout()}
                 className="px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
