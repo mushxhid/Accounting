@@ -547,6 +547,7 @@ const App: React.FC = () => {
             onDeleteDebit={handleDeleteDebit}
             onDeleteLoan={handleDeleteLoan}
             onUpdateBalance={handleUpdateBalance}
+            onNavigate={(view) => setCurrentView(view)}
           />
         ) : currentView === 'expenses' ? (
           <ExpenseList 

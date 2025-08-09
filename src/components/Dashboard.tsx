@@ -17,6 +17,8 @@ interface DashboardProps {
   onDeleteDebit: (id: string) => void;
   onDeleteLoan: (id: string) => void;
   onUpdateBalance: (newBalance: number) => void;
+  // New: handler to switch view in parent
+  onNavigate?: (view: 'expenses' | 'credits' | 'loans') => void;
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ 
@@ -29,7 +31,8 @@ const Dashboard: React.FC<DashboardProps> = ({
   onDeleteExpense, 
   onDeleteDebit,
   onDeleteLoan,
-  onUpdateBalance 
+  onUpdateBalance,
+  onNavigate,
 }) => {
   const [showBalanceModal, setShowBalanceModal] = useState(false);
   const [showDebitModal, setShowDebitModal] = useState(false);
@@ -250,7 +253,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               <h2 className="text-xl font-semibold text-gray-900">Recent Expenses</h2>
               <p className="text-sm text-gray-600 mt-1">{getCurrentMonthName()} only</p>
             </div>
-            <button className="text-primary-600 hover:text-primary-700 font-medium text-sm">
+            <button className="text-primary-600 hover:text-primary-700 font-medium text-sm" onClick={() => onNavigate && onNavigate('expenses')}>
               View All
             </button>
           </div>
@@ -320,7 +323,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               <h2 className="text-xl font-semibold text-gray-900">Recent Income</h2>
               <p className="text-sm text-gray-600 mt-1">{getCurrentMonthName()} only</p>
             </div>
-            <button className="text-primary-600 hover:text-primary-700 font-medium text-sm">
+            <button className="text-primary-600 hover:text-primary-700 font-medium text-sm" onClick={() => onNavigate && onNavigate('credits')}>
               View All
             </button>
           </div>
@@ -390,7 +393,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                <h2 className="text-xl font-semibold text-gray-900">Recent Loans</h2>
                <p className="text-sm text-gray-600 mt-1">{getCurrentMonthName()} only</p>
              </div>
-             <button className="text-primary-600 hover:text-primary-700 font-medium text-sm">
+             <button className="text-primary-600 hover:text-primary-700 font-medium text-sm" onClick={() => onNavigate && onNavigate('loans')}>
                View All
              </button>
            </div>
