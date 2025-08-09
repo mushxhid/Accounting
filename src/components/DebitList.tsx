@@ -115,11 +115,13 @@ const DebitList: React.FC<DebitListProps> = ({ debits, onDelete, onAddDebit }) =
       Date: new Date(debit.date).toLocaleDateString('en-US', {
         year: 'numeric',
         month: '2-digit',
-        day: '2-digit'
+        day: '2-digit',
+        timeZone: 'Asia/Karachi'
       }),
       Time: new Date(debit.date).toLocaleTimeString('en-US', {
         hour: '2-digit',
-        minute: '2-digit'
+        minute: '2-digit',
+        timeZone: 'Asia/Karachi'
       }),
       Source: debit.source,
       Description: debit.description || '',
@@ -320,13 +322,15 @@ const DebitList: React.FC<DebitListProps> = ({ debits, onDelete, onAddDebit }) =
                               weekday: 'short',
                               year: 'numeric',
                               month: 'short',
-                              day: 'numeric'
+                              day: 'numeric',
+                              timeZone: 'Asia/Karachi'
                             })}
                           </p>
                           <p className="text-sm text-gray-500">
                             {new Date(debit.date).toLocaleTimeString('en-US', {
                               hour: '2-digit',
-                              minute: '2-digit'
+                              minute: '2-digit',
+                              timeZone: 'Asia/Karachi'
                             })}
                           </p>
                         </div>

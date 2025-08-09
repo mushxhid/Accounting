@@ -144,10 +144,12 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, onDelete,
           year: 'numeric',
           month: '2-digit',
           day: '2-digit'
+        , timeZone: 'Asia/Karachi'
         }),
         Time: new Date(expense.date).toLocaleTimeString('en-US', {
           hour: '2-digit',
-          minute: '2-digit'
+          minute: '2-digit',
+          timeZone: 'Asia/Karachi'
         }),
         'Expense Name': expense.name,
         Description: expense.description || '',
@@ -392,13 +394,15 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, onDelete,
                                 weekday: 'short',
                                 year: 'numeric',
                                 month: 'short',
-                                day: 'numeric'
+                                day: 'numeric',
+                                timeZone: 'Asia/Karachi'
                               })}
                             </p>
                             <p className="text-sm text-gray-500">
                               {new Date(expense.date).toLocaleTimeString('en-US', {
                                 hour: '2-digit',
-                                minute: '2-digit'
+                                minute: '2-digit',
+                                timeZone: 'Asia/Karachi'
                               })}
                             </p>
                           </div>

@@ -117,8 +117,8 @@ const LoanList: React.FC<LoanListProps> = ({ loans, onDelete, onAddLoan, onOpenR
       // Parent loan row
       csvData.push({
         Type: 'Loan',
-        Date: new Date(loan.date).toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' }),
-        Time: new Date(loan.date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+        Date: new Date(loan.date).toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit', timeZone: 'Asia/Karachi' }),
+        Time: new Date(loan.date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Karachi' }),
         'Partner Name': loan.partnerName,
         'Amount (PKR)': (-loan.amount).toFixed(2),
         'Amount (USD)': (-loan.usdAmount).toFixed(2),
@@ -129,8 +129,8 @@ const LoanList: React.FC<LoanListProps> = ({ loans, onDelete, onAddLoan, onOpenR
       (loan.repayments || []).forEach(r => {
         csvData.push({
           Type: 'Repayment',
-          Date: new Date(r.date).toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' }),
-          Time: new Date(r.date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+          Date: new Date(r.date).toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit', timeZone: 'Asia/Karachi' }),
+          Time: new Date(r.date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Karachi' }),
           'Partner Name': loan.partnerName,
           'Amount (PKR)': r.amount.toFixed(2),
           'Amount (USD)': r.usdAmount.toFixed(2),
@@ -275,7 +275,8 @@ const LoanList: React.FC<LoanListProps> = ({ loans, onDelete, onAddLoan, onOpenR
                       {new Date(loan.date).toLocaleDateString('en-US', {
                         year: 'numeric',
                         month: 'short',
-                        day: 'numeric'
+                        day: 'numeric',
+                        timeZone: 'Asia/Karachi'
                       })}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">

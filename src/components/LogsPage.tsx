@@ -93,7 +93,7 @@ const LogsPage: React.FC<LogsPageProps> = ({ audit }) => {
 
   const exportCSV = () => {
     const rows = filtered.map((e) => ({
-      Time: new Date(e.timeMs).toLocaleString(),
+      Time: new Date(e.timeMs).toLocaleString('en-US', { timeZone: 'Asia/Karachi' }),
       Action: e.action,
       Entity: e.entity,
       Name: e.details?.name || '',
@@ -150,7 +150,7 @@ const LogsPage: React.FC<LogsPageProps> = ({ audit }) => {
             <tbody className="divide-y divide-gray-200">
               {filtered.map((e) => (
                 <tr key={e.id}>
-                  <td className="px-4 py-2">{new Date(e.timeMs).toLocaleString()}</td>
+                  <td className="px-4 py-2">{new Date(e.timeMs).toLocaleString('en-US', { timeZone: 'Asia/Karachi' })}</td>
                   <td className="px-4 py-2 font-medium">{e.action}</td>
                   <td className="px-4 py-2">{e.entity}</td>
                   <td className="px-4 py-2">{e.details?.name || ''}</td>
