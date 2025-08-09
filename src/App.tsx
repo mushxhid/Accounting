@@ -25,6 +25,7 @@ import {
   upsertContact as dbUpsertContact,
   deleteContact as dbDeleteContact,
   migrateUserToOrgIfEmpty,
+    clearOrgData,
 } from './utils/db';
 import { sendAudit } from './utils/audit';
 
@@ -124,13 +125,18 @@ const App: React.FC = () => {
       setLoans([]);
       setContacts([]);
       setCurrentBalance(0);
-      
-      // Clear localStorage
+
+      // Clear local cache for offline mode
       localStorage.removeItem('amazon-agency-expenses');
       localStorage.removeItem('amazon-agency-debits');
       localStorage.removeItem('amazon-agency-loans');
       localStorage.removeItem('amazon-agency-contacts');
       localStorage.setItem('amazon-agency-balance', '0');
+
+      // Clear shared org data in Firestore so both admins see reset
+      if (orgId) {
+        clearOrgData(orgId).catch(() => {/* already logged in db util */});
+      }
     }
   };
 
