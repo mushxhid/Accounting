@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { DollarSign, TrendingDown, Calendar, Trash2, Wallet, Edit, TrendingUp as TrendingUpIcon, UserCheck } from 'lucide-react';
 import { Expense, Debit, Loan } from '../types';
 import { calculateTotalExpenses } from '../utils/helpers';
@@ -121,6 +121,8 @@ const Dashboard: React.FC<DashboardProps> = ({
     setShowDebitModal(false);
   };
 
+  const auditRef = useRef<HTMLDivElement | null>(null);
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -129,6 +131,14 @@ const Dashboard: React.FC<DashboardProps> = ({
           <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
           <p className="text-gray-600 mt-1">Track your Amazon agency expenses</p>
         </div>
+        <button
+          type="button"
+          onClick={() => auditRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+          className="text-sm font-medium text-white/90 bg-white/20 hover:bg-white/30 rounded px-3 py-2"
+          title="Jump to activity logs"
+        >
+          View Logs
+        </button>
       </div>
 
       {/* Current Balance Section */}
@@ -463,7 +473,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 
       {/* Audit Log */}
       {Array.isArray(audit) && (
-        <div className="card mt-6">
+        <div className="card mt-6" ref={auditRef}>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold text-gray-900">Activity (both admins)</h2>
           </div>
