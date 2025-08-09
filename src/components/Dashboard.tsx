@@ -34,6 +34,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   onDeleteLoan,
   onUpdateBalance,
   onNavigate,
+  audit,
 }) => {
   const [showBalanceModal, setShowBalanceModal] = useState(false);
   const [showDebitModal, setShowDebitModal] = useState(false);
@@ -128,7 +129,7 @@ const Dashboard: React.FC<DashboardProps> = ({
     return () => window.removeEventListener('scrollToAudit' as any, handler);
   }, []);
 
-  const auditList = (props as any).audit as any[] | undefined;
+  const auditList = (audit as any[]) || [];
 
   return (
     <div className="space-y-6">
