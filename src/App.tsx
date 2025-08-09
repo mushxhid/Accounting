@@ -8,6 +8,7 @@ import ExpenseList from './components/ExpenseList';
 import DebitList from './components/DebitList';
 import LoanList from './components/LoanList';
 import ContactsPage from './components/ContactsPage';
+import LogsPage from './components/LogsPage';
 import ExpenseForm from './components/ExpenseForm';
 import DebitForm from './components/DebitForm';
 import LoanForm from './components/LoanForm';
@@ -36,7 +37,7 @@ const App: React.FC = () => {
   const [debits, setDebits] = useState<Debit[]>([]);
   const [loans, setLoans] = useState<Loan[]>([]);
   const [contacts, setContacts] = useState<Contact[]>([]);
-  const [currentView, setCurrentView] = useState<'dashboard' | 'expenses' | 'credits' | 'loans' | 'contacts'>('dashboard');
+  const [currentView, setCurrentView] = useState<'dashboard' | 'expenses' | 'credits' | 'loans' | 'contacts' | 'logs'>('dashboard');
   const [audit, setAudit] = useState<any[]>([]);
   const [showExpenseForm, setShowExpenseForm] = useState(false);
   const [showDebitForm, setShowDebitForm] = useState(false);
@@ -587,6 +588,17 @@ const App: React.FC = () => {
                 <Users size={16} className="mr-2" />
                 Contacts
               </button>
+              <button
+                onClick={() => setCurrentView('logs')}
+                className={`flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  currentView === 'logs'
+                    ? 'bg-primary-100 text-primary-700'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+                title="View Logs"
+              >
+                Logs
+              </button>
             </div>
           </div>
         </div>
@@ -651,6 +663,8 @@ const App: React.FC = () => {
               if (orgId) { dbUpsertLoan(orgId, updatedLoan); dbSetBalance(orgId, newBalance); }
             }}
           />
+        ) : currentView === 'logs' ? (
+          <LogsPage audit={audit} />
         ) : (
           <ContactsPage 
             contacts={contacts}
