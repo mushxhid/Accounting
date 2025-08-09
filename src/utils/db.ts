@@ -164,4 +164,30 @@ export const clearOrgData = async (orgId: string) => {
   }
 };
 
+// Optional safety: clear legacy per-user data to avoid resurrection from old clients
+export const clearAllLegacyUsersData = async () => {
+  try {
+    const usersSnap = await getDocs(collection(db, 'users'));
+    const perUserDeletes: Promise<void>[] = [];
+    usersSnap.forEach((userDoc) => {
+      const uid = userDoc.id;
+      const cols: Array<'expenses' | 'debits' | 'loans' | 'contacts'> = ['expenses', 'debits', 'loans', 'contacts'];
+      for (const name of cols) {
+        perUserDeletes.push(
+          (async () => {
+            const snap = await getDocs(collection(db, 'users', uid, name));
+            const deletes: Promise<void>[] = [];
+            snap.forEach((d) => deletes.push(deleteDoc(doc(db, 'users', uid, name, d.id))));
+            await Promise.all(deletes);
+          })()
+        );
+      }
+    });
+    await Promise.all(perUserDeletes);
+    console.log('[DB] clearAllLegacyUsersData done');
+  } catch (e) {
+    console.warn('[DB] clearAllLegacyUsersData skipped/failed', e);
+  }
+};
+
 

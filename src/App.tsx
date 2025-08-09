@@ -27,6 +27,7 @@ import {
   migrateUserToOrgIfEmpty,
     clearOrgData,
   appendRepayment,
+    clearAllLegacyUsersData,
 } from './utils/db';
 import { sendAudit } from './utils/audit';
 
@@ -125,6 +126,8 @@ const App: React.FC = () => {
         clearOrgData(orgId)
           .then(() => console.log('[Reset] org cleared'))
           .catch(() => {/* already logged in db util */});
+        // Safety: also clear legacy per-user collections to avoid resurrection from old clients
+        clearAllLegacyUsersData();
       }
     }
   };
