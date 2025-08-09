@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Home, List, Plus, TrendingUp, RotateCcw, Users, UserCheck, Activity } from 'lucide-react';
+import { Home, List, Plus, TrendingUp, RotateCcw, Users, UserCheck, Activity, Menu, X } from 'lucide-react';
 import { Expense, Debit, Contact, Loan, ExpenseFormData, DebitFormData, ContactFormData, LoanFormData, LoanRepaymentFormData, LoanRepayment } from './types';
 import LoanRepaymentForm from './components/LoanRepaymentForm';
 import { generateId } from './utils/helpers';
@@ -39,6 +39,7 @@ const App: React.FC = () => {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [currentView, setCurrentView] = useState<'dashboard' | 'expenses' | 'credits' | 'loans' | 'contacts' | 'logs'>('dashboard');
   const [audit, setAudit] = useState<any[]>([]);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
   const [showExpenseForm, setShowExpenseForm] = useState(false);
   const [showDebitForm, setShowDebitForm] = useState(false);
   const [showLoanForm, setShowLoanForm] = useState(false);
@@ -498,7 +499,8 @@ const App: React.FC = () => {
               <h1 className="text-xl font-bold text-gray-900">eCom Gliders</h1>
             </div>
             
-            <div className="flex items-center space-x-4">
+            {/* Desktop navbar */}
+            <div className="hidden sm:flex items-center space-x-4">
               {currentUserName && (
                 <div className="hidden sm:flex items-center px-3 py-1 rounded-lg bg-gray-100 text-gray-700 text-sm">
                   {currentUserName}
@@ -594,9 +596,33 @@ const App: React.FC = () => {
                 Logs
               </button>
             </div>
+
+            {/* Mobile menu toggle */}
+            <button
+              className="sm:hidden inline-flex items-center p-2 rounded-md text-gray-700 hover:bg-gray-100"
+              aria-label="Toggle navigation"
+              onClick={() => setMobileMenuOpen((v) => !v)}
+            >
+              {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+            </button>
           </div>
         </div>
       </nav>
+
+      {/* Mobile menu panel */}
+      {mobileMenuOpen && (
+        <div className="sm:hidden border-b border-gray-200 bg-white">
+          <div className="px-4 py-3 space-y-2">
+            <button onClick={() => { setCurrentView('dashboard'); setMobileMenuOpen(false); }} className={`block w-full text-left px-3 py-2 rounded-lg ${currentView==='dashboard'?'bg-primary-100 text-primary-700':'text-gray-700 hover:bg-gray-100'}`}>Dashboard</button>
+            <button onClick={() => { setCurrentView('expenses'); setMobileMenuOpen(false); }} className={`block w-full text-left px-3 py-2 rounded-lg ${currentView==='expenses'?'bg-primary-100 text-primary-700':'text-gray-700 hover:bg-gray-100'}`}>Expenses</button>
+            <button onClick={() => { setCurrentView('credits'); setMobileMenuOpen(false); }} className={`block w-full text-left px-3 py-2 rounded-lg ${currentView==='credits'?'bg-primary-100 text-primary-700':'text-gray-700 hover:bg-gray-100'}`}>Income</button>
+            <button onClick={() => { setCurrentView('loans'); setMobileMenuOpen(false); }} className={`block w-full text-left px-3 py-2 rounded-lg ${currentView==='loans'?'bg-primary-100 text-primary-700':'text-gray-700 hover:bg-gray-100'}`}>Loans</button>
+            <button onClick={() => { setCurrentView('contacts'); setMobileMenuOpen(false); }} className={`block w-full text-left px-3 py-2 rounded-lg ${currentView==='contacts'?'bg-primary-100 text-primary-700':'text-gray-700 hover:bg-gray-100'}`}>Contacts</button>
+            <button onClick={() => { setCurrentView('logs'); setMobileMenuOpen(false); }} className={`block w-full text-left px-3 py-2 rounded-lg ${currentView==='logs'?'bg-primary-100 text-primary-700':'text-gray-700 hover:bg-gray-100'}`}>Logs</button>
+            <button onClick={() => { logout(); setMobileMenuOpen(false); }} className="block w-full text-left px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">Sign out</button>
+          </div>
+        </div>
+      )}
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
