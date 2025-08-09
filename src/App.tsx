@@ -45,6 +45,13 @@ const App: React.FC = () => {
   const [currentUserEmail, setCurrentUserEmail] = useState<string>('');
   const [currentUserId, setCurrentUserId] = useState<string>('');
   const [orgId, setOrgId] = useState<string>('');
+  const [authReady, setAuthReady] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (authReady) {
+      console.log('[Auth] orgId =', orgId, 'email =', currentUserEmail);
+    }
+  }, [authReady, orgId, currentUserEmail]);
 
   // Auth listener and Firestore sync
   useEffect(() => {
@@ -54,6 +61,7 @@ const App: React.FC = () => {
       setCurrentUserId(u?.uid || '');
       const newOrgId = getOrgIdForUser(u);
       setOrgId(newOrgId);
+      setAuthReady(true);
       if (stopSync) { stopSync(); stopSync = null; }
       if (newOrgId) {
         // Best-effort migration from old per-user paths to shared org
@@ -70,33 +78,22 @@ const App: React.FC = () => {
     return () => { unsub(); if (stopSync) stopSync(); };
   }, []);
 
+  // Only hydrate from localStorage if there is no authenticated org (offline/unauth)
   useEffect(() => {
+    if (!authReady) return;
+    if (orgId) return; // skip when using shared org
     const savedExpenses = localStorage.getItem('amazon-agency-expenses');
     const savedDebits = localStorage.getItem('amazon-agency-debits');
     const savedLoans = localStorage.getItem('amazon-agency-loans');
     const savedContacts = localStorage.getItem('amazon-agency-contacts');
     const savedBalance = localStorage.getItem('amazon-agency-balance');
-    
-    if (savedExpenses) {
-      setExpenses(JSON.parse(savedExpenses));
-    }
-    
-    if (savedDebits) {
-      setDebits(JSON.parse(savedDebits));
-    }
-    
-    if (savedLoans) {
-      setLoans(JSON.parse(savedLoans));
-    }
-    
-    if (savedContacts) {
-      setContacts(JSON.parse(savedContacts));
-    }
-    
-    if (savedBalance) {
-      setCurrentBalance(parseFloat(savedBalance));
-    }
-  }, []);
+
+    if (savedExpenses) setExpenses(JSON.parse(savedExpenses));
+    if (savedDebits) setDebits(JSON.parse(savedDebits));
+    if (savedLoans) setLoans(JSON.parse(savedLoans));
+    if (savedContacts) setContacts(JSON.parse(savedContacts));
+    if (savedBalance) setCurrentBalance(parseFloat(savedBalance));
+  }, [authReady, orgId]);
 
   // Save expenses, debits, loans, contacts and balance to localStorage whenever they change
   useEffect(() => {
@@ -140,6 +137,7 @@ const App: React.FC = () => {
   const handleAddExpense = (formData: ExpenseFormData) => {
     // Calculate the new current balance (using USD amount for balance calculations)
     const usdAmount = parseFloat(formData.usdAmount) || 0;
+    console.log('[AddExpense] orgId =', orgId, 'usd =', usdAmount);
     const newBalance = currentBalance - usdAmount;
 
     const newExpense: Expense = {
@@ -159,7 +157,7 @@ const App: React.FC = () => {
 
     setExpenses(prev => [newExpense, ...prev]);
     setCurrentBalance(newBalance);
-    if (orgId) { dbUpsertExpense(orgId, newExpense); dbSetBalance(orgId, newBalance); }
+    if (orgId) { dbUpsertExpense(orgId, newExpense); dbSetBalance(orgId, newBalance); } else { console.warn('[AddExpense] Missing orgId, write skipped'); }
     sendAudit({ action: 'create', entity: 'expense', details: { id: newExpense.id, name: newExpense.name, amount: newExpense.amount } });
     setShowExpenseForm(false);
   };
@@ -167,6 +165,7 @@ const App: React.FC = () => {
   const handleAddDebit = (formData: DebitFormData) => {
     // Calculate the new current balance (using USD amount for balance calculations)
     const usdAmount = parseFloat(formData.usdAmount) || 0;
+    console.log('[AddDebit] orgId =', orgId, 'usd =', usdAmount);
     const newBalance = currentBalance + usdAmount;
 
     const newDebit: Debit = {
@@ -185,7 +184,7 @@ const App: React.FC = () => {
 
     setDebits(prev => [newDebit, ...prev]);
     setCurrentBalance(newBalance);
-    if (orgId) { dbUpsertDebit(orgId, newDebit); dbSetBalance(orgId, newBalance); }
+    if (orgId) { dbUpsertDebit(orgId, newDebit); dbSetBalance(orgId, newBalance); } else { console.warn('[AddDebit] Missing orgId, write skipped'); }
     sendAudit({ action: 'create', entity: 'debit', details: { id: newDebit.id, amount: newDebit.amount, source: newDebit.source } });
     setShowDebitForm(false);
   };
@@ -193,6 +192,7 @@ const App: React.FC = () => {
   const handleAddLoan = (formData: LoanFormData) => {
     // Calculate the new current balance (loans reduce the balance, using USD amount)
     const usdAmount = parseFloat(formData.usdAmount) || 0;
+    console.log('[AddLoan] orgId =', orgId, 'usd =', usdAmount);
     const newBalance = currentBalance - usdAmount;
 
     const newLoan: Loan = {
@@ -214,7 +214,7 @@ const App: React.FC = () => {
 
     setLoans(prev => [newLoan, ...prev]);
     setCurrentBalance(newBalance);
-    if (orgId) { dbUpsertLoan(orgId, newLoan); dbSetBalance(orgId, newBalance); }
+    if (orgId) { dbUpsertLoan(orgId, newLoan); dbSetBalance(orgId, newBalance); } else { console.warn('[AddLoan] Missing orgId, write skipped'); }
     sendAudit({ action: 'create', entity: 'loan', details: { id: newLoan.id, partnerName: newLoan.partnerName, amount: newLoan.amount } });
     setShowLoanForm(false);
   };
@@ -258,7 +258,7 @@ const App: React.FC = () => {
     if (orgId && updatedLoanForDb) {
       dbUpsertLoan(orgId, updatedLoanForDb);
       dbSetBalance(orgId, newBalance);
-    }
+    } else { console.warn('[RepayLoan] Missing orgId or loan'); }
     sendAudit({ action: 'create', entity: 'repayment', details: { loanId, amount: pkrAmount } });
   };
 
