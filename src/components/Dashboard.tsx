@@ -253,7 +253,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               <h2 className="text-xl font-semibold text-gray-900">Recent Expenses</h2>
               <p className="text-sm text-gray-600 mt-1">{getCurrentMonthName()} only</p>
             </div>
-            <button className="text-primary-600 hover:text-primary-700 font-medium text-sm" onClick={() => onNavigate && onNavigate('expenses')}>
+            <button type="button" className="text-primary-600 hover:text-primary-700 font-medium text-sm" onClick={() => { console.log('[Nav] View All → expenses'); onNavigate && onNavigate('expenses'); }}>
               View All
             </button>
           </div>
@@ -323,7 +323,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               <h2 className="text-xl font-semibold text-gray-900">Recent Income</h2>
               <p className="text-sm text-gray-600 mt-1">{getCurrentMonthName()} only</p>
             </div>
-            <button className="text-primary-600 hover:text-primary-700 font-medium text-sm" onClick={() => onNavigate && onNavigate('credits')}>
+            <button type="button" className="text-primary-600 hover:text-primary-700 font-medium text-sm" onClick={() => { console.log('[Nav] View All → credits'); onNavigate && onNavigate('credits'); }}>
               View All
             </button>
           </div>
@@ -393,7 +393,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                <h2 className="text-xl font-semibold text-gray-900">Recent Loans</h2>
                <p className="text-sm text-gray-600 mt-1">{getCurrentMonthName()} only</p>
              </div>
-             <button className="text-primary-600 hover:text-primary-700 font-medium text-sm" onClick={() => onNavigate && onNavigate('loans')}>
+             <button type="button" className="text-primary-600 hover:text-primary-700 font-medium text-sm" onClick={() => { console.log('[Nav] View All → loans'); onNavigate && onNavigate('loans'); }}>
                View All
              </button>
            </div>

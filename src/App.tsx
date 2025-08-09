@@ -560,7 +560,7 @@ const App: React.FC = () => {
             onDeleteDebit={handleDeleteDebit}
             onDeleteLoan={handleDeleteLoan}
             onUpdateBalance={handleUpdateBalance}
-            onNavigate={(view) => setCurrentView(view)}
+            onNavigate={(view) => { console.log('[Nav] setCurrentView', view); setCurrentView(view); }}
           />
         ) : currentView === 'expenses' ? (
           <ExpenseList 
