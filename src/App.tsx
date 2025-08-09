@@ -463,6 +463,9 @@ const App: React.FC = () => {
                   {currentUserEmail}
                 </div>
               )}
+              <div className="hidden md:flex items-center px-3 py-1 rounded-lg bg-blue-50 text-blue-700 text-sm" title="Organization scope">
+                Org: {orgId || 'none'}
+              </div>
               <button
                 onClick={() => logout()}
                 className="px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"

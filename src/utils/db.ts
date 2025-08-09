@@ -144,6 +144,7 @@ export const migrateUserToOrgIfEmpty = async (userUid: string, orgId: string) =>
 export const clearOrgData = async (orgId: string) => {
   if (!orgId) return;
   try {
+    console.log('[DB] clearOrgData start', orgId);
     const collNames: Array<'expenses' | 'debits' | 'loans' | 'contacts'> = ['expenses', 'debits', 'loans', 'contacts'];
     for (const name of collNames) {
       const snap = await getDocs(colRef(orgId, name));
@@ -152,6 +153,7 @@ export const clearOrgData = async (orgId: string) => {
       await Promise.all(deletes);
     }
     await setBalance(orgId, 0);
+    console.log('[DB] clearOrgData done', orgId);
   } catch (e) {
     // eslint-disable-next-line no-console
     console.error('[DB] clearOrgData failed', e);
