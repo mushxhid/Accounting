@@ -12,7 +12,7 @@ import ExpenseForm from './components/ExpenseForm';
 import DebitForm from './components/DebitForm';
 import LoanForm from './components/LoanForm';
 import ContactForm from './components/ContactForm';
-import { observeAuth, logout } from './utils/auth';
+import { observeAuth, logout, getOrgIdForUser } from './utils/auth';
 import {
   startRealtimeSync,
   upsertExpense as dbUpsertExpense,
@@ -24,6 +24,7 @@ import {
   setBalance as dbSetBalance,
   upsertContact as dbUpsertContact,
   deleteContact as dbDeleteContact,
+  migrateUserToOrgIfEmpty,
 } from './utils/db';
 import { sendAudit } from './utils/audit';
 
@@ -43,6 +44,7 @@ const App: React.FC = () => {
   const [currentBalance, setCurrentBalance] = useState<number>(0); // Reset to 0
   const [currentUserEmail, setCurrentUserEmail] = useState<string>('');
   const [currentUserId, setCurrentUserId] = useState<string>('');
+  const [orgId, setOrgId] = useState<string>('');
 
   // Auth listener and Firestore sync
   useEffect(() => {
@@ -50,9 +52,13 @@ const App: React.FC = () => {
     const unsub = observeAuth((u) => {
       setCurrentUserEmail(u?.email || '');
       setCurrentUserId(u?.uid || '');
+      const newOrgId = getOrgIdForUser(u);
+      setOrgId(newOrgId);
       if (stopSync) { stopSync(); stopSync = null; }
-      if (u?.uid) {
-        stopSync = startRealtimeSync(u.uid, {
+      if (newOrgId) {
+        // Best-effort migration from old per-user paths to shared org
+        if (u?.uid) { migrateUserToOrgIfEmpty(u.uid, newOrgId); }
+        stopSync = startRealtimeSync(newOrgId, {
           onExpenses: setExpenses,
           onDebits: setDebits,
           onLoans: setLoans,
@@ -111,7 +117,7 @@ const App: React.FC = () => {
 
   useEffect(() => {
     localStorage.setItem('amazon-agency-balance', currentBalance.toString());
-    if (currentUserId) dbSetBalance(currentUserId, currentBalance);
+    if (orgId) dbSetBalance(orgId, currentBalance);
   }, [currentBalance]);
 
   const handleReset = () => {
@@ -153,7 +159,7 @@ const App: React.FC = () => {
 
     setExpenses(prev => [newExpense, ...prev]);
     setCurrentBalance(newBalance);
-    if (currentUserId) { dbUpsertExpense(currentUserId, newExpense); dbSetBalance(currentUserId, newBalance); }
+    if (orgId) { dbUpsertExpense(orgId, newExpense); dbSetBalance(orgId, newBalance); }
     sendAudit({ action: 'create', entity: 'expense', details: { id: newExpense.id, name: newExpense.name, amount: newExpense.amount } });
     setShowExpenseForm(false);
   };
@@ -179,7 +185,7 @@ const App: React.FC = () => {
 
     setDebits(prev => [newDebit, ...prev]);
     setCurrentBalance(newBalance);
-    if (currentUserId) { dbUpsertDebit(currentUserId, newDebit); dbSetBalance(currentUserId, newBalance); }
+    if (orgId) { dbUpsertDebit(orgId, newDebit); dbSetBalance(orgId, newBalance); }
     sendAudit({ action: 'create', entity: 'debit', details: { id: newDebit.id, amount: newDebit.amount, source: newDebit.source } });
     setShowDebitForm(false);
   };
@@ -208,7 +214,7 @@ const App: React.FC = () => {
 
     setLoans(prev => [newLoan, ...prev]);
     setCurrentBalance(newBalance);
-    if (currentUserId) { dbUpsertLoan(currentUserId, newLoan); dbSetBalance(currentUserId, newBalance); }
+    if (orgId) { dbUpsertLoan(orgId, newLoan); dbSetBalance(orgId, newBalance); }
     sendAudit({ action: 'create', entity: 'loan', details: { id: newLoan.id, partnerName: newLoan.partnerName, amount: newLoan.amount } });
     setShowLoanForm(false);
   };
@@ -249,9 +255,9 @@ const App: React.FC = () => {
       updatedLoanForDb = updatedLoan;
       return updatedLoan;
     }));
-    if (currentUserId && updatedLoanForDb) {
-      dbUpsertLoan(currentUserId, updatedLoanForDb);
-      dbSetBalance(currentUserId, newBalance);
+    if (orgId && updatedLoanForDb) {
+      dbUpsertLoan(orgId, updatedLoanForDb);
+      dbSetBalance(orgId, newBalance);
     }
     sendAudit({ action: 'create', entity: 'repayment', details: { loanId, amount: pkrAmount } });
   };
@@ -279,7 +285,7 @@ const App: React.FC = () => {
     };
 
     setContacts(prev => [newContact, ...prev]);
-    if (currentUserId) dbUpsertContact(currentUserId, newContact);
+    if (orgId) dbUpsertContact(orgId, newContact);
     sendAudit({ action: 'create', entity: 'contact', details: { id: newContact.id, name: newContact.name } });
     setShowContactForm(false);
     setEditingContact(null);
@@ -317,7 +323,7 @@ const App: React.FC = () => {
         setCurrentBalance(prev => prev + expenseToDelete.usdAmount);
       }
       setExpenses(prev => prev.filter(expense => expense.id !== id));
-      if (currentUserId) dbDeleteExpense(currentUserId, id);
+      if (orgId) dbDeleteExpense(orgId, id);
       sendAudit({ action: 'delete', entity: 'expense', details: { id } });
     }
   };
@@ -330,7 +336,7 @@ const App: React.FC = () => {
         setCurrentBalance(prev => prev - debitToDelete.usdAmount);
       }
       setDebits(prev => prev.filter(debit => debit.id !== id));
-      if (currentUserId) dbDeleteDebit(currentUserId, id);
+      if (orgId) dbDeleteDebit(orgId, id);
       sendAudit({ action: 'delete', entity: 'debit', details: { id } });
     }
   };
@@ -343,7 +349,7 @@ const App: React.FC = () => {
         setCurrentBalance(prev => prev + loanToDelete.usdAmount);
       }
       setLoans(prev => prev.filter(loan => loan.id !== id));
-      if (currentUserId) dbDeleteLoan(currentUserId, id);
+      if (orgId) dbDeleteLoan(orgId, id);
       sendAudit({ action: 'delete', entity: 'loan', details: { id } });
     }
   };
@@ -351,7 +357,7 @@ const App: React.FC = () => {
   const handleDeleteContact = (id: string) => {
     if (window.confirm('Are you sure you want to delete this contact?')) {
       setContacts(prev => prev.filter(contact => contact.id !== id));
-      if (currentUserId) dbDeleteContact(currentUserId, id);
+      if (orgId) dbDeleteContact(orgId, id);
     sendAudit({ action: 'delete', entity: 'contact', details: { id } });
     }
   };

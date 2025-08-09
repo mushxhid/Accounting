@@ -19,6 +19,15 @@ const ALLOWED_EMAILS = new Set([
   'rizwanelahi481@gmail.com',
 ]);
 
+export const getOrgIdForUser = (user: User | null): string => {
+  if (!user?.email) return '';
+  const email = user.email.toLowerCase();
+  // Map both admins to a shared org id
+  if (email === 'mushahidyaseen56@gmail.com' || email === 'rizwanelahi481@gmail.com') return 'agency';
+  // default per-user fallback
+  return user.uid;
+};
+
 export const signInWithGoogle = async (): Promise<User | null> => {
   const result = await signInWithPopup(auth, provider);
   const user = result.user;

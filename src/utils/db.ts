@@ -1,55 +1,56 @@
-import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, Firestore, serverTimestamp } from 'firebase/firestore';
+import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, Firestore, serverTimestamp, getDocs, getDoc } from 'firebase/firestore';
 import { Expense, Debit, Loan, Contact } from '../types';
 
 const db: Firestore = getFirestore();
 
-const colRef = (uid: string, name: 'expenses' | 'debits' | 'loans' | 'contacts') => collection(db, 'users', uid, name);
-const docRef = (uid: string, name: 'expenses' | 'debits' | 'loans' | 'contacts', id: string) => doc(db, 'users', uid, name, id);
-const metaDocRef = (uid: string, name: string) => doc(db, 'users', uid, 'meta', name);
+// Use a shared org-scoped path so multiple admins see the same data
+const colRef = (orgId: string, name: 'expenses' | 'debits' | 'loans' | 'contacts') => collection(db, 'orgs', orgId, name);
+const docRef = (orgId: string, name: 'expenses' | 'debits' | 'loans' | 'contacts', id: string) => doc(db, 'orgs', orgId, name, id);
+const metaDocRef = (orgId: string, name: string) => doc(db, 'orgs', orgId, 'meta', name);
 
-export const upsertExpense = async (uid: string, expense: Expense) => {
-  if (!uid) return;
-  await setDoc(docRef(uid, 'expenses', expense.id), { ...expense, _updatedAt: serverTimestamp() }, { merge: true });
+export const upsertExpense = async (orgId: string, expense: Expense) => {
+  if (!orgId) return;
+  await setDoc(docRef(orgId, 'expenses', expense.id), { ...expense, _updatedAt: serverTimestamp() }, { merge: true });
 };
 
-export const deleteExpense = async (uid: string, id: string) => {
-  if (!uid) return;
-  await deleteDoc(docRef(uid, 'expenses', id));
+export const deleteExpense = async (orgId: string, id: string) => {
+  if (!orgId) return;
+  await deleteDoc(docRef(orgId, 'expenses', id));
 };
 
-export const upsertDebit = async (uid: string, debit: Debit) => {
-  if (!uid) return;
-  await setDoc(docRef(uid, 'debits', debit.id), { ...debit, _updatedAt: serverTimestamp() }, { merge: true });
+export const upsertDebit = async (orgId: string, debit: Debit) => {
+  if (!orgId) return;
+  await setDoc(docRef(orgId, 'debits', debit.id), { ...debit, _updatedAt: serverTimestamp() }, { merge: true });
 };
 
-export const deleteDebit = async (uid: string, id: string) => {
-  if (!uid) return;
-  await deleteDoc(docRef(uid, 'debits', id));
+export const deleteDebit = async (orgId: string, id: string) => {
+  if (!orgId) return;
+  await deleteDoc(docRef(orgId, 'debits', id));
 };
 
-export const upsertLoan = async (uid: string, loan: Loan) => {
-  if (!uid) return;
-  await setDoc(docRef(uid, 'loans', loan.id), { ...loan, _updatedAt: serverTimestamp() }, { merge: true });
+export const upsertLoan = async (orgId: string, loan: Loan) => {
+  if (!orgId) return;
+  await setDoc(docRef(orgId, 'loans', loan.id), { ...loan, _updatedAt: serverTimestamp() }, { merge: true });
 };
 
-export const deleteLoan = async (uid: string, id: string) => {
-  if (!uid) return;
-  await deleteDoc(docRef(uid, 'loans', id));
+export const deleteLoan = async (orgId: string, id: string) => {
+  if (!orgId) return;
+  await deleteDoc(docRef(orgId, 'loans', id));
 };
 
-export const upsertContact = async (uid: string, contact: Contact) => {
-  if (!uid) return;
-  await setDoc(docRef(uid, 'contacts', contact.id), { ...contact, _updatedAt: serverTimestamp() }, { merge: true });
+export const upsertContact = async (orgId: string, contact: Contact) => {
+  if (!orgId) return;
+  await setDoc(docRef(orgId, 'contacts', contact.id), { ...contact, _updatedAt: serverTimestamp() }, { merge: true });
 };
 
-export const deleteContact = async (uid: string, id: string) => {
-  if (!uid) return;
-  await deleteDoc(docRef(uid, 'contacts', id));
+export const deleteContact = async (orgId: string, id: string) => {
+  if (!orgId) return;
+  await deleteDoc(docRef(orgId, 'contacts', id));
 };
 
-export const setBalance = async (uid: string, currentBalance: number) => {
-  if (!uid) return;
-  await setDoc(metaDocRef(uid, 'balance'), { currentBalance, _updatedAt: serverTimestamp() }, { merge: true });
+export const setBalance = async (orgId: string, currentBalance: number) => {
+  if (!orgId) return;
+  await setDoc(metaDocRef(orgId, 'balance'), { currentBalance, _updatedAt: serverTimestamp() }, { merge: true });
 };
 
 type SyncHandlers = {
@@ -60,42 +61,77 @@ type SyncHandlers = {
   onBalance?: (value: number) => void;
 };
 
-export const startRealtimeSync = (uid: string, handlers: SyncHandlers) => {
+export const startRealtimeSync = (orgId: string, handlers: SyncHandlers) => {
   const unsubs: Array<() => void> = [];
-  if (!uid) return () => {};
+  if (!orgId) return () => {};
 
   if (handlers.onExpenses) {
-    unsubs.push(onSnapshot(colRef(uid, 'expenses'), (snap) => {
+    unsubs.push(onSnapshot(colRef(orgId, 'expenses'), (snap) => {
       const list: Expense[] = snap.docs.map((d) => d.data() as Expense).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
       handlers.onExpenses!(list);
     }));
   }
   if (handlers.onDebits) {
-    unsubs.push(onSnapshot(colRef(uid, 'debits'), (snap) => {
+    unsubs.push(onSnapshot(colRef(orgId, 'debits'), (snap) => {
       const list: Debit[] = snap.docs.map((d) => d.data() as Debit).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
       handlers.onDebits!(list);
     }));
   }
   if (handlers.onLoans) {
-    unsubs.push(onSnapshot(colRef(uid, 'loans'), (snap) => {
+    unsubs.push(onSnapshot(colRef(orgId, 'loans'), (snap) => {
       const list: Loan[] = snap.docs.map((d) => d.data() as Loan).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
       handlers.onLoans!(list);
     }));
   }
   if (handlers.onContacts) {
-    unsubs.push(onSnapshot(colRef(uid, 'contacts'), (snap) => {
+    unsubs.push(onSnapshot(colRef(orgId, 'contacts'), (snap) => {
       const list: Contact[] = snap.docs.map((d) => d.data() as Contact);
       handlers.onContacts!(list);
     }));
   }
   if (handlers.onBalance) {
-    unsubs.push(onSnapshot(metaDocRef(uid, 'balance'), (snap) => {
+    unsubs.push(onSnapshot(metaDocRef(orgId, 'balance'), (snap) => {
       const data = snap.data() as any;
       if (data && typeof data.currentBalance === 'number') handlers.onBalance!(data.currentBalance);
     }));
   }
 
   return () => unsubs.forEach((u) => u());
+};
+
+// One-time migration: copy data from old per-user path users/{userUid} to shared org path orgs/{orgId}
+export const migrateUserToOrgIfEmpty = async (userUid: string, orgId: string) => {
+  if (!userUid || !orgId) return;
+  try {
+    // If org already has expenses or debits or loans, skip
+    const [orgExpensesSnap, orgDebitsSnap, orgLoansSnap] = await Promise.all([
+      getDocs(collection(db, 'orgs', orgId, 'expenses')),
+      getDocs(collection(db, 'orgs', orgId, 'debits')),
+      getDocs(collection(db, 'orgs', orgId, 'loans')),
+    ]);
+    const orgHasData = !orgExpensesSnap.empty || !orgDebitsSnap.empty || !orgLoansSnap.empty;
+    if (orgHasData) return;
+
+    const [userExpensesSnap, userDebitsSnap, userLoansSnap, userContactsSnap, userBalanceSnap] = await Promise.all([
+      getDocs(collection(db, 'users', userUid, 'expenses')),
+      getDocs(collection(db, 'users', userUid, 'debits')),
+      getDocs(collection(db, 'users', userUid, 'loans')),
+      getDocs(collection(db, 'users', userUid, 'contacts')),
+      getDoc(doc(db, 'users', userUid, 'meta', 'balance')),
+    ]);
+
+    const writes: Promise<any>[] = [];
+    userExpensesSnap.forEach(d => writes.push(setDoc(docRef(orgId, 'expenses', d.id), { ...d.data() })));
+    userDebitsSnap.forEach(d => writes.push(setDoc(docRef(orgId, 'debits', d.id), { ...d.data() })));
+    userLoansSnap.forEach(d => writes.push(setDoc(docRef(orgId, 'loans', d.id), { ...d.data() })));
+    userContactsSnap.forEach(d => writes.push(setDoc(docRef(orgId, 'contacts', d.id), { ...d.data() })));
+    if (userBalanceSnap.exists()) {
+      writes.push(setDoc(metaDocRef(orgId, 'balance'), userBalanceSnap.data() as any, { merge: true }));
+    }
+    await Promise.all(writes);
+  } catch (_e) {
+    // ignore errors; migration is best-effort
+  }
 };
 
 
