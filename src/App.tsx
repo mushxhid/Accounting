@@ -88,50 +88,21 @@ const App: React.FC = () => {
     return () => { unsub(); if (stopSync) stopSync(); };
   }, []);
 
-  // Only hydrate from localStorage if there is no authenticated org (offline/unauth)
+  // When using shared org, force-clear any old local cache to avoid stale re-appearing entries
   useEffect(() => {
     if (!authReady) return;
-    if (orgId) return; // skip when using shared org
-    const savedExpenses = localStorage.getItem('amazon-agency-expenses');
-    const savedDebits = localStorage.getItem('amazon-agency-debits');
-    const savedLoans = localStorage.getItem('amazon-agency-loans');
-    const savedContacts = localStorage.getItem('amazon-agency-contacts');
-    const savedBalance = localStorage.getItem('amazon-agency-balance');
-
-    if (savedExpenses) setExpenses(JSON.parse(savedExpenses));
-    if (savedDebits) setDebits(JSON.parse(savedDebits));
-    if (savedLoans) setLoans(JSON.parse(savedLoans));
-    if (savedContacts) setContacts(JSON.parse(savedContacts));
-    if (savedBalance) setCurrentBalance(parseFloat(savedBalance));
+    if (!orgId) return;
+    localStorage.removeItem('amazon-agency-expenses');
+    localStorage.removeItem('amazon-agency-debits');
+    localStorage.removeItem('amazon-agency-loans');
+    localStorage.removeItem('amazon-agency-contacts');
+    localStorage.removeItem('amazon-agency-balance');
   }, [authReady, orgId]);
 
-  // Save expenses, debits, loans, contacts and balance to localStorage whenever they change
+  // Persist balance only to Firestore when org is active
   useEffect(() => {
-    if (orgId) return; // skip persisting when using shared org
-    localStorage.setItem('amazon-agency-expenses', JSON.stringify(expenses));
-  }, [expenses, orgId]);
-
-  useEffect(() => {
-    if (orgId) return;
-    localStorage.setItem('amazon-agency-debits', JSON.stringify(debits));
-  }, [debits, orgId]);
-
-  useEffect(() => {
-    if (orgId) return;
-    localStorage.setItem('amazon-agency-loans', JSON.stringify(loans));
-  }, [loans, orgId]);
-
-  useEffect(() => {
-    if (orgId) return;
-    localStorage.setItem('amazon-agency-contacts', JSON.stringify(contacts));
-  }, [contacts, orgId]);
-
-  useEffect(() => {
-    if (!orgId) {
-      localStorage.setItem('amazon-agency-balance', currentBalance.toString());
-    } else {
-      dbSetBalance(orgId, currentBalance);
-    }
+    if (!orgId) return;
+    dbSetBalance(orgId, currentBalance);
   }, [currentBalance, orgId]);
 
   const handleReset = () => {

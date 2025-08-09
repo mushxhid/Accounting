@@ -151,6 +151,11 @@ export const clearOrgData = async (orgId: string) => {
     metaSnap.forEach((d) => metaDeletes.push(deleteDoc(doc(db, 'orgs', orgId, 'meta', d.id))));
     await Promise.all(metaDeletes);
     await setBalance(orgId, 0);
+    // Hard check: verify collections are empty
+    for (const name of collNames) {
+      const verify = await getDocs(colRef(orgId, name));
+      console.log('[DB] verify empty', name, verify.empty);
+    }
     console.log('[DB] clearOrgData done', orgId);
   } catch (e) {
     // eslint-disable-next-line no-console
