@@ -26,6 +26,7 @@ import {
   deleteContact as dbDeleteContact,
   migrateUserToOrgIfEmpty,
     clearOrgData,
+  appendRepayment,
 } from './utils/db';
 import { sendAudit } from './utils/audit';
 
@@ -254,20 +255,19 @@ const App: React.FC = () => {
     setCurrentBalance(newBalance);
 
     let updatedLoanForDb: Loan | null = null;
+    const repayment: LoanRepayment = {
+      id: generateId(),
+      loanId,
+      amount: pkrAmount,
+      usdAmount: usdAmount,
+      date: data.date,
+      description: data.description,
+      createdBy: { uid: currentUserId, email: currentUserEmail },
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
     setLoans(prev => prev.map(loan => {
       if (loan.id !== loanId) return loan;
-      const repayment: LoanRepayment = {
-        id: generateId(),
-        loanId,
-        amount: pkrAmount,
-        usdAmount: usdAmount,
-        date: data.date,
-        description: data.description,
-        createdBy: { uid: currentUserId, email: currentUserEmail },
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-
       const updatedLoan: Loan = {
         ...loan,
         amount: Math.max(0, loan.amount - pkrAmount),
@@ -276,14 +276,13 @@ const App: React.FC = () => {
         repayments: [...(loan.repayments || []), repayment],
         updatedAt: new Date().toISOString(),
       };
-
       updatedLoanForDb = updatedLoan;
       return updatedLoan;
     }));
-    if (orgId && updatedLoanForDb) {
-      dbUpsertLoan(orgId, updatedLoanForDb);
+    if (orgId) {
+      appendRepayment(orgId, loanId, repayment).catch(() => dbUpsertLoan(orgId, updatedLoanForDb!));
       dbSetBalance(orgId, newBalance);
-    } else { console.warn('[RepayLoan] Missing orgId or loan'); }
+    } else { console.warn('[RepayLoan] Missing orgId'); }
     sendAudit({ action: 'create', entity: 'repayment', details: { loanId, amount: pkrAmount } });
   };
 

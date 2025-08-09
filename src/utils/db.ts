@@ -1,4 +1,4 @@
-import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, Firestore, serverTimestamp, getDocs, getDoc } from 'firebase/firestore';
+import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, Firestore, serverTimestamp, getDocs, getDoc, updateDoc, arrayUnion, increment } from 'firebase/firestore';
 import { Expense, Debit, Loan, Contact } from '../types';
 
 const db: Firestore = getFirestore();
@@ -42,6 +42,23 @@ export const deleteLoan = async (orgId: string, id: string) => {
   if (!orgId) return;
   console.log('[DB] deleteLoan', orgId, id);
   await deleteDoc(docRef(orgId, 'loans', id));
+};
+
+// Atomic repayment append to avoid last-write-wins on concurrent writers
+export const appendRepayment = async (
+  orgId: string,
+  loanId: string,
+  repayment: any
+) => {
+  if (!orgId) return;
+  const ref = docRef(orgId, 'loans', loanId);
+  console.log('[DB] appendRepayment', orgId, loanId, repayment?.id);
+  await updateDoc(ref, {
+    repayments: arrayUnion(repayment),
+    usdAmount: increment(-Number(repayment.usdAmount || 0)),
+    amount: increment(-Number(repayment.amount || 0)),
+    _updatedAt: serverTimestamp(),
+  } as any);
 };
 
 export const upsertContact = async (orgId: string, contact: Contact) => {
