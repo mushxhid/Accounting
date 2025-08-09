@@ -7,6 +7,15 @@ const nodemailer = require('nodemailer');
 const app = express();
 app.use(bodyParser.json());
 
+// Basic CORS for browser clients (dev and prod)
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Headers', 'Content-Type');
+  res.header('Access-Control-Allow-Methods', 'POST,OPTIONS');
+  if (req.method === 'OPTIONS') return res.sendStatus(200);
+  next();
+});
+
 // Hostinger SMTP credentials
 const SMTP_USER = process.env.SMTP_USER || 'accounting@ecomgliders.com';
 const SMTP_PASS = process.env.SMTP_PASS || 'Ecomgliders.llc.22';

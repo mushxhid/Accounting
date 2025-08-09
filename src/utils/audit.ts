@@ -34,11 +34,12 @@ export const sendAudit = async (event: AuditEvent) => {
       recipients: RECIPIENTS,
       timestamp: new Date().toISOString(),
     };
-    await fetch(AUDIT_ENDPOINT, {
+    const res = await fetch(AUDIT_ENDPOINT, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
+    if (!res.ok) throw new Error(`Audit endpoint error ${res.status}`);
   } catch (err) {
     console.error('Audit send failed', err);
   }

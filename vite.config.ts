@@ -9,8 +9,9 @@ export default defineConfig({
     open: true,
     proxy: {
       '/audit': {
-        target: 'http://localhost:4000',
+        target: process.env.VITE_AUDIT_URL || 'http://localhost:4000',
         changeOrigin: true,
+        secure: false,
       },
     },
   },
