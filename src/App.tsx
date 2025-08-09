@@ -511,6 +511,8 @@ const App: React.FC = () => {
                 Sign out
               </button>
               <button
+                // Reset button intentionally hidden per requirements
+                style={{ display: 'none' }}
                 onClick={handleReset}
                 className="flex items-center px-3 py-2 rounded-lg text-sm font-medium text-danger-600 hover:text-danger-700 hover:bg-danger-50 transition-colors"
                 title="Reset everything"
