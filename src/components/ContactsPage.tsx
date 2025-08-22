@@ -21,8 +21,8 @@ const ContactsPage: React.FC<ContactsPageProps> = ({
   onEditContact 
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState<'name' | 'accountNumber' | 'createdAt'>('name');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [sortBy, setSortBy] = useState<'name' | 'accountNumber' | 'createdAt'>('createdAt');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
 
   // Filter contacts by search term

@@ -117,7 +117,7 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, onDelete,
     
     switch (sortBy) {
       case 'date':
-        comparison = new Date(a.date).getTime() - new Date(b.date).getTime();
+        comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
         break;
       case 'amount':
         comparison = a.amount - b.amount;
@@ -192,8 +192,8 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, onDelete,
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Expenses</h1>
-          <p className="text-gray-600 mt-1">Track all your Amazon agency expenses</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Expenses</h1>
+          <p className="text-gray-600 dark:text-gray-300 mt-1">Track all your Amazon agency expenses</p>
         </div>
         <div className="flex items-center space-x-3">
           <button
@@ -214,8 +214,8 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, onDelete,
         </div>
       </div>
 
-      {/* Stats Card */}
-      <div className="card">
+             {/* Stats Card */}
+       <div className="card dark:bg-gray-800 dark:border-gray-700">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <div className="p-3 bg-danger-100 rounded-lg">
@@ -237,8 +237,8 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, onDelete,
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="card">
+             {/* Filters */}
+       <div className="card dark:bg-gray-800 dark:border-gray-700">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
           <div className="flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 sm:space-x-4">
             <div className="flex items-center space-x-2">
@@ -307,8 +307,8 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, onDelete,
         </div>
       </div>
 
-      {/* Expenses Table */}
-      <div className="card-wide">
+             {/* Expenses Table */}
+       <div className="card-wide dark:bg-gray-800 dark:border-gray-700">
         {sortedExpenses.length === 0 ? (
           <div className="text-center py-12">
             <DollarSign className="mx-auto text-gray-400 mb-4" size={48} />
@@ -335,7 +335,7 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, onDelete,
             <table className="expense-table w-full table-fixed">
               <thead>
                 <tr className="border-b-2 border-gray-200">
-                  <th className="text-left py-4 px-3 font-semibold text-gray-700 bg-gray-50 w-32">
+                                     <th className="text-left py-4 px-3 font-semibold text-gray-700 dark:text-gray-200 bg-gray-50 dark:bg-gray-700 w-32">
                     <button
                       onClick={() => handleSort('date')}
                       className="flex items-center gap-2 hover:text-gray-900 transition-colors w-full"

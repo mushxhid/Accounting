@@ -77,7 +77,7 @@ const DebitList: React.FC<DebitListProps> = ({ debits, onDelete, onAddDebit }) =
     
     switch (sortBy) {
       case 'date':
-        comparison = new Date(a.date).getTime() - new Date(b.date).getTime();
+        comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
         break;
       case 'amount':
         comparison = a.amount - b.amount;
