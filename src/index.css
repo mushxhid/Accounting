@@ -52,20 +52,35 @@
     text-overflow: ellipsis;
   }
   
-  /* Responsive table */
-  @media (max-width: 1024px) {
-    .expense-table-container {
-      @apply overflow-x-auto;
+  /* Responsive table - no horizontal scroll */
+  .expense-table-container {
+    @apply w-full;
+  }
+  
+  /* Ensure table fits within card */
+  .expense-table {
+    @apply table-fixed;
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 1280px) {
+    .expense-table th,
+    .expense-table td {
+      @apply px-2;
     }
-    
-    .expense-table {
-      @apply min-w-[1200px];
+  }
+  
+  @media (max-width: 1024px) {
+    .expense-table th,
+    .expense-table td {
+      @apply px-2 text-xs;
     }
   }
   
   @media (max-width: 768px) {
-    .expense-table {
-      @apply min-w-[1000px];
+    .expense-table th,
+    .expense-table td {
+      @apply px-1 text-xs;
     }
   }
 } 

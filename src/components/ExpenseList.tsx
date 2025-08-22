@@ -324,11 +324,11 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, onDelete,
             )}
           </div>
         ) : (
-          <div className="expense-table-container overflow-x-auto">
-            <table className="expense-table w-full min-w-full">
+          <div className="expense-table-container">
+            <table className="expense-table w-full">
               <thead>
                 <tr className="border-b-2 border-gray-200">
-                  <th className="text-left py-4 px-4 font-semibold text-gray-700 bg-gray-50 w-40">
+                  <th className="text-left py-4 px-3 font-semibold text-gray-700 bg-gray-50 w-32">
                     <button
                       onClick={() => handleSort('date')}
                       className="flex items-center gap-2 hover:text-gray-900 transition-colors w-full"
@@ -337,7 +337,7 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, onDelete,
                       <span>Date</span>
                     </button>
                   </th>
-                  <th className="text-left py-4 px-4 font-semibold text-gray-700 bg-gray-50 w-44">
+                  <th className="text-left py-4 px-3 font-semibold text-gray-700 bg-gray-50 w-36">
                     <button
                       onClick={() => handleSort('name')}
                       className="flex items-center gap-2 hover:text-gray-900 transition-colors w-full"
@@ -346,19 +346,19 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, onDelete,
                       <span>Expense</span>
                     </button>
                   </th>
-                  <th className="text-left py-4 px-4 font-semibold text-gray-700 bg-gray-50 w-48">
+                  <th className="text-left py-4 px-3 font-semibold text-gray-700 bg-gray-50 w-40">
                     <div className="flex items-center gap-2">
                       <FileText size={16} />
                       <span>Description</span>
                     </div>
                   </th>
-                  <th className="text-left py-4 px-4 font-semibold text-gray-700 bg-gray-50 w-44">
+                  <th className="text-left py-4 px-3 font-semibold text-gray-700 bg-gray-50 w-36">
                     <div className="flex items-center gap-2">
                       <User size={16} />
                       <span>Contact</span>
                     </div>
                   </th>
-                  <th className="text-left py-4 px-4 font-semibold text-gray-700 bg-gray-50 w-52">
+                  <th className="text-left py-4 px-3 font-semibold text-gray-700 bg-gray-50 w-40">
                     <button
                       onClick={() => handleSort('accountNumber')}
                       className="flex items-center gap-2 hover:text-gray-900 transition-colors w-full"
@@ -367,7 +367,7 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, onDelete,
                       <span>Account</span>
                     </button>
                   </th>
-                  <th className="text-left py-4 px-4 font-semibold text-gray-700 bg-gray-50 w-36">
+                  <th className="text-left py-4 px-3 font-semibold text-gray-700 bg-gray-50 w-28">
                     <button
                       onClick={() => handleSort('amount')}
                       className="flex items-center gap-2 hover:text-gray-900 transition-colors w-full"
@@ -376,13 +376,13 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, onDelete,
                       <span>Amount</span>
                     </button>
                   </th>
-                  <th className="text-left py-4 px-4 font-semibold text-gray-700 bg-gray-50 w-44">
+                  <th className="text-left py-4 px-3 font-semibold text-gray-700 bg-gray-50 w-36">
                     <div className="flex items-center gap-2">
                       <Wallet size={16} />
                       <span>Balance After</span>
                     </div>
                   </th>
-                  <th className="text-right py-4 px-4 font-semibold text-gray-700 bg-gray-50 w-20">
+                  <th className="text-right py-4 px-3 font-semibold text-gray-700 bg-gray-50 w-16">
                     <span>Actions</span>
                   </th>
                 </tr>
@@ -396,10 +396,10 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, onDelete,
                       key={expense.id}
                       className="hover:bg-gray-50 transition-colors duration-150"
                     >
-                      <td className="py-4 px-4 align-top">
+                      <td className="py-3 px-3 align-top">
                         <div className="flex items-start space-x-2">
-                          <div className="p-1.5 bg-danger-100 rounded flex-shrink-0 mt-0.5">
-                            <DollarSign className="text-danger-600" size={14} />
+                          <div className="p-1 bg-danger-100 rounded flex-shrink-0 mt-0.5">
+                            <DollarSign className="text-danger-600" size={12} />
                           </div>
                           <div className="min-w-0">
                             <p className="font-semibold text-gray-900 text-sm leading-tight whitespace-nowrap">
@@ -420,17 +420,17 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, onDelete,
                           </div>
                         </div>
                       </td>
-                      <td className="py-4 px-4 align-top">
+                      <td className="py-3 px-3 align-top">
                         <p className="font-semibold text-gray-900 text-sm leading-tight whitespace-nowrap overflow-hidden text-ellipsis" title={expense.name}>
                           {expense.name}
                         </p>
                       </td>
-                      <td className="py-4 px-4 align-top">
-                        <div className="space-y-2">
+                      <td className="py-3 px-3 align-top">
+                        <div className="space-y-1">
                           <p className="text-sm text-gray-600 leading-tight max-w-xs overflow-hidden text-ellipsis whitespace-nowrap" title={expense.description || '—'}>
                             {expense.description || '—'}
                           </p>
-                          {expense.description && expense.description.length > 30 && (
+                          {expense.description && expense.description.length > 25 && (
                             <button
                               onClick={() => toggleDescription(expense.id)}
                               className="text-primary-600 hover:text-primary-700 text-xs font-medium flex items-center gap-1 transition-colors"
@@ -449,7 +449,7 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, onDelete,
                             </button>
                           )}
                           {isDescriptionExpanded && expense.description && (
-                            <div className="mt-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                            <div className="mt-2 p-2 bg-gray-50 rounded border border-gray-200">
                               <p className="text-sm text-gray-700 leading-relaxed break-words">
                                 {expense.description}
                               </p>
@@ -457,11 +457,11 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, onDelete,
                           )}
                         </div>
                       </td>
-                      <td className="py-4 px-4 align-top">
+                      <td className="py-3 px-3 align-top">
                         {contactName ? (
                           <div className="flex items-start space-x-2">
                             <div className="p-1 bg-primary-100 rounded flex-shrink-0 mt-0.5">
-                              <User className="text-primary-600" size={12} />
+                              <User className="text-primary-600" size={10} />
                             </div>
                             <span className="text-sm font-medium text-gray-900 break-words leading-tight max-w-xs overflow-hidden text-ellipsis whitespace-nowrap" title={contactName}>
                               {contactName}
@@ -471,12 +471,12 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, onDelete,
                           <span className="text-sm text-gray-500">—</span>
                         )}
                       </td>
-                      <td className="py-4 px-4 align-top">
+                      <td className="py-3 px-3 align-top">
                         <p className="font-mono text-sm text-gray-700 break-all leading-tight max-w-xs overflow-hidden text-ellipsis whitespace-nowrap" title={expense.accountNumber}>
                           {expense.accountNumber}
                         </p>
                       </td>
-                      <td className="py-4 px-4 align-top">
+                      <td className="py-3 px-3 align-top">
                         <div className="space-y-1">
                           <p className="font-bold text-danger-600 text-sm leading-tight whitespace-nowrap">
                             -{formatPKR(expense.amount)}
@@ -486,7 +486,7 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, onDelete,
                           </p>
                         </div>
                       </td>
-                      <td className="py-4 px-4 align-top">
+                      <td className="py-3 px-3 align-top">
                         <div className="space-y-1">
                           <p className="font-semibold text-gray-900 text-sm leading-tight whitespace-nowrap">
                             {formatCurrency(expense.currentBalance)}
@@ -498,13 +498,13 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, onDelete,
                           )}
                         </div>
                       </td>
-                      <td className="py-4 px-4 text-right align-top">
+                      <td className="py-3 px-3 text-right align-top">
                         <button
                           onClick={() => onDelete(expense.id)}
-                          className="text-danger-600 hover:text-danger-700 p-2 rounded-lg hover:bg-danger-50 transition-colors duration-150"
+                          className="text-danger-600 hover:text-danger-700 p-1.5 rounded hover:bg-danger-50 transition-colors duration-150"
                           title="Delete expense"
                         >
-                          <Trash2 size={16} />
+                          <Trash2 size={14} />
                         </button>
                       </td>
                     </tr>
