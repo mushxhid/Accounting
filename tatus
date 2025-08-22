@@ -1,0 +1,5 @@
+[33m77216f2[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Add View button in front of each expense name for better UX
+[33m8e1df15[m Fix expense name visibility: ensure full names are displayed regardless of length
+[33m624e6ae[m Fix expense history card visibility and alignment: remove problematic positioning, ensure proper layout flow
+[33mc4f7e49[m Make expense history card truly full-width: span entire viewport width
+[33m616ebc7[m Make expense history table card wider than filter cards above

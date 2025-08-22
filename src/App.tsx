@@ -653,6 +653,8 @@ const App: React.FC = () => {
         ) : (
           <ContactsPage 
             contacts={contacts}
+            expenses={expenses}
+            debits={debits}
             onAddContact={() => openContactForm()}
             onDeleteContact={handleDeleteContact}
             onEditContact={handleEditContact}

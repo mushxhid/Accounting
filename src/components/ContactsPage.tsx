@@ -1,9 +1,13 @@
 import React, { useState } from 'react';
-import { Plus, Trash2, User, CreditCard, FileText, Edit, Search } from 'lucide-react';
-import { Contact } from '../types';
+import { Plus, Trash2, User, CreditCard, FileText, Edit, Search, X, DollarSign, TrendingUp, Calendar } from 'lucide-react';
+import { Contact, Expense, Debit } from '../types';
+import { formatCurrency } from '../utils/helpers';
+import { formatPKR, formatUSD } from '../utils/currencyConverter';
 
 interface ContactsPageProps {
   contacts: Contact[];
+  expenses: Expense[];
+  debits: Debit[];
   onAddContact: () => void;
   onDeleteContact: (id: string) => void;
   onEditContact: (contact: Contact) => void;
@@ -11,6 +15,8 @@ interface ContactsPageProps {
 
 const ContactsPage: React.FC<ContactsPageProps> = ({ 
   contacts, 
+  expenses,
+  debits,
   onAddContact, 
   onDeleteContact,
   onEditContact 
@@ -18,6 +24,7 @@ const ContactsPage: React.FC<ContactsPageProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState<'name' | 'accountNumber' | 'createdAt'>('name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
 
   // Filter contacts by search term
   const filteredContacts = contacts.filter(contact =>
@@ -52,6 +59,28 @@ const ContactsPage: React.FC<ContactsPageProps> = ({
       setSortBy(field);
       setSortOrder('asc');
     }
+  };
+
+  // Get contact's financial data
+  const getContactFinancialData = (contact: Contact) => {
+    const contactExpenses = expenses.filter(expense => expense.accountNumber === contact.accountNumber);
+    const contactDebits = debits.filter(debit => debit.accountNumber === contact.accountNumber);
+    
+    return {
+      expenses: contactExpenses,
+      debits: contactDebits,
+      totalExpenses: contactExpenses.reduce((sum, exp) => sum + exp.usdAmount, 0),
+      totalIncome: contactDebits.reduce((sum, deb) => sum + deb.usdAmount, 0),
+      netAmount: contactDebits.reduce((sum, deb) => sum + deb.usdAmount, 0) - contactExpenses.reduce((sum, exp) => sum + exp.usdAmount, 0)
+    };
+  };
+
+  const handleContactClick = (contact: Contact) => {
+    setSelectedContact(contact);
+  };
+
+  const closeContactDetail = () => {
+    setSelectedContact(null);
   };
 
   return (
@@ -176,7 +205,8 @@ const ContactsPage: React.FC<ContactsPageProps> = ({
                 {sortedContacts.map((contact) => (
                   <tr
                     key={contact.id}
-                    className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
+                    className="border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer"
+                    onClick={() => handleContactClick(contact)}
                   >
                     <td className="py-4 px-4">
                       <div className="flex items-center space-x-3">
@@ -226,6 +256,180 @@ const ContactsPage: React.FC<ContactsPageProps> = ({
           </div>
         )}
       </div>
+
+      {/* Contact Detail Modal */}
+      {selectedContact && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-6xl max-h-[90vh] overflow-hidden">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <div className="flex items-center space-x-4">
+                <div className="p-3 bg-primary-100 rounded-lg">
+                  <User className="text-primary-600" size={24} />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">{selectedContact.name}</h2>
+                  <p className="text-gray-600">{selectedContact.accountNumber}</p>
+                  {selectedContact.description && (
+                    <p className="text-sm text-gray-500 mt-1">{selectedContact.description}</p>
+                  )}
+                </div>
+              </div>
+              <button
+                onClick={closeContactDetail}
+                className="text-gray-400 hover:text-gray-600 transition-colors p-2 rounded-lg hover:bg-gray-100"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+              {/* Financial Summary */}
+              {(() => {
+                const financialData = getContactFinancialData(selectedContact);
+                return (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div className="card">
+                      <div className="flex items-center">
+                        <div className="p-3 bg-danger-100 rounded-lg">
+                          <DollarSign className="text-danger-600" size={24} />
+                        </div>
+                        <div className="ml-4">
+                          <p className="text-sm font-medium text-gray-600">Total Expenses</p>
+                          <p className="text-2xl font-bold text-gray-900">
+                            {formatUSD(financialData.totalExpenses)}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="card">
+                      <div className="flex items-center">
+                        <div className="p-3 bg-success-100 rounded-lg">
+                          <TrendingUp className="text-success-600" size={24} />
+                        </div>
+                        <div className="ml-4">
+                          <p className="text-sm font-medium text-gray-600">Total Income</p>
+                          <p className="text-2xl font-bold text-gray-900">
+                            {formatUSD(financialData.totalIncome)}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="card">
+                      <div className="flex items-center">
+                        <div className={`p-3 rounded-lg ${financialData.netAmount >= 0 ? 'bg-success-100' : 'bg-danger-100'}`}>
+                          <DollarSign className={financialData.netAmount >= 0 ? 'text-success-600' : 'text-danger-600'} size={24} />
+                        </div>
+                        <div className="ml-4">
+                          <p className="text-sm font-medium text-gray-600">Net Amount</p>
+                          <p className={`text-2xl font-bold ${financialData.netAmount >= 0 ? 'text-success-600' : 'text-danger-600'}`}>
+                            {formatUSD(Math.abs(financialData.netAmount))}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            {financialData.netAmount >= 0 ? 'Net Income' : 'Net Expense'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Expenses List */}
+              {(() => {
+                const financialData = getContactFinancialData(selectedContact);
+                return (
+                  <div className="space-y-6">
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <DollarSign className="text-danger-600 mr-2" size={20} />
+                        Expenses ({financialData.expenses.length})
+                      </h3>
+                      {financialData.expenses.length === 0 ? (
+                        <div className="text-center py-8 bg-gray-50 rounded-lg">
+                          <DollarSign className="mx-auto text-gray-400 mb-2" size={32} />
+                          <p className="text-gray-600">No expenses recorded for this contact</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          {financialData.expenses.map((expense) => (
+                            <div key={expense.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                              <div className="flex items-center space-x-4">
+                                <div className="p-2 bg-danger-100 rounded-lg">
+                                  <DollarSign className="text-danger-600" size={16} />
+                                </div>
+                                <div>
+                                  <p className="font-medium text-gray-900">{expense.name}</p>
+                                  <p className="text-sm text-gray-500">{expense.description || '—'}</p>
+                                  <p className="text-xs text-gray-400 flex items-center mt-1">
+                                    <Calendar size={12} className="mr-1" />
+                                    {new Date(expense.date).toLocaleDateString()}
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <p className="font-bold text-danger-600">
+                                  -{formatUSD(expense.usdAmount)}
+                                </p>
+                                <p className="text-sm text-gray-500">
+                                  {formatPKR(expense.amount)}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Income List */}
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <TrendingUp className="text-success-600 mr-2" size={20} />
+                        Income ({financialData.debits.length})
+                      </h3>
+                      {financialData.debits.length === 0 ? (
+                        <div className="text-center py-8 bg-gray-50 rounded-lg">
+                          <TrendingUp className="mx-auto text-gray-400 mb-2" size={32} />
+                          <p className="text-gray-600">No income recorded for this contact</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          {financialData.debits.map((debit) => (
+                            <div key={debit.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                              <div className="flex items-center space-x-4">
+                                <div className="p-2 bg-success-100 rounded-lg">
+                                  <TrendingUp className="text-success-600" size={16} />
+                                </div>
+                                <div>
+                                  <p className="font-medium text-gray-900">{debit.source}</p>
+                                  <p className="text-sm text-gray-500">{debit.description || '—'}</p>
+                                  <p className="text-xs text-gray-400 flex items-center mt-1">
+                                    <Calendar size={12} className="mr-1" />
+                                    {new Date(debit.date).toLocaleDateString()}
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <p className="font-bold text-success-600">
+                                  +{formatUSD(debit.usdAmount)}
+                                </p>
+                                <p className="text-sm text-gray-500">
+                                  {formatPKR(debit.amount)}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
