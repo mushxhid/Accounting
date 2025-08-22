@@ -203,12 +203,12 @@ const Dashboard: React.FC<DashboardProps> = ({
               <TrendingUpIcon className="text-success-600" size={24} />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Total Income</p>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Total Income</p>
               <div>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">
                   {formatUSD(totalIncome)}
                 </p>
-                <p className="text-sm font-medium text-gray-600">
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
                   {formatPKR(totalIncomePKR)}
                 </p>
               </div>
@@ -222,12 +222,12 @@ const Dashboard: React.FC<DashboardProps> = ({
               <Calendar className="text-primary-600" size={24} />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">This Month</p>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-300">This Month</p>
               <div>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">
                   {formatUSD(monthlyExpenses)}
                 </p>
-                <p className="text-sm font-medium text-gray-600">
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
                   {formatPKR(monthlyExpensesPKR)}
                 </p>
               </div>
@@ -241,12 +241,12 @@ const Dashboard: React.FC<DashboardProps> = ({
               <UserCheck className="text-warning-600" size={24} />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Total Loans</p>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Total Loans</p>
               <div>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">
                   {formatUSD(totalLoans)}
                 </p>
-                <p className="text-sm font-medium text-gray-600">
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
                   {formatPKR(totalLoansPKR)}
                 </p>
               </div>
@@ -261,8 +261,8 @@ const Dashboard: React.FC<DashboardProps> = ({
          <div className="card">
           <div className="flex items-center justify-between mb-6" onClick={() => onNavigate && onNavigate('expenses')} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { onNavigate && onNavigate('expenses'); } }}>
             <div>
-              <h2 className="text-xl font-semibold text-gray-900">Recent Expenses</h2>
-              <p className="text-sm text-gray-600 mt-1">{getCurrentMonthName()} only</p>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Recent Expenses</h2>
+              <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">{getCurrentMonthName()} only</p>
             </div>
             <button type="button" className="text-primary-600 hover:text-primary-700 font-medium text-sm" onClick={(e) => { e.stopPropagation(); console.log('[Nav] View All → expenses'); onNavigate && onNavigate('expenses'); }}>
               View All
@@ -271,9 +271,9 @@ const Dashboard: React.FC<DashboardProps> = ({
 
           {currentMonthExpenses.length === 0 ? (
             <div className="text-center py-8">
-              <TrendingDown className="mx-auto text-gray-400 mb-4" size={48} />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No expenses this month</h3>
-              <p className="text-gray-600 mb-4">Start tracking your {getCurrentMonthName()} expenses</p>
+              <TrendingDown className="mx-auto text-gray-400 dark:text-gray-500 mb-4" size={48} />
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No expenses this month</h3>
+              <p className="text-gray-600 dark:text-gray-400 mb-4">Start tracking your {getCurrentMonthName()} expenses</p>
               <button
                 onClick={onAddExpense}
                 className="btn-primary"
@@ -286,15 +286,15 @@ const Dashboard: React.FC<DashboardProps> = ({
               {currentMonthExpenses.map((expense) => (
                 <div
                   key={expense.id}
-                  className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                  className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
                 >
                   <div className="flex items-center space-x-4">
-                    <div className="p-2 bg-danger-100 rounded-lg">
-                      <DollarSign className="text-danger-600" size={16} />
+                    <div className="p-2 bg-danger-100 dark:bg-danger-900 rounded-lg">
+                      <DollarSign className="text-danger-600 dark:text-danger-400" size={16} />
                     </div>
                     <div>
-                      <h3 className="font-medium text-gray-900 break-words">{expense.name}</h3>
-                      <p className="text-sm text-gray-500">
+                      <h3 className="font-medium text-gray-900 dark:text-white break-words">{expense.name}</h3>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
                         {new Date(expense.date).toLocaleDateString()}
                       </p>
                     </div>
@@ -302,20 +302,20 @@ const Dashboard: React.FC<DashboardProps> = ({
                   <div className="flex items-center space-x-4">
                     <div className="text-right">
                       <div>
-                        <p className="font-semibold text-danger-600">
+                        <p className="font-semibold text-danger-600 dark:text-danger-400">
                           -{formatPKR(expense.amount)}
                         </p>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
                           ({formatUSD(expense.usdAmount)})
                         </p>
                       </div>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
                         Balance: {formatUSD(expense.currentBalance)} / {formatPKR(currentBalancePKRExact)}
                       </p>
                     </div>
                     <button
                       onClick={() => onDeleteExpense(expense.id)}
-                      className="text-danger-600 hover:text-danger-700 p-1 rounded transition-colors"
+                      className="text-danger-600 dark:text-danger-400 hover:text-danger-700 dark:hover:text-danger-300 p-1 rounded transition-colors"
                       title="Delete"
                     >
                       <Trash2 size={16} />
@@ -331,8 +331,8 @@ const Dashboard: React.FC<DashboardProps> = ({
         <div className="card">
           <div className="flex items-center justify-between mb-6" onClick={() => onNavigate && onNavigate('credits')} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { onNavigate && onNavigate('credits'); } }}>
             <div>
-              <h2 className="text-xl font-semibold text-gray-900">Recent Income</h2>
-              <p className="text-sm text-gray-600 mt-1">{getCurrentMonthName()} only</p>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Recent Income</h2>
+              <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">{getCurrentMonthName()} only</p>
             </div>
             <button type="button" className="text-primary-600 hover:text-primary-700 font-medium text-sm" onClick={(e) => { e.stopPropagation(); console.log('[Nav] View All → credits'); onNavigate && onNavigate('credits'); }}>
               View All
@@ -341,9 +341,9 @@ const Dashboard: React.FC<DashboardProps> = ({
 
           {currentMonthDebits.length === 0 ? (
             <div className="text-center py-8">
-              <TrendingUpIcon className="mx-auto text-gray-400 mb-4" size={48} />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No income this month</h3>
-              <p className="text-gray-600 mb-4">Add money to your balance</p>
+              <TrendingUpIcon className="mx-auto text-gray-400 dark:text-gray-500 mb-4" size={48} />
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No income this month</h3>
+              <p className="text-gray-600 dark:text-gray-400 mb-4">Add money to your balance</p>
               <button
                 onClick={onAddDebit}
                 className="btn-primary"
@@ -356,15 +356,15 @@ const Dashboard: React.FC<DashboardProps> = ({
               {currentMonthDebits.map((debit) => (
                 <div
                   key={debit.id}
-                  className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                  className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
                 >
                   <div className="flex items-center space-x-4">
-                    <div className="p-2 bg-success-100 rounded-lg">
-                      <TrendingUpIcon className="text-success-600" size={16} />
+                    <div className="p-2 bg-success-100 dark:bg-success-900 rounded-lg">
+                      <TrendingUpIcon className="text-success-600 dark:text-success-400" size={16} />
                     </div>
                     <div>
-                      <h3 className="font-medium text-gray-900">{debit.source}</h3>
-                      <p className="text-sm text-gray-500">
+                      <h3 className="font-medium text-gray-900 dark:text-white">{debit.source}</h3>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
                         {new Date(debit.date).toLocaleDateString()}
                       </p>
                     </div>
@@ -372,20 +372,20 @@ const Dashboard: React.FC<DashboardProps> = ({
                   <div className="flex items-center space-x-4">
                     <div className="text-right">
                       <div>
-                        <p className="font-semibold text-success-600">
+                        <p className="font-semibold text-success-600 dark:text-success-400">
                           +{formatPKR(debit.amount)}
                         </p>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
                           ({formatUSD(debit.usdAmount)})
                         </p>
                       </div>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
                         Balance: {formatUSD(debit.currentBalance)} / {formatPKR(currentBalancePKRExact)}
                       </p>
                     </div>
                     <button
                       onClick={() => onDeleteDebit(debit.id)}
-                      className="text-danger-600 hover:text-danger-700 p-1 rounded transition-colors"
+                      className="text-danger-600 dark:text-danger-400 hover:text-danger-700 dark:hover:text-danger-300 p-1 rounded transition-colors"
                       title="Delete"
                     >
                       <Trash2 size={16} />
@@ -401,8 +401,8 @@ const Dashboard: React.FC<DashboardProps> = ({
          <div className="card">
            <div className="flex items-center justify-between mb-6" onClick={() => onNavigate && onNavigate('loans')} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { onNavigate && onNavigate('loans'); } }}>
              <div>
-               <h2 className="text-xl font-semibold text-gray-900">Recent Loans</h2>
-               <p className="text-sm text-gray-600 mt-1">{getCurrentMonthName()} only</p>
+               <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Recent Loans</h2>
+               <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">{getCurrentMonthName()} only</p>
              </div>
              <button type="button" className="text-primary-600 hover:text-primary-700 font-medium text-sm" onClick={(e) => { e.stopPropagation(); console.log('[Nav] View All → loans'); onNavigate && onNavigate('loans'); }}>
                View All
@@ -411,24 +411,24 @@ const Dashboard: React.FC<DashboardProps> = ({
 
            {currentMonthLoans.length === 0 ? (
              <div className="text-center py-8">
-               <UserCheck className="mx-auto text-gray-400 mb-4" size={48} />
-               <h3 className="text-lg font-medium text-gray-900 mb-2">No loans this month</h3>
-               <p className="text-gray-600 mb-4">No partner loans recorded this month</p>
+               <UserCheck className="mx-auto text-gray-400 dark:text-gray-500 mb-4" size={48} />
+               <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No loans this month</h3>
+               <p className="text-gray-600 dark:text-gray-400 mb-4">No partner loans recorded this month</p>
              </div>
            ) : (
              <div className="space-y-4">
                {currentMonthLoans.map((loan) => (
                  <div
                    key={loan.id}
-                   className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                   className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
                  >
                    <div className="flex items-center space-x-4">
-                     <div className="p-2 bg-warning-100 rounded-lg">
-                       <UserCheck className="text-warning-600" size={16} />
+                     <div className="p-2 bg-warning-100 dark:bg-warning-900 rounded-lg">
+                       <UserCheck className="text-warning-600 dark:text-warning-400" size={16} />
                      </div>
                      <div>
-                       <h3 className="font-medium text-gray-900">{loan.partnerName}</h3>
-                       <p className="text-sm text-gray-500">
+                       <h3 className="font-medium text-gray-900 dark:text-white">{loan.partnerName}</h3>
+                       <p className="text-sm text-gray-500 dark:text-gray-400">
                          {new Date(loan.date).toLocaleDateString()}
                        </p>
                      </div>
@@ -436,20 +436,20 @@ const Dashboard: React.FC<DashboardProps> = ({
                    <div className="flex items-center space-x-4">
                      <div className="text-right">
                        <div>
-                         <p className="font-semibold text-warning-600">
+                         <p className="font-semibold text-warning-600 dark:text-warning-400">
                            -{formatPKR(loan.amount)}
                          </p>
-                         <p className="text-xs text-gray-500">
+                         <p className="text-xs text-gray-500 dark:text-gray-400">
                            ({formatUSD(loan.usdAmount)})
                          </p>
                        </div>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
                           Balance: {formatUSD(loan.currentBalance)} / {formatPKR(currentBalancePKRExact)}
                         </p>
                      </div>
                      <button
                        onClick={() => onDeleteLoan(loan.id)}
-                       className="text-danger-600 hover:text-danger-700 p-1 rounded transition-colors"
+                       className="text-danger-600 dark:text-danger-400 hover:text-danger-700 dark:hover:text-danger-300 p-1 rounded transition-colors"
                        title="Delete"
                      >
                        <Trash2 size={16} />
@@ -475,23 +475,23 @@ const Dashboard: React.FC<DashboardProps> = ({
       {Array.isArray(auditList) && (
         <div className="card mt-6" ref={auditRef}>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-gray-900">Activity (both admins)</h2>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Activity (both admins)</h2>
           </div>
           {auditList.length === 0 ? (
-            <div className="text-sm text-gray-500">No recent activity.</div>
+            <div className="text-sm text-gray-500 dark:text-gray-400">No recent activity.</div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200 text-sm">
-                <thead className="bg-gray-50">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-600 text-sm">
+                <thead className="bg-gray-50 dark:bg-gray-700">
                   <tr>
-                    <th className="px-4 py-2 text-left text-gray-600">When</th>
-                    <th className="px-4 py-2 text-left text-gray-600">Action</th>
-                    <th className="px-4 py-2 text-left text-gray-600">Entity</th>
-                    <th className="px-4 py-2 text-left text-gray-600">By</th>
-                    <th className="px-4 py-2 text-left text-gray-600">Details</th>
+                    <th className="px-4 py-2 text-left text-gray-600 dark:text-gray-200">When</th>
+                    <th className="px-4 py-2 text-left text-gray-600 dark:text-gray-200">Action</th>
+                    <th className="px-4 py-2 text-left text-gray-600 dark:text-gray-200">Entity</th>
+                    <th className="px-4 py-2 text-left text-gray-600 dark:text-gray-200">By</th>
+                    <th className="px-4 py-2 text-left text-gray-600 dark:text-gray-200">Details</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
+                <tbody className="divide-y divide-gray-200 dark:divide-gray-600">
                   {auditList.map((e: any) => (
                     <tr key={e.id}>
                       <td className="px-4 py-2">{new Date(e.timestamp || e._createdAt?.toDate?.() || Date.now()).toLocaleString()}</td>

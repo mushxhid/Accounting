@@ -10,19 +10,24 @@
   body {
     @apply bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white;
   }
+
+  /* Ensure dark mode is properly applied */
+  .dark {
+    color-scheme: dark;
+  }
 }
 
 @layer components {
   .btn-primary {
-    @apply bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
+    @apply bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800;
   }
   
   .btn-secondary {
-    @apply bg-white hover:bg-gray-50 text-gray-700 font-medium py-2 px-4 rounded-lg border border-gray-300 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
+    @apply bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 font-medium py-2 px-4 rounded-lg border border-gray-300 dark:border-gray-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:focus:ring-offset-gray-800 transition-colors duration-200;
   }
   
   .input-field {
-    @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors duration-200;
+    @apply w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 transition-colors duration-200;
   }
   
   .card {
@@ -47,12 +52,12 @@
   }
   
   .expense-table th {
-    @apply sticky top-0 z-10;
+    @apply sticky top-0 z-10 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200;
   }
   
   .expense-table td,
   .expense-table th {
-    @apply border-b border-gray-100;
+    @apply border-b border-gray-100 dark:border-gray-600;
   }
   
   .expense-table tbody tr:hover {

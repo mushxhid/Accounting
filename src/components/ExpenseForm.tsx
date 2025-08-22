@@ -130,14 +130,14 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSubmit, onCancel, contacts 
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md animate-slide-up">
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-xl font-semibold text-gray-900">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md animate-slide-up">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
             Add New Expense
           </h2>
           <button
             onClick={onCancel}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-gray-400 dark:text-gray-300 hover:text-gray-600 dark:hover:text-gray-100 transition-colors"
           >
             <X size={20} />
           </button>
@@ -147,18 +147,18 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSubmit, onCancel, contacts 
           {/* Contact Selection */}
           {contacts.length > 0 && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Select Contact (Optional)
               </label>
               <div className="relative">
                 <button
                   type="button"
                   onClick={() => setShowContactDropdown(!showContactDropdown)}
-                  className="w-full flex items-center justify-between p-3 border border-gray-300 rounded-lg bg-white hover:border-gray-400 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-colors"
+                  className="w-full flex items-center justify-between p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 hover:border-gray-400 dark:hover:border-gray-500 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-colors"
                 >
                   <div className="flex items-center space-x-3">
                     <User className="text-gray-400" size={20} />
-                    <span className={selectedContactData ? 'text-gray-900' : 'text-gray-500'}>
+                    <span className={selectedContactData ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'}>
                       {selectedContactData ? selectedContactData.name : 'Choose a contact or enter manually'}
                     </span>
                   </div>
@@ -166,11 +166,11 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSubmit, onCancel, contacts 
                 </button>
                 
                 {showContactDropdown && (
-                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                  <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                     <button
                       type="button"
                       onClick={handleManualInput}
-                      className="w-full text-left px-4 py-3 hover:bg-gray-50 border-b border-gray-100 text-primary-600 font-medium"
+                      className="w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-600 border-b border-gray-100 dark:border-gray-600 text-primary-600 dark:text-primary-400 font-medium"
                     >
                       + Enter manually
                     </button>
@@ -179,12 +179,12 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSubmit, onCancel, contacts 
                         key={contact.id}
                         type="button"
                         onClick={() => handleContactSelect(contact)}
-                        className="w-full text-left px-4 py-3 hover:bg-gray-50 border-b border-gray-100 last:border-b-0"
+                        className="w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-600 border-b border-gray-100 dark:border-gray-600 last:border-b-0"
                       >
-                        <div className="font-medium text-gray-900">{contact.name}</div>
-                        <div className="text-sm text-gray-500">{contact.accountNumber}</div>
+                        <div className="font-medium text-gray-900 dark:text-white">{contact.name}</div>
+                        <div className="text-sm text-gray-500 dark:text-gray-400">{contact.accountNumber}</div>
                         {contact.description && (
-                          <div className="text-xs text-gray-400">{contact.description}</div>
+                          <div className="text-xs text-gray-400 dark:text-gray-500">{contact.description}</div>
                         )}
                       </button>
                     ))}
@@ -196,7 +196,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSubmit, onCancel, contacts 
 
           {/* Expense Name */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Expense Name
             </label>
             <div className="relative">
@@ -217,7 +217,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSubmit, onCancel, contacts 
           {/* Amount */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Amount (PKR)
               </label>
               <div className="flex items-center space-x-2">
@@ -231,13 +231,13 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSubmit, onCancel, contacts 
                   <RefreshCw size={12} className={`mr-1 ${isLoadingRate ? 'animate-spin' : ''}`} />
                   {isLoadingRate ? 'Updating...' : 'Refresh Rate'}
                 </button>
-                <span className="text-xs text-gray-500">
+                <span className="text-xs text-gray-500 dark:text-gray-400">
                   Rate: {formatExchangeRate(exchangeRate)} = $1.00
                 </span>
               </div>
             </div>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm font-medium">PKR</span>
+              <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 text-sm font-medium">PKR</span>
               <input
                 type="number"
                 step="0.01"
@@ -249,13 +249,13 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSubmit, onCancel, contacts 
               />
             </div>
             {formData.usdAmount && (
-              <div className="mt-2 p-2 bg-gray-50 rounded-md">
+              <div className="mt-2 p-2 bg-gray-50 dark:bg-gray-700 rounded-md">
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-600">USD Equivalent:</span>
-                  <span className="font-medium text-gray-900">{formatUSD(parseFloat(formData.usdAmount))}</span>
+                  <span className="text-gray-600 dark:text-gray-300">USD Equivalent:</span>
+                  <span className="font-medium text-gray-900 dark:text-white">{formatUSD(parseFloat(formData.usdAmount))}</span>
                 </div>
                 {lastRateUpdate && (
-                  <div className="text-xs text-gray-500 mt-1">
+                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                     Rate updated: {lastRateUpdate}
                   </div>
                 )}
@@ -268,7 +268,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSubmit, onCancel, contacts 
 
           {/* Account Number */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Account Number
             </label>
             <div className="relative">
@@ -288,7 +288,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSubmit, onCancel, contacts 
 
           {/* Description */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Description (Optional)
             </label>
             <div className="relative">
@@ -305,7 +305,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSubmit, onCancel, contacts 
 
           {/* Date */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Date
             </label>
             <div className="relative">

@@ -464,20 +464,20 @@ const App: React.FC = () => {
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center">
               <img src="/logo.png" alt="eCom Gliders" className="h-7 w-7 mr-2" />
-              <h1 className="text-xl font-bold text-gray-900">eCom Gliders</h1>
+              <h1 className="text-xl font-bold text-gray-900 dark:text-white">eCom Gliders</h1>
             </div>
             
                          {/* Desktop navbar */}
              <div className="hidden sm:flex items-center space-x-4">
                <ThemeToggle />
                {currentUserName && (
-                 <div className="hidden sm:flex items-center px-3 py-1 rounded-lg bg-gray-100 text-gray-700 text-sm">
+                 <div className="hidden sm:flex items-center px-3 py-1 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm">
                    {currentUserName}
                  </div>
                )}
                <button
                  onClick={() => logout()}
-                 className="px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
+                 className="px-3 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                  title="Sign out"
                >
                  Sign out
@@ -497,8 +497,8 @@ const App: React.FC = () => {
                 onClick={() => setCurrentView('dashboard')}
                 className={`flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                   currentView === 'dashboard'
-                    ? 'bg-primary-100 text-primary-700'
-                    : 'text-gray-600 hover:text-gray-900'
+                    ? 'bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300'
+                    : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700'
                 }`}
               >
                 <Home size={16} className="mr-2" />
@@ -509,8 +509,8 @@ const App: React.FC = () => {
                 onClick={() => setCurrentView('expenses')}
                 className={`flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                   currentView === 'expenses'
-                    ? 'bg-primary-100 text-primary-700'
-                    : 'text-gray-600 hover:text-gray-900'
+                    ? 'bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300'
+                    : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700'
                 }`}
               >
                 <List size={16} className="mr-2" />
@@ -521,8 +521,8 @@ const App: React.FC = () => {
                 onClick={() => setCurrentView('credits')}
                 className={`flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                   currentView === 'credits'
-                    ? 'bg-primary-100 text-primary-700'
-                    : 'text-gray-600 hover:text-gray-900'
+                    ? 'bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300'
+                    : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700'
                 }`}
               >
                 <TrendingUp size={16} className="mr-2" />
@@ -533,8 +533,8 @@ const App: React.FC = () => {
                 onClick={() => setCurrentView('loans')}
                 className={`flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                   currentView === 'loans'
-                    ? 'bg-primary-100 text-primary-700'
-                    : 'text-gray-600 hover:text-gray-900'
+                    ? 'bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300'
+                    : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700'
                 }`}
               >
                 <UserCheck size={16} className="mr-2" />
@@ -545,8 +545,8 @@ const App: React.FC = () => {
                 onClick={() => setCurrentView('contacts')}
                 className={`flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                   currentView === 'contacts'
-                    ? 'bg-primary-100 text-primary-700'
-                    : 'text-gray-600 hover:text-gray-900'
+                    ? 'bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300'
+                    : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700'
                 }`}
               >
                 <Users size={16} className="mr-2" />
@@ -556,8 +556,8 @@ const App: React.FC = () => {
                 onClick={() => setCurrentView('logs')}
                 className={`flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                   currentView === 'logs'
-                    ? 'bg-primary-100 text-primary-700'
-                    : 'text-gray-600 hover:text-gray-900'
+                    ? 'bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300'
+                    : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700'
                 }`}
                 title="Logs"
               >
@@ -568,7 +568,7 @@ const App: React.FC = () => {
 
             {/* Mobile menu toggle */}
             <button
-              className="sm:hidden inline-flex items-center p-2 rounded-md text-gray-700 hover:bg-gray-100"
+              className="sm:hidden inline-flex items-center p-2 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
               aria-label="Toggle navigation"
               onClick={() => setMobileMenuOpen((v) => !v)}
             >
@@ -580,15 +580,15 @@ const App: React.FC = () => {
 
       {/* Mobile menu panel */}
       {mobileMenuOpen && (
-        <div className="sm:hidden border-b border-gray-200 bg-white">
+        <div className="sm:hidden border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
           <div className="px-4 py-3 space-y-2">
-            <button onClick={() => { setCurrentView('dashboard'); setMobileMenuOpen(false); }} className={`block w-full text-left px-3 py-2 rounded-lg ${currentView==='dashboard'?'bg-primary-100 text-primary-700':'text-gray-700 hover:bg-gray-100'}`}>Dashboard</button>
-            <button onClick={() => { setCurrentView('expenses'); setMobileMenuOpen(false); }} className={`block w-full text-left px-3 py-2 rounded-lg ${currentView==='expenses'?'bg-primary-100 text-primary-700':'text-gray-700 hover:bg-gray-100'}`}>Expenses</button>
-            <button onClick={() => { setCurrentView('credits'); setMobileMenuOpen(false); }} className={`block w-full text-left px-3 py-2 rounded-lg ${currentView==='credits'?'bg-primary-100 text-primary-700':'text-gray-700 hover:bg-gray-100'}`}>Income</button>
-            <button onClick={() => { setCurrentView('loans'); setMobileMenuOpen(false); }} className={`block w-full text-left px-3 py-2 rounded-lg ${currentView==='loans'?'bg-primary-100 text-primary-700':'text-gray-700 hover:bg-gray-100'}`}>Loans</button>
-            <button onClick={() => { setCurrentView('contacts'); setMobileMenuOpen(false); }} className={`block w-full text-left px-3 py-2 rounded-lg ${currentView==='contacts'?'bg-primary-100 text-primary-700':'text-gray-700 hover:bg-gray-100'}`}>Contacts</button>
-            <button onClick={() => { setCurrentView('logs'); setMobileMenuOpen(false); }} className={`block w-full text-left px-3 py-2 rounded-lg ${currentView==='logs'?'bg-primary-100 text-primary-700':'text-gray-700 hover:bg-gray-100'}`}>Logs</button>
-            <button onClick={() => { logout(); setMobileMenuOpen(false); }} className="block w-full text-left px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">Sign out</button>
+            <button onClick={() => { setCurrentView('dashboard'); setMobileMenuOpen(false); }} className={`block w-full text-left px-3 py-2 rounded-lg ${currentView==='dashboard'?'bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300':'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}>Dashboard</button>
+            <button onClick={() => { setCurrentView('expenses'); setMobileMenuOpen(false); }} className={`block w-full text-left px-3 py-2 rounded-lg ${currentView==='expenses'?'bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300':'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}>Expenses</button>
+            <button onClick={() => { setCurrentView('credits'); setMobileMenuOpen(false); }} className={`block w-full text-left px-3 py-2 rounded-lg ${currentView==='credits'?'bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300':'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}>Income</button>
+            <button onClick={() => { setCurrentView('loans'); setMobileMenuOpen(false); }} className={`block w-full text-left px-3 py-2 rounded-lg ${currentView==='loans'?'bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300':'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}>Loans</button>
+            <button onClick={() => { setCurrentView('contacts'); setMobileMenuOpen(false); }} className={`block w-full text-left px-3 py-2 rounded-lg ${currentView==='contacts'?'bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300':'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}>Contacts</button>
+            <button onClick={() => { setCurrentView('logs'); setMobileMenuOpen(false); }} className={`block w-full text-left px-3 py-2 rounded-lg ${currentView==='logs'?'bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300':'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}>Logs</button>
+            <button onClick={() => { logout(); setMobileMenuOpen(false); }} className="block w-full text-left px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">Sign out</button>
           </div>
         </div>
       )}
@@ -669,14 +669,14 @@ const App: React.FC = () => {
       <div className="fixed bottom-6 right-6 flex flex-col space-y-3">
         <button
           onClick={() => openDebitForm()}
-          className="bg-success-600 hover:bg-success-700 text-white rounded-full p-4 shadow-lg transition-all duration-200 hover:shadow-xl"
+          className="bg-success-600 hover:bg-success-700 text-white rounded-full p-4 shadow-lg transition-all duration-200 hover:shadow-xl dark:shadow-gray-900/50"
           title="Add Money"
         >
           <Plus size={24} />
         </button>
         <button
           onClick={() => openExpenseForm()}
-          className="bg-primary-600 hover:bg-primary-700 text-white rounded-full p-4 shadow-lg transition-all duration-200 hover:shadow-xl"
+          className="bg-primary-600 hover:bg-primary-700 text-white rounded-full p-4 shadow-lg transition-all duration-200 hover:shadow-xl dark:shadow-gray-900/50"
           title="Add Expense"
         >
           <Plus size={24} />
