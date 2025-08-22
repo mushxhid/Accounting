@@ -33,6 +33,13 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, onDelete,
     setExpandedDescriptions(newExpanded);
   };
 
+  // Handle viewing expense details
+  const handleViewExpense = (expense: Expense) => {
+    // For now, this will toggle the description expansion
+    // You can extend this to show more detailed information in a modal or expand the row
+    toggleDescription(expense.id);
+  };
+
   // Build exact PKR balance-after map from all transactions in storage
   const pkrBalanceAfterById = useMemo(() => {
     try {
@@ -421,9 +428,22 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, onDelete,
                         </div>
                       </td>
                       <td className="py-3 px-3 align-top">
-                        <p className="font-semibold text-gray-900 text-sm leading-tight break-words" title={expense.name}>
-                          {expense.name}
-                        </p>
+                        <div className="flex items-start space-x-2">
+                          <button
+                            onClick={() => handleViewExpense(expense)}
+                            className="p-1.5 text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded transition-colors duration-150 flex-shrink-0 mt-0.5"
+                            title={expandedDescriptions.has(expense.id) ? "Hide expense details" : "View expense details"}
+                          >
+                            {expandedDescriptions.has(expense.id) ? (
+                              <X size={14} />
+                            ) : (
+                              <Eye size={14} />
+                            )}
+                          </button>
+                          <p className="font-semibold text-gray-900 text-sm leading-tight break-words flex-1" title={expense.name}>
+                            {expense.name}
+                          </p>
+                        </div>
                       </td>
                       <td className="py-3 px-3 align-top">
                         <div className="space-y-1">
@@ -442,8 +462,7 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, onDelete,
                                 </>
                               ) : (
                                 <>
-                                  <Eye size={12} />
-                                  View
+                                  <span className="text-xs">Show more</span>
                                 </>
                               )}
                             </button>
