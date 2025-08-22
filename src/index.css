@@ -31,14 +31,14 @@
 
   /* Wider card for expense history table */
   .card-wide {
-    @apply bg-white rounded-xl shadow-sm border border-gray-200 p-6 w-full max-w-none mx-0;
-    width: 100vw;
-    margin-left: calc(-50vw + 50%);
-    margin-right: calc(-50vw + 50%);
-    position: relative;
-    left: 50%;
-    right: 50%;
-    transform: translateX(-50%);
+    @apply bg-white rounded-xl shadow-sm border border-gray-200 p-6 w-full max-w-none;
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    position: static;
+    left: auto;
+    right: auto;
+    transform: none;
   }
 
   /* Table improvements */
@@ -67,12 +67,14 @@
   /* Ensure table uses full width of wide card */
   .expense-table-container {
     @apply w-full;
-    max-width: none;
+    max-width: 100%;
+    overflow-x: auto;
   }
   
   .expense-table {
     @apply w-full border-collapse;
-    table-layout: fixed;
+    table-layout: auto;
+    min-width: 100%;
   }
   
   /* Responsive adjustments */
