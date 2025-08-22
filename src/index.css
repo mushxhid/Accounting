@@ -31,7 +31,14 @@
 
   /* Wider card for expense history table */
   .card-wide {
-    @apply bg-white rounded-xl shadow-sm border border-gray-200 p-6 w-full max-w-none;
+    @apply bg-white rounded-xl shadow-sm border border-gray-200 p-6 w-full max-w-none mx-0;
+    width: 100vw;
+    margin-left: calc(-50vw + 50%);
+    margin-right: calc(-50vw + 50%);
+    position: relative;
+    left: 50%;
+    right: 50%;
+    transform: translateX(-50%);
   }
 
   /* Table improvements */
@@ -57,14 +64,15 @@
     text-overflow: ellipsis;
   }
   
-  /* Responsive table - no horizontal scroll */
+  /* Ensure table uses full width of wide card */
   .expense-table-container {
     @apply w-full;
+    max-width: none;
   }
   
-  /* Ensure table fits within card */
   .expense-table {
-    @apply table-fixed;
+    @apply w-full border-collapse;
+    table-layout: fixed;
   }
   
   /* Responsive adjustments */

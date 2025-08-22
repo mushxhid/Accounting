@@ -324,8 +324,8 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, onDelete,
             )}
           </div>
         ) : (
-          <div className="expense-table-container">
-            <table className="expense-table w-full">
+          <div className="expense-table-container w-full">
+            <table className="expense-table w-full table-fixed">
               <thead>
                 <tr className="border-b-2 border-gray-200">
                   <th className="text-left py-4 px-3 font-semibold text-gray-700 bg-gray-50 w-32">
