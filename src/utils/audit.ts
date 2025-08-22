@@ -1,5 +1,7 @@
 import { auth } from './auth';
-// This module posts to a local path /audit; Vite proxies it to the SMTP relay (http://localhost:4000)
+// Endpoint resolution:
+// - In dev: Vite proxy maps '/audit' -> local relay (http://localhost:4000)
+// - In prod (Vercel): rewrite maps '/audit' -> '/api/audit' (serverless)
 const DEFAULT_ENDPOINT = '/audit';
 const AUDIT_ENDPOINT = (import.meta as any).env?.VITE_AUDIT_URL || DEFAULT_ENDPOINT;
 

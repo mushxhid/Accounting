@@ -28,4 +28,39 @@
   .card {
     @apply bg-white rounded-xl shadow-sm border border-gray-200 p-6;
   }
+
+  /* Table improvements */
+  .expense-table {
+    @apply w-full border-collapse;
+  }
+  
+  .expense-table th {
+    @apply sticky top-0 z-10;
+  }
+  
+  .expense-table td,
+  .expense-table th {
+    @apply border-b border-gray-100;
+  }
+  
+  .expense-table tbody tr:hover {
+    @apply bg-gray-50;
+  }
+  
+  /* Responsive table */
+  @media (max-width: 1024px) {
+    .expense-table-container {
+      @apply overflow-x-auto;
+    }
+    
+    .expense-table {
+      @apply min-w-[1200px];
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .expense-table {
+      @apply min-w-[1000px];
+    }
+  }
 } 

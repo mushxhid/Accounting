@@ -16,9 +16,9 @@ app.use((req, res, next) => {
   next();
 });
 
-// Hostinger SMTP credentials
-const SMTP_USER = process.env.SMTP_USER || 'accounting@ecomgliders.com';
-const SMTP_PASS = process.env.SMTP_PASS || 'Ecomgliders.llc.22';
+// Hostinger SMTP credentials (provide via environment variables)
+const SMTP_USER = process.env.SMTP_USER;
+const SMTP_PASS = process.env.SMTP_PASS;
 const SMTP_HOST = process.env.SMTP_HOST || 'smtp.hostinger.com';
 
 // Helper: try 465 (SSL), then fallback to 587 (STARTTLS)
@@ -50,6 +50,9 @@ async function sendMailSmart(mailOpts) {
 
 app.post('/audit', async (req, res) => {
   try {
+    if (!SMTP_USER || !SMTP_PASS) {
+      return res.status(500).json({ ok: false, error: 'SMTP credentials not configured on relay server' });
+    }
     const { action, entity, details, actor, recipients, timestamp } = req.body || {};
     const toList = (recipients && recipients.length)
       ? recipients.join(',')
