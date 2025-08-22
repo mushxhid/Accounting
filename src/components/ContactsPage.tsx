@@ -3,6 +3,7 @@ import { Plus, Trash2, User, CreditCard, FileText, Edit, Search, X, DollarSign, 
 import { Contact, Expense } from '../types';
 
 import { formatPKR, formatUSD } from '../utils/currencyConverter';
+import { formatPKRDate } from '../utils/helpers';
 
 interface ContactsPageProps {
   contacts: Contact[];
@@ -227,7 +228,7 @@ const ContactsPage: React.FC<ContactsPageProps> = ({
                     </td>
                     <td className="py-4 px-4">
                       <p className="text-sm text-gray-500">
-                        {new Date(contact.createdAt).toLocaleDateString()}
+                        {formatPKRDate(contact.createdAt)}
                       </p>
                     </td>
                     <td className="py-4 px-4 text-right">
@@ -363,7 +364,7 @@ const ContactsPage: React.FC<ContactsPageProps> = ({
                                   <p className="text-sm text-gray-500">{expense.description || '—'}</p>
                                   <p className="text-xs text-gray-400 flex items-center mt-1">
                                     <Calendar size={12} className="mr-1" />
-                                    {new Date(expense.date).toLocaleDateString()}
+                                    {formatPKRDate(expense.createdAt)}
                                   </p>
                                 </div>
                               </div>

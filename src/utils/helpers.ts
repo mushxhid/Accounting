@@ -21,6 +21,48 @@ export const generateId = (): string => {
   return Date.now().toString(36) + Math.random().toString(36).substr(2);
 };
 
+// PKR Timezone utilities
+export const getPKRTimestamp = (): string => {
+  // Create a date in PKR timezone (Asia/Karachi)
+  const now = new Date();
+  const pkrTime = new Date(now.toLocaleString("en-US", {timeZone: "Asia/Karachi"}));
+  return pkrTime.toISOString();
+};
+
+export const formatPKRDateTime = (dateString: string): string => {
+  const date = new Date(dateString);
+  return date.toLocaleString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    timeZone: 'Asia/Karachi',
+    hour12: true
+  });
+};
+
+export const formatPKRDate = (dateString: string): string => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    timeZone: 'Asia/Karachi'
+  });
+};
+
+export const formatPKRTime = (dateString: string): string => {
+  const date = new Date(dateString);
+  return date.toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'Asia/Karachi',
+    hour12: true
+  });
+};
+
 export const calculateTotalExpenses = (expenses: any[]): number => {
   return expenses.reduce((total, expense) => total + expense.usdAmount, 0);
 };

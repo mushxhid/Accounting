@@ -1,7 +1,7 @@
 import React from 'react';
 import { Calendar, DollarSign, CreditCard, TrendingDown, Edit, Trash2 } from 'lucide-react';
 import { Expense } from '../types';
-import { formatCurrency, formatDate } from '../utils/helpers';
+import { formatCurrency, formatPKRDateTime } from '../utils/helpers';
 
 interface ExpenseCardProps {
   expense: Expense;
@@ -19,7 +19,7 @@ const ExpenseCard: React.FC<ExpenseCardProps> = ({ expense, onEdit, onDelete }) 
           </h3>
           <div className="flex items-center text-sm text-gray-500 mb-2">
             <Calendar size={14} className="mr-1" />
-            {formatDate(expense.date)}
+            {formatPKRDateTime(expense.createdAt)}
           </div>
         </div>
         <div className="flex space-x-2">

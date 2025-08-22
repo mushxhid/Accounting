@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Plus, Trash2, DollarSign, Calendar, CreditCard, Filter, User, FileText, Wallet, Download, Eye, X } from 'lucide-react';
 import { Expense, Contact } from '../types';
-import { formatCurrency, exportToCSV } from '../utils/helpers';
+import { formatCurrency, exportToCSV, formatPKRDate, formatPKRTime } from '../utils/helpers';
 import { formatPKR, formatUSD } from '../utils/currencyConverter';
 import { sendAudit } from '../utils/audit';
 
@@ -410,19 +410,10 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, onDelete,
                           </div>
                           <div className="min-w-0">
                             <p className="font-semibold text-gray-900 text-sm leading-tight whitespace-nowrap">
-                              {new Date(expense.date).toLocaleDateString('en-US', {
-                                month: 'short',
-                                day: 'numeric',
-                                year: 'numeric',
-                                timeZone: 'Asia/Karachi'
-                              })}
+                              {formatPKRDate(expense.createdAt)}
                             </p>
                             <p className="text-xs text-gray-500 mt-1 whitespace-nowrap">
-                              {new Date(expense.date).toLocaleTimeString('en-US', {
-                                hour: '2-digit',
-                                minute: '2-digit',
-                                timeZone: 'Asia/Karachi'
-                              })}
+                              {formatPKRTime(expense.createdAt)}
                             </p>
                           </div>
                         </div>

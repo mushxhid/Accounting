@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Plus, Trash2, UserCheck, Calendar, Filter, Download, Wallet, ChevronDown, ChevronRight, Edit3, X } from 'lucide-react';
 import { Loan } from '../types';
-import { formatCurrency, exportToCSV } from '../utils/helpers';
+import { formatCurrency, exportToCSV, formatPKRDate } from '../utils/helpers';
 import { formatPKR, formatUSD } from '../utils/currencyConverter';
 import { sendAudit } from '../utils/audit';
 
@@ -272,12 +272,7 @@ const LoanList: React.FC<LoanListProps> = ({ loans, onDelete, onAddLoan, onOpenR
                   <React.Fragment key={loan.id}>
                   <tr className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {new Date(loan.date).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric',
-                        timeZone: 'Asia/Karachi'
-                      })}
+                      {formatPKRDate(loan.createdAt)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                       {loan.partnerName}

@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Plus, Trash2, TrendingUp, Calendar, Filter, Download } from 'lucide-react';
 import { Debit } from '../types';
-import { formatCurrency, exportToCSV } from '../utils/helpers';
+import { formatCurrency, exportToCSV, formatPKRDate, formatPKRTime } from '../utils/helpers';
 import { formatPKR, formatUSD } from '../utils/currencyConverter';
 import { sendAudit } from '../utils/audit';
 
@@ -318,20 +318,10 @@ const DebitList: React.FC<DebitListProps> = ({ debits, onDelete, onAddDebit }) =
                         </div>
                         <div>
                           <p className="font-medium text-gray-900">
-                            {new Date(debit.date).toLocaleDateString('en-US', {
-                              weekday: 'short',
-                              year: 'numeric',
-                              month: 'short',
-                              day: 'numeric',
-                              timeZone: 'Asia/Karachi'
-                            })}
+                            {formatPKRDate(debit.createdAt)}
                           </p>
                           <p className="text-sm text-gray-500">
-                            {new Date(debit.date).toLocaleTimeString('en-US', {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                              timeZone: 'Asia/Karachi'
-                            })}
+                            {formatPKRTime(debit.createdAt)}
                           </p>
                         </div>
                       </div>
