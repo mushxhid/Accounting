@@ -410,47 +410,12 @@ const App: React.FC = () => {
   };
 
   const handleUpdateBalance = (newBalance: number) => {
+    // Simply update the current balance without recalculating transaction amounts
+    // This preserves PKR amounts and only changes the current available balance
     setCurrentBalance(newBalance);
     
-    // Update all existing expenses, debits, and loans to reflect the new balance
-    if (expenses.length > 0 || debits.length > 0 || loans.length > 0) {
-      // Combine and sort all transactions by date
-      const allTransactions = [
-        ...expenses.map(exp => ({ ...exp, type: 'expense' as const })),
-        ...debits.map(deb => ({ ...deb, type: 'debit' as const })),
-        ...loans.map(loan => ({ ...loan, type: 'loan' as const }))
-      ].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-
-      let runningBalance = newBalance;
-      const updatedExpenses: Expense[] = [];
-      const updatedDebits: Debit[] = [];
-      const updatedLoans: Loan[] = [];
-
-      allTransactions.forEach(transaction => {
-        if (transaction.type === 'expense') {
-          runningBalance -= transaction.usdAmount;
-          updatedExpenses.push({
-            ...transaction,
-            currentBalance: runningBalance
-          });
-        } else if (transaction.type === 'debit') {
-          runningBalance += transaction.usdAmount; // Use usdAmount for balance
-          updatedDebits.push({
-            ...transaction,
-            currentBalance: runningBalance
-          });
-        } else { // type === 'loan'
-          runningBalance -= transaction.usdAmount; // Use usdAmount for balance
-          updatedLoans.push({
-            ...transaction,
-            currentBalance: runningBalance
-          });
-        }
-      });
-
-      setExpenses(updatedExpenses);
-      setDebits(updatedDebits);
-      setLoans(updatedLoans);
+    if (orgId) {
+      dbSetBalance(orgId, newBalance);
     }
   };
 
