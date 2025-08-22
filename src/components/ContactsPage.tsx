@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
 import { Plus, Trash2, User, CreditCard, FileText, Edit, Search, X, DollarSign, TrendingUp, Calendar } from 'lucide-react';
-import { Contact, Expense, Debit } from '../types';
-import { formatCurrency } from '../utils/helpers';
+import { Contact, Expense } from '../types';
+
 import { formatPKR, formatUSD } from '../utils/currencyConverter';
 
 interface ContactsPageProps {
   contacts: Contact[];
   expenses: Expense[];
-  debits: Debit[];
   onAddContact: () => void;
   onDeleteContact: (id: string) => void;
   onEditContact: (contact: Contact) => void;
@@ -16,7 +15,6 @@ interface ContactsPageProps {
 const ContactsPage: React.FC<ContactsPageProps> = ({ 
   contacts, 
   expenses,
-  debits,
   onAddContact, 
   onDeleteContact,
   onEditContact 
@@ -64,14 +62,15 @@ const ContactsPage: React.FC<ContactsPageProps> = ({
   // Get contact's financial data
   const getContactFinancialData = (contact: Contact) => {
     const contactExpenses = expenses.filter(expense => expense.accountNumber === contact.accountNumber);
-    const contactDebits = debits.filter(debit => debit.accountNumber === contact.accountNumber);
+    // Note: Debits (income) don't have accountNumber, so we'll show all income
+    // You can modify this logic if you want to associate income with specific contacts
     
     return {
       expenses: contactExpenses,
-      debits: contactDebits,
+      debits: [], // No debits associated with contacts for now
       totalExpenses: contactExpenses.reduce((sum, exp) => sum + exp.usdAmount, 0),
-      totalIncome: contactDebits.reduce((sum, deb) => sum + deb.usdAmount, 0),
-      netAmount: contactDebits.reduce((sum, deb) => sum + deb.usdAmount, 0) - contactExpenses.reduce((sum, exp) => sum + exp.usdAmount, 0)
+      totalIncome: 0, // No income associated with contacts
+      netAmount: -contactExpenses.reduce((sum, exp) => sum + exp.usdAmount, 0) // Only expenses for now
     };
   };
 
@@ -382,47 +381,18 @@ const ContactsPage: React.FC<ContactsPageProps> = ({
                       )}
                     </div>
 
-                    {/* Income List */}
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                        <TrendingUp className="text-success-600 mr-2" size={20} />
-                        Income ({financialData.debits.length})
-                      </h3>
-                      {financialData.debits.length === 0 ? (
-                        <div className="text-center py-8 bg-gray-50 rounded-lg">
-                          <TrendingUp className="mx-auto text-gray-400 mb-2" size={32} />
-                          <p className="text-gray-600">No income recorded for this contact</p>
-                        </div>
-                      ) : (
-                        <div className="space-y-3">
-                          {financialData.debits.map((debit) => (
-                            <div key={debit.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                              <div className="flex items-center space-x-4">
-                                <div className="p-2 bg-success-100 rounded-lg">
-                                  <TrendingUp className="text-success-600" size={16} />
-                                </div>
-                                <div>
-                                  <p className="font-medium text-gray-900">{debit.source}</p>
-                                  <p className="text-sm text-gray-500">{debit.description || '—'}</p>
-                                  <p className="text-xs text-gray-400 flex items-center mt-1">
-                                    <Calendar size={12} className="mr-1" />
-                                    {new Date(debit.date).toLocaleDateString()}
-                                  </p>
-                                </div>
-                              </div>
-                              <div className="text-right">
-                                <p className="font-bold text-success-600">
-                                  +{formatUSD(debit.usdAmount)}
-                                </p>
-                                <p className="text-sm text-gray-500">
-                                  {formatPKR(debit.amount)}
-                                </p>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
+                                         {/* Income List */}
+                     <div>
+                       <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                         <TrendingUp className="text-success-600 mr-2" size={20} />
+                         Income
+                       </h3>
+                       <div className="text-center py-8 bg-gray-50 rounded-lg">
+                         <TrendingUp className="mx-auto text-gray-400 mb-2" size={32} />
+                         <p className="text-gray-600">Income is not currently associated with contacts</p>
+                         <p className="text-sm text-gray-500 mt-1">All income is shown in the Income section</p>
+                       </div>
+                     </div>
                   </div>
                 );
               })()}
