@@ -29,6 +29,11 @@
     @apply bg-white rounded-xl shadow-sm border border-gray-200 p-6;
   }
 
+  /* Wider card for expense history table */
+  .card-wide {
+    @apply bg-white rounded-xl shadow-sm border border-gray-200 p-6 w-full max-w-none;
+  }
+
   /* Table improvements */
   .expense-table {
     @apply w-full border-collapse;

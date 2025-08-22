@@ -301,7 +301,7 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, onDelete,
       </div>
 
       {/* Expenses Table */}
-      <div className="card">
+      <div className="card-wide">
         {sortedExpenses.length === 0 ? (
           <div className="text-center py-12">
             <DollarSign className="mx-auto text-gray-400 mb-4" size={48} />
