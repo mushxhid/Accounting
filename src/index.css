@@ -47,6 +47,11 @@
     @apply bg-gray-50;
   }
   
+  /* Text ellipsis for long content */
+  .text-ellipsis {
+    text-overflow: ellipsis;
+  }
+  
   /* Responsive table */
   @media (max-width: 1024px) {
     .expense-table-container {
