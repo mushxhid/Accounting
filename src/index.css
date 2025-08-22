@@ -71,10 +71,18 @@
     overflow-x: auto;
   }
   
+  /* Allow expense name column to expand */
+  .expense-table td:nth-child(2) {
+    min-width: 200px;
+    max-width: none;
+    word-wrap: break-word;
+  }
+  
   .expense-table {
     @apply w-full border-collapse;
     table-layout: auto;
     min-width: 100%;
+    width: auto;
   }
   
   /* Responsive adjustments */

@@ -337,7 +337,7 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, onDelete,
                       <span>Date</span>
                     </button>
                   </th>
-                  <th className="text-left py-4 px-3 font-semibold text-gray-700 bg-gray-50 w-36">
+                  <th className="text-left py-4 px-3 font-semibold text-gray-700 bg-gray-50">
                     <button
                       onClick={() => handleSort('name')}
                       className="flex items-center gap-2 hover:text-gray-900 transition-colors w-full"
@@ -421,7 +421,7 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, onDelete,
                         </div>
                       </td>
                       <td className="py-3 px-3 align-top">
-                        <p className="font-semibold text-gray-900 text-sm leading-tight whitespace-nowrap overflow-hidden text-ellipsis" title={expense.name}>
+                        <p className="font-semibold text-gray-900 text-sm leading-tight break-words" title={expense.name}>
                           {expense.name}
                         </p>
                       </td>

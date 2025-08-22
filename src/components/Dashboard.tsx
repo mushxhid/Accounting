@@ -293,7 +293,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                       <DollarSign className="text-danger-600" size={16} />
                     </div>
                     <div>
-                      <h3 className="font-medium text-gray-900">{expense.name}</h3>
+                      <h3 className="font-medium text-gray-900 break-words">{expense.name}</h3>
                       <p className="text-sm text-gray-500">
                         {new Date(expense.date).toLocaleDateString()}
                       </p>
