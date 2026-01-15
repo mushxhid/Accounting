@@ -7,7 +7,7 @@ A modern, beautiful accounting application designed specifically for Amazon agen
 ### 📊 Dashboard
 - **Overview Statistics**: Total expenses, current balance, and monthly spending
 - **Recent Expenses**: Quick view of latest transactions
-- **Beautiful Cards**: Clean, modern UI with intuitive icons
+- **Beautiful Cards**: Clean, modern UI with intuitive icons.
 
 ### 💰 Expense Management
 - **Add Expenses**: Complete form with all required fields
