@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Plus, Trash2, DollarSign, Filter, Download, ChevronUp, ChevronDown } from 'lucide-react';
+import { Plus, Trash2, DollarSign, Filter, Download, ChevronUp, ChevronDown, X } from 'lucide-react';
 import { Expense, Contact } from '../types';
 import { formatCurrency, exportToCSV, formatPKRDate, formatPKRTime } from '../utils/helpers';
 import { formatPKR, formatUSD } from '../utils/currencyConverter';
@@ -188,6 +188,15 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, onDelete,
         <input type="date" value={startDate} onChange={(e)=>setStartDate(e.target.value)} className="border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white px-2 py-1 text-sm" />
         <span className="text-sm text-gray-600 dark:text-gray-400">To:</span>
         <input type="date" value={endDate} onChange={(e)=>setEndDate(e.target.value)} className="border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white px-2 py-1 text-sm" />
+        {(selectedMonth !== 'all' || selectedContact !== 'all' || startDate || endDate) && (
+          <button
+            onClick={() => { setSelectedMonth('all'); setSelectedContact('all'); setStartDate(''); setEndDate(''); }}
+            className="flex items-center gap-1 px-2 py-1 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 border border-red-300 dark:border-red-600 rounded"
+          >
+            <X size={14} />
+            Clear Filters
+          </button>
+        )}
       </div>
 
       {/* Excel-style Table */}
