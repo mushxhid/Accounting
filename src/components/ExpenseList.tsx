@@ -244,14 +244,13 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, onDelete,
         </div>
       ) : (
         <div className="w-full" style={{ overflowX: 'auto', overflowY: 'visible', maxWidth: '100%', WebkitOverflowScrolling: 'touch' }}>
-          <table className="border-collapse bg-white dark:bg-gray-800 border border-gray-400 dark:border-gray-500" style={{ minWidth: '1300px' }}>
+          <table className="border-collapse bg-white dark:bg-gray-800 border border-gray-400 dark:border-gray-500" style={{ minWidth: '1230px' }}>
             <thead>
               <tr className="bg-gray-200 dark:bg-gray-700">
                 <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-left text-xs font-bold text-gray-800 dark:text-gray-200 w-8">#</th>
                 <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-left text-xs font-bold text-gray-800 dark:text-gray-200 cursor-pointer hover:bg-gray-300 dark:hover:bg-gray-600" onClick={() => handleSort('date')} style={{ minWidth: '90px' }}>
                   <div className="flex items-center">Date<SortIcon field="date" /></div>
                 </th>
-                <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-left text-xs font-bold text-gray-800 dark:text-gray-200" style={{ minWidth: '70px' }}>Time</th>
                 <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-left text-xs font-bold text-gray-800 dark:text-gray-200 cursor-pointer hover:bg-gray-300 dark:hover:bg-gray-600" onClick={() => handleSort('name')} style={{ minWidth: '120px' }}>
                   <div className="flex items-center">Expense Name<SortIcon field="name" /></div>
                 </th>
@@ -276,7 +275,6 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, onDelete,
                   <tr key={expense.id} className={index % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-750'}>
                     <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-600 dark:text-gray-400 text-center">{index + 1}</td>
                     <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-900 dark:text-white whitespace-nowrap" style={{ minWidth: '90px' }}>{formatPKRDate(expense.date)}</td>
-                    <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap" style={{ minWidth: '70px' }}>{formatPKRTime(expense.date)}</td>
                     <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-900 dark:text-white font-medium whitespace-nowrap" style={{ minWidth: '120px' }}>
                       <TruncatedCell text={expense.name} maxLength={20} field={`name-${expense.id}`} label="Expense Name" />
                     </td>
