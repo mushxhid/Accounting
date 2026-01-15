@@ -243,8 +243,9 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, onDelete,
           <button onClick={onAddExpense} className="btn-primary mt-4">Add Expense</button>
         </div>
       ) : (
-        <div className="overflow-x-auto border border-gray-400 dark:border-gray-500">
-          <table className="w-full border-collapse bg-white dark:bg-gray-800" style={{ minWidth: '900px' }}>
+        <div className="w-full overflow-x-auto">
+          <div className="inline-block min-w-full border border-gray-400 dark:border-gray-500">
+            <table className="w-full border-collapse bg-white dark:bg-gray-800" style={{ minWidth: '1400px' }}>
             <thead>
               <tr className="bg-gray-200 dark:bg-gray-700">
                 <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-left text-xs font-bold text-gray-800 dark:text-gray-200 w-8">#</th>
@@ -320,6 +321,7 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, onDelete,
               </tr>
             </tfoot>
           </table>
+          </div>
         </div>
       )}
 
