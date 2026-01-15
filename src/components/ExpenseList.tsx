@@ -456,32 +456,47 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, debits, l
         </div>
       )}
 
-      {/* Dialog for full text */}
+      {/* Dialog for full text - Excel style */}
       {dialogContent && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" onClick={() => setDialogContent(null)}>
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                {dialogContent.label}
-              </h2>
+        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center p-4 z-50" onClick={() => setDialogContent(null)}>
+          <div className="bg-white dark:bg-gray-900 border-2 border-gray-400 dark:border-gray-600 shadow-lg w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
+            {/* Header - Excel style */}
+            <div className="bg-gray-200 dark:bg-gray-700 border-b-2 border-gray-400 dark:border-gray-600 px-3 py-2 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 bg-red-500 border border-gray-600"></div>
+                <h2 className="text-sm font-bold text-gray-900 dark:text-white" style={{ fontFamily: 'Arial, sans-serif' }}>
+                  {dialogContent.label}
+                </h2>
+              </div>
               <button
                 onClick={() => setDialogContent(null)}
-                className="text-gray-400 dark:text-gray-300 hover:text-gray-600 dark:hover:text-gray-100 transition-colors"
+                className="text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 px-2 py-1 border border-gray-400 dark:border-gray-500"
+                title="Close"
               >
-                <X size={20} />
+                <X size={16} />
               </button>
             </div>
-            <div className="p-6">
-              <p className="text-gray-900 dark:text-white whitespace-pre-wrap break-words">
-                {dialogContent.value || '—'}
-              </p>
+            
+            {/* Content - Excel cell style */}
+            <div className="p-4 bg-white dark:bg-gray-900">
+              <div className="border border-gray-400 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 min-h-[100px] p-3">
+                <div className="text-xs text-gray-700 dark:text-gray-300 mb-1 font-medium" style={{ fontFamily: 'Arial, sans-serif' }}>
+                  Value:
+                </div>
+                <div className="text-sm text-gray-900 dark:text-white whitespace-pre-wrap break-words font-normal" style={{ fontFamily: 'Calibri, Arial, sans-serif', lineHeight: '1.4' }}>
+                  {dialogContent.value || '—'}
+                </div>
+              </div>
             </div>
-            <div className="flex justify-end p-6 border-t border-gray-200 dark:border-gray-700">
+            
+            {/* Footer - Excel style */}
+            <div className="bg-gray-200 dark:bg-gray-700 border-t-2 border-gray-400 dark:border-gray-600 px-3 py-2 flex justify-end gap-2">
               <button
                 onClick={() => setDialogContent(null)}
-                className="btn-primary"
+                className="px-4 py-1.5 text-xs font-medium bg-white dark:bg-gray-800 border-2 border-gray-400 dark:border-gray-500 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-1 focus:ring-gray-400"
+                style={{ fontFamily: 'Arial, sans-serif' }}
               >
-                Close
+                OK
               </button>
             </div>
           </div>
