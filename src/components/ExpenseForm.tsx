@@ -219,9 +219,9 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSubmit, onCancel, contacts 
   }, [formData.amount, exchangeRate]);
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md animate-slide-up">
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md animate-slide-up my-auto max-h-[90vh] flex flex-col">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
             Add New Expense
           </h2>
@@ -233,7 +233,8 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSubmit, onCancel, contacts 
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+          <div className="p-6 space-y-6 overflow-y-auto flex-1">
           {/* Contact Selection */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -463,17 +464,14 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSubmit, onCancel, contacts 
                 <div className="flex items-center justify-center w-full">
                   <label
                     htmlFor="receipt-upload"
-                    className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors border-gray-300 dark:border-gray-600 ${
+                    className={`flex flex-col items-center justify-center w-full h-24 border-2 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors border-gray-300 dark:border-gray-600 ${
                       uploadingImage ? 'opacity-50 cursor-not-allowed' : ''
                     }`}
                   >
-                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                      <Upload className="w-8 h-8 mb-2 text-gray-400" />
-                      <p className="mb-2 text-sm text-gray-500 dark:text-gray-400">
-                        <span className="font-semibold">Click to upload</span> or drag and drop
-                      </p>
+                    <div className="flex flex-col items-center justify-center py-3">
+                      <Upload className="w-6 h-6 mb-1 text-gray-400" />
                       <p className="text-xs text-gray-500 dark:text-gray-400">
-                        PNG, JPG, GIF up to 10MB
+                        <span className="font-semibold">Click to upload</span> (PNG, JPG, GIF - max 10MB)
                       </p>
                     </div>
                     <input
@@ -492,7 +490,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSubmit, onCancel, contacts 
                     <img
                       src={imagePreview}
                       alt="Receipt preview"
-                      className="max-w-full max-h-48 mx-auto rounded"
+                      className="max-w-full max-h-40 mx-auto rounded"
                     />
                   </div>
                   {uploadingImage && (
@@ -521,8 +519,10 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSubmit, onCancel, contacts 
             </div>
           </div>
 
+          </div>
+          
           {/* Action Buttons */}
-          <div className="flex space-x-3 pt-4">
+          <div className="flex space-x-3 p-6 pt-4 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
             <button
               type="button"
               onClick={onCancel}
