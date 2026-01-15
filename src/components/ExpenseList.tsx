@@ -119,13 +119,12 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, onDelete,
 
   const getContactName = (expense: Expense) => {
     // First try to find by contactId (more reliable)
-    if (expense.contactId) {
+    if (expense.contactId && expense.contactId !== '') {
       const contact = contacts.find(c => c.id === expense.contactId);
       if (contact) return contact.name;
     }
-    // Fallback to account number for old records
-    const contact = contacts.find(c => c.accountNumber === expense.accountNumber);
-    return contact ? contact.name : null;
+    // No fallback - only show contact if explicitly linked
+    return null;
   };
 
   const handleExportCSV = () => {

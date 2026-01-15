@@ -62,10 +62,9 @@ const ContactsPage: React.FC<ContactsPageProps> = ({
 
   // Get contact's financial data
   const getContactFinancialData = (contact: Contact) => {
-    // Filter by contactId first (more reliable), fallback to accountNumber for old records
+    // Only filter by contactId - no fallback to avoid wrong matches
     const contactExpenses = expenses.filter(expense => 
-      expense.contactId === contact.id || 
-      (!expense.contactId && expense.accountNumber === contact.accountNumber)
+      expense.contactId && expense.contactId !== '' && expense.contactId === contact.id
     );
     
     return {
