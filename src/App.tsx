@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+  import React, { useState, useEffect } from 'react';
 import { Home, List, Plus, TrendingUp, RotateCcw, Users, UserCheck, Activity, Menu, X } from 'lucide-react';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { Expense, Debit, Contact, Loan, ExpenseFormData, DebitFormData, ContactFormData, LoanFormData, LoanRepaymentFormData, LoanRepayment } from './types';
@@ -125,16 +125,15 @@ const App: React.FC = () => {
     }
   }, [orgId, expenses, debits, loans]);
 
-  // Migrate old expenses: add contactId based on account number match (only if unique match)
+  // Migrate old expenses: clear wrong contactId and let user re-assign
   useEffect(() => {
     if (!orgId || contacts.length === 0 || expenses.length === 0) return;
     expenses.forEach(expense => {
-      if (!expense.contactId && expense.accountNumber) {
-        // Find all contacts with this account number
-        const matchingContacts = contacts.filter(c => c.accountNumber === expense.accountNumber);
-        // Only auto-assign if exactly one match (to avoid wrong assignment)
-        if (matchingContacts.length === 1) {
-          const updatedExpense = { ...expense, contactId: matchingContacts[0].id };
+      // If expense has contactId but that contact doesn't exist anymore, clear it
+      if (expense.contactId) {
+        const contactExists = contacts.find(c => c.id === expense.contactId);
+        if (!contactExists) {
+          const updatedExpense = { ...expense, contactId: undefined };
           dbUpsertExpense(orgId, updatedExpense);
         }
       }
