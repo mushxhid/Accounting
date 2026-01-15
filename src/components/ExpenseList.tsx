@@ -243,29 +243,29 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, onDelete,
           <button onClick={onAddExpense} className="btn-primary mt-4">Add Expense</button>
         </div>
       ) : (
-        <div className="w-full" style={{ overflowX: 'auto', overflowY: 'visible', maxWidth: '100%', WebkitOverflowScrolling: 'touch' }}>
-          <table className="border-collapse bg-white dark:bg-gray-800 border border-gray-400 dark:border-gray-500" style={{ minWidth: '1230px' }}>
+        <div className="w-full overflow-x-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
+          <table className="border-collapse bg-white dark:bg-gray-800 border border-gray-400 dark:border-gray-500" style={{ minWidth: '1100px' }}>
             <thead>
               <tr className="bg-gray-200 dark:bg-gray-700">
                 <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-left text-xs font-bold text-gray-800 dark:text-gray-200 w-8">#</th>
-                <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-left text-xs font-bold text-gray-800 dark:text-gray-200 cursor-pointer hover:bg-gray-300 dark:hover:bg-gray-600" onClick={() => handleSort('date')} style={{ minWidth: '90px' }}>
+                <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-left text-xs font-bold text-gray-800 dark:text-gray-200 cursor-pointer hover:bg-gray-300 dark:hover:bg-gray-600" onClick={() => handleSort('date')} style={{ minWidth: '80px' }}>
                   <div className="flex items-center">Date<SortIcon field="date" /></div>
                 </th>
-                <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-left text-xs font-bold text-gray-800 dark:text-gray-200 cursor-pointer hover:bg-gray-300 dark:hover:bg-gray-600" onClick={() => handleSort('name')} style={{ minWidth: '120px' }}>
+                <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-left text-xs font-bold text-gray-800 dark:text-gray-200 cursor-pointer hover:bg-gray-300 dark:hover:bg-gray-600" onClick={() => handleSort('name')} style={{ minWidth: '95px' }}>
                   <div className="flex items-center">Expense Name<SortIcon field="name" /></div>
                 </th>
-                <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-left text-xs font-bold text-gray-800 dark:text-gray-200" style={{ minWidth: '100px' }}>Description</th>
-                <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-left text-xs font-bold text-gray-800 dark:text-gray-200" style={{ minWidth: '100px' }}>Contact</th>
-                <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-left text-xs font-bold text-gray-800 dark:text-gray-200 cursor-pointer hover:bg-gray-300 dark:hover:bg-gray-600" onClick={() => handleSort('accountNumber')} style={{ minWidth: '90px' }}>
+                <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-left text-xs font-bold text-gray-800 dark:text-gray-200" style={{ minWidth: '85px' }}>Description</th>
+                <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-left text-xs font-bold text-gray-800 dark:text-gray-200" style={{ minWidth: '85px' }}>Contact</th>
+                <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-left text-xs font-bold text-gray-800 dark:text-gray-200 cursor-pointer hover:bg-gray-300 dark:hover:bg-gray-600" onClick={() => handleSort('accountNumber')} style={{ minWidth: '75px' }}>
                   <div className="flex items-center">Account<SortIcon field="accountNumber" /></div>
                 </th>
-                <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-right text-xs font-bold text-gray-800 dark:text-gray-200 cursor-pointer hover:bg-gray-300 dark:hover:bg-gray-600" onClick={() => handleSort('amount')} style={{ minWidth: '110px' }}>
+                <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-right text-xs font-bold text-gray-800 dark:text-gray-200 cursor-pointer hover:bg-gray-300 dark:hover:bg-gray-600" onClick={() => handleSort('amount')} style={{ minWidth: '95px' }}>
                   <div className="flex items-center justify-end">Amount (PKR)<SortIcon field="amount" /></div>
                 </th>
-                <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-right text-xs font-bold text-gray-800 dark:text-gray-200" style={{ minWidth: '110px' }}>Amount (USD)</th>
-                <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-right text-xs font-bold text-gray-800 dark:text-gray-200" style={{ minWidth: '110px' }}>Balance (USD)</th>
-                <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-right text-xs font-bold text-gray-800 dark:text-gray-200" style={{ minWidth: '110px' }}>Balance (PKR)</th>
-                <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-center text-xs font-bold text-gray-800 dark:text-gray-200 w-20">Actions</th>
+                <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-right text-xs font-bold text-gray-800 dark:text-gray-200" style={{ minWidth: '95px' }}>Amount (USD)</th>
+                <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-right text-xs font-bold text-gray-800 dark:text-gray-200" style={{ minWidth: '95px' }}>Balance (USD)</th>
+                <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-right text-xs font-bold text-gray-800 dark:text-gray-200" style={{ minWidth: '95px' }}>Balance (PKR)</th>
+                <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-center text-xs font-bold text-gray-800 dark:text-gray-200" style={{ minWidth: '70px' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -274,26 +274,26 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, onDelete,
                 return (
                   <tr key={expense.id} className={index % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-750'}>
                     <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-600 dark:text-gray-400 text-center">{index + 1}</td>
-                    <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-900 dark:text-white whitespace-nowrap" style={{ minWidth: '90px' }}>{formatPKRDate(expense.date)}</td>
-                    <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-900 dark:text-white font-medium whitespace-nowrap" style={{ minWidth: '120px' }}>
-                      <TruncatedCell text={expense.name} maxLength={20} field={`name-${expense.id}`} label="Expense Name" />
+                    <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-900 dark:text-white whitespace-nowrap" style={{ minWidth: '80px' }}>{formatPKRDate(expense.date)}</td>
+                    <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-900 dark:text-white font-medium whitespace-nowrap" style={{ minWidth: '95px' }}>
+                      <TruncatedCell text={expense.name} maxLength={16} field={`name-${expense.id}`} label="Expense Name" />
                     </td>
-                    <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap" style={{ minWidth: '100px' }}>
-                      <TruncatedCell text={expense.description || ''} maxLength={20} field={`desc-${expense.id}`} label="Description" />
+                    <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap" style={{ minWidth: '85px' }}>
+                      <TruncatedCell text={expense.description || ''} maxLength={16} field={`desc-${expense.id}`} label="Description" />
                     </td>
-                    <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-900 dark:text-white whitespace-nowrap" style={{ minWidth: '100px' }}>
-                      <TruncatedCell text={contactName || ''} maxLength={15} field={`contact-${expense.id}`} label="Contact" />
+                    <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-900 dark:text-white whitespace-nowrap" style={{ minWidth: '85px' }}>
+                      <TruncatedCell text={contactName || ''} maxLength={12} field={`contact-${expense.id}`} label="Contact" />
                     </td>
-                    <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-700 dark:text-gray-300 font-mono whitespace-nowrap" style={{ minWidth: '90px' }}>
-                      <TruncatedCell text={expense.accountNumber} maxLength={12} field={`account-${expense.id}`} label="Account Number" />
+                    <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-700 dark:text-gray-300 font-mono whitespace-nowrap" style={{ minWidth: '75px' }}>
+                      <TruncatedCell text={expense.accountNumber} maxLength={9} field={`account-${expense.id}`} label="Account Number" />
                     </td>
-                    <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-red-600 dark:text-red-400 text-right font-medium whitespace-nowrap" style={{ minWidth: '110px' }}>-{formatPKR(expense.amount)}</td>
-                    <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-red-600 dark:text-red-400 text-right whitespace-nowrap" style={{ minWidth: '110px' }}>{formatUSD(expense.usdAmount)}</td>
-                    <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-900 dark:text-white text-right font-medium whitespace-nowrap" style={{ minWidth: '110px' }}>{formatCurrency(expense.currentBalance)}</td>
-                    <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-600 dark:text-gray-400 text-right whitespace-nowrap" style={{ minWidth: '110px' }}>
+                    <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-red-600 dark:text-red-400 text-right font-medium whitespace-nowrap" style={{ minWidth: '95px' }}>-{formatPKR(expense.amount)}</td>
+                    <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-red-600 dark:text-red-400 text-right whitespace-nowrap" style={{ minWidth: '95px' }}>{formatUSD(expense.usdAmount)}</td>
+                    <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-900 dark:text-white text-right font-medium whitespace-nowrap" style={{ minWidth: '95px' }}>{formatCurrency(expense.currentBalance)}</td>
+                    <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-600 dark:text-gray-400 text-right whitespace-nowrap" style={{ minWidth: '95px' }}>
                       {!isLoadingRate && formatPKR(pkrBalanceAfterById[expense.id] ?? 0)}
                     </td>
-                    <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-center" style={{ minWidth: '80px' }}>
+                    <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-center" style={{ minWidth: '70px' }}>
                       <div className="flex items-center justify-center gap-1">
                         <button onClick={() => onEditExpense(expense)} className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 p-1" title="Edit">
                           <Edit size={14} />
