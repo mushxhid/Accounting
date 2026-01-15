@@ -243,8 +243,8 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, onDelete,
           <button onClick={onAddExpense} className="btn-primary mt-4">Add Expense</button>
         </div>
       ) : (
-        <div className="w-full overflow-x-auto overflow-y-visible" style={{ WebkitOverflowScrolling: 'touch' }}>
-          <table className="border-collapse bg-white dark:bg-gray-800 border border-gray-400 dark:border-gray-500" style={{ minWidth: '1400px', width: 'max-content' }}>
+        <div className="w-full" style={{ overflowX: 'auto', overflowY: 'visible', WebkitOverflowScrolling: 'touch' }}>
+          <table className="border-collapse bg-white dark:bg-gray-800 border border-gray-400 dark:border-gray-500" style={{ minWidth: '1800px' }}>
             <thead>
               <tr className="bg-gray-200 dark:bg-gray-700">
                 <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-left text-xs font-bold text-gray-800 dark:text-gray-200 w-8">#</th>
@@ -264,8 +264,8 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, onDelete,
                   <div className="flex items-center justify-end">Amount (PKR)<SortIcon field="amount" /></div>
                 </th>
                 <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-right text-xs font-bold text-gray-800 dark:text-gray-200">Amount (USD)</th>
-                <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-right text-xs font-bold text-gray-800 dark:text-gray-200">Balance (USD)</th>
-                <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-right text-xs font-bold text-gray-800 dark:text-gray-200">Balance (PKR)</th>
+                <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-right text-xs font-bold text-gray-800 dark:text-gray-200" style={{ minWidth: '120px' }}>Balance (USD)</th>
+                <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-right text-xs font-bold text-gray-800 dark:text-gray-200" style={{ minWidth: '120px' }}>Balance (PKR)</th>
                 <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-center text-xs font-bold text-gray-800 dark:text-gray-200 w-20">Actions</th>
               </tr>
             </thead>
@@ -291,8 +291,8 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, onDelete,
                     </td>
                     <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-red-600 dark:text-red-400 text-right font-medium whitespace-nowrap">-{formatPKR(expense.amount)}</td>
                     <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-red-600 dark:text-red-400 text-right whitespace-nowrap">{formatUSD(expense.usdAmount)}</td>
-                    <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-900 dark:text-white text-right font-medium whitespace-nowrap">{formatCurrency(expense.currentBalance)}</td>
-                    <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-600 dark:text-gray-400 text-right whitespace-nowrap">
+                    <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-900 dark:text-white text-right font-medium whitespace-nowrap" style={{ minWidth: '120px' }}>{formatCurrency(expense.currentBalance)}</td>
+                    <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-600 dark:text-gray-400 text-right whitespace-nowrap" style={{ minWidth: '120px' }}>
                       {!isLoadingRate && formatPKR(pkrBalanceAfterById[expense.id] ?? 0)}
                     </td>
                     <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-center">
