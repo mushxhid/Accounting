@@ -182,7 +182,7 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, onDelete,
   };
 
   return (
-    <div className="space-y-4 w-full" style={{ minWidth: 0 }}>
+    <div className="space-y-4 w-full" style={{ minWidth: 0, width: '100%' }}>
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -243,8 +243,8 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, onDelete,
           <button onClick={onAddExpense} className="btn-primary mt-4">Add Expense</button>
         </div>
       ) : (
-        <div className="w-full overflow-x-scroll" style={{ WebkitOverflowScrolling: 'touch', scrollbarWidth: 'thin' }}>
-          <table className="border-collapse bg-white dark:bg-gray-800 border border-gray-400 dark:border-gray-500" style={{ minWidth: '2000px', width: 'auto' }}>
+        <div className="w-full" style={{ overflowX: 'auto', overflowY: 'visible', maxWidth: '100%', WebkitOverflowScrolling: 'touch' }}>
+          <table className="border-collapse bg-white dark:bg-gray-800 border border-gray-400 dark:border-gray-500" style={{ minWidth: '2000px', width: 'max-content' }}>
             <thead>
               <tr className="bg-gray-200 dark:bg-gray-700">
                 <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-left text-xs font-bold text-gray-800 dark:text-gray-200 w-8">#</th>
