@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, X, Calendar, CreditCard, User, ChevronDown, FileText, RefreshCw, Upload, Image as ImageIcon } from 'lucide-react';
+import { Plus, X, Calendar, CreditCard, User, ChevronDown, FileText, RefreshCw, Upload } from 'lucide-react';
 import { ExpenseFormData, Contact } from '../types';
 import { fetchPKRtoUSDRate, convertPKRtoUSD, formatUSD, formatExchangeRate } from '../utils/currencyConverter';
 import { uploadImageToCloudinary } from '../utils/cloudinary';
@@ -29,7 +29,6 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSubmit, onCancel, contacts 
   const [selectedContact, setSelectedContact] = useState<string>('');
   const [showContactDropdown, setShowContactDropdown] = useState(false);
   const [contactSearchQuery, setContactSearchQuery] = useState<string>('');
-  const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
 
@@ -128,7 +127,6 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSubmit, onCancel, contacts 
       return;
     }
 
-    setSelectedImage(file);
     setUploadingImage(true);
 
     // Create preview
@@ -148,7 +146,6 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSubmit, onCancel, contacts 
     } catch (error) {
       console.error('Upload error:', error);
       alert(error instanceof Error ? error.message : 'Failed to upload image. Please try again.');
-      setSelectedImage(null);
       setImagePreview(null);
     } finally {
       setUploadingImage(false);
@@ -156,12 +153,16 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSubmit, onCancel, contacts 
   };
 
   const handleRemoveImage = () => {
-    setSelectedImage(null);
     setImagePreview(null);
     setFormData(prev => ({
       ...prev,
       receiptImageUrl: undefined,
     }));
+    // Reset file input
+    const fileInput = document.getElementById('receipt-upload') as HTMLInputElement;
+    if (fileInput) {
+      fileInput.value = '';
+    }
   };
 
   // Fetch exchange rate on component mount
