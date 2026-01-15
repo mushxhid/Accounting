@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Plus, Trash2, DollarSign, Calendar, Filter, Download, ChevronUp, ChevronDown } from 'lucide-react';
+import { Plus, Trash2, DollarSign, Filter, Download, ChevronUp, ChevronDown } from 'lucide-react';
 import { Expense, Contact } from '../types';
 import { formatCurrency, exportToCSV, formatPKRDate, formatPKRTime } from '../utils/helpers';
 import { formatPKR, formatUSD } from '../utils/currencyConverter';
