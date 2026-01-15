@@ -202,7 +202,8 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, onDelete,
       </div>
 
       {/* Filters */}
-      <div className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 p-3 flex flex-wrap items-center gap-3">
+      <div className="w-full overflow-x-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
+        <div className="bg-white dark:bg-gray-800 border border-gray-400 dark:border-gray-500 p-3 flex flex-wrap items-center gap-3" style={{ minWidth: '1100px' }}>
         <Filter size={16} className="text-gray-500" />
         <select value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)} className="border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white px-2 py-1 text-sm">
           <option value="all">All Months</option>
@@ -233,6 +234,7 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, onDelete,
           <X size={14} />
           Clear Filters
         </button>
+        </div>
       </div>
 
       {/* Excel-style Table */}
