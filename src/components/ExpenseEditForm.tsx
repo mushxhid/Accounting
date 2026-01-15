@@ -18,9 +18,14 @@ const ExpenseEditForm: React.FC<ExpenseEditFormProps> = ({ expense, contacts, on
   const handleSave = () => {
     const updatedExpense: Expense = {
       ...expense,
-      contactId: selectedContactId || undefined,
       accountNumber: selectedContact ? selectedContact.accountNumber : expense.accountNumber,
     };
+    // Set or clear contactId
+    if (selectedContactId) {
+      updatedExpense.contactId = selectedContactId;
+    } else {
+      delete updatedExpense.contactId;
+    }
     onSave(updatedExpense);
   };
 
