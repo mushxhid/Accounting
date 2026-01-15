@@ -125,14 +125,16 @@ const App: React.FC = () => {
     }
   }, [orgId, expenses, debits, loans]);
 
-  // Migrate old expenses: add contactId based on account number match
+  // Migrate old expenses: add contactId based on account number match (only if unique match)
   useEffect(() => {
     if (!orgId || contacts.length === 0 || expenses.length === 0) return;
     expenses.forEach(expense => {
       if (!expense.contactId && expense.accountNumber) {
-        const matchingContact = contacts.find(c => c.accountNumber === expense.accountNumber);
-        if (matchingContact) {
-          const updatedExpense = { ...expense, contactId: matchingContact.id };
+        // Find all contacts with this account number
+        const matchingContacts = contacts.filter(c => c.accountNumber === expense.accountNumber);
+        // Only auto-assign if exactly one match (to avoid wrong assignment)
+        if (matchingContacts.length === 1) {
+          const updatedExpense = { ...expense, contactId: matchingContacts[0].id };
           dbUpsertExpense(orgId, updatedExpense);
         }
       }
