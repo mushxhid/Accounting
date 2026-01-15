@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Plus, Trash2, DollarSign, Filter, Download, ChevronUp, ChevronDown, X, Edit } from 'lucide-react';
+import { Plus, Trash2, DollarSign, Filter, Download, ChevronUp, ChevronDown, X, Edit, ChevronRight } from 'lucide-react';
 import { Expense, Contact } from '../types';
 import { formatCurrency, exportToCSV, formatPKRDate, formatPKRTime } from '../utils/helpers';
 import { formatPKR, formatUSD } from '../utils/currencyConverter';
@@ -21,6 +21,7 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, onDelete,
   const [sortBy, setSortBy] = useState<'date' | 'amount' | 'name' | 'accountNumber'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [isLoadingRate] = useState<boolean>(false);
+  const [dialogContent, setDialogContent] = useState<{ field: string; value: string; label: string } | null>(null);
 
   // Build exact PKR balance-after map from all transactions in storage
   const pkrBalanceAfterById = useMemo(() => {
@@ -157,6 +158,29 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, onDelete,
     return sortOrder === 'asc' ? <ChevronUp size={14} className="ml-1" /> : <ChevronDown size={14} className="ml-1" />;
   };
 
+  const TruncatedCell = ({ text, maxLength = 30, field, label }: { text: string; maxLength?: number; field: string; label: string }) => {
+    const isTruncated = text && text.length > maxLength;
+    const displayText = isTruncated ? text.substring(0, maxLength) + '...' : (text || '—');
+    
+    return (
+      <div className="flex items-center gap-1">
+        <span className="truncate">{displayText}</span>
+        {isTruncated && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setDialogContent({ field, value: text, label });
+            }}
+            className="flex-shrink-0 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+            title="View full text"
+          >
+            <ChevronRight size={12} />
+          </button>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-4">
       {/* Header */}
@@ -253,14 +277,22 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, onDelete,
                     <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-600 dark:text-gray-400 text-center">{index + 1}</td>
                     <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-900 dark:text-white whitespace-nowrap">{formatPKRDate(expense.date)}</td>
                     <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap">{formatPKRTime(expense.date)}</td>
-                    <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-900 dark:text-white font-medium">{expense.name}</td>
-                    <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-600 dark:text-gray-400 max-w-[150px] truncate" title={expense.description || ''}>{expense.description || '—'}</td>
-                    <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-900 dark:text-white">{contactName || '—'}</td>
-                    <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-700 dark:text-gray-300 font-mono">{expense.accountNumber}</td>
-                    <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-red-600 dark:text-red-400 text-right font-medium">-{formatPKR(expense.amount)}</td>
-                    <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-red-600 dark:text-red-400 text-right">{formatUSD(expense.usdAmount)}</td>
-                    <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-900 dark:text-white text-right font-medium">{formatCurrency(expense.currentBalance)}</td>
-                    <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-600 dark:text-gray-400 text-right">
+                    <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-900 dark:text-white font-medium whitespace-nowrap">
+                      <TruncatedCell text={expense.name} maxLength={25} field={`name-${expense.id}`} label="Expense Name" />
+                    </td>
+                    <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                      <TruncatedCell text={expense.description || ''} maxLength={30} field={`desc-${expense.id}`} label="Description" />
+                    </td>
+                    <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-900 dark:text-white whitespace-nowrap">
+                      <TruncatedCell text={contactName || ''} maxLength={20} field={`contact-${expense.id}`} label="Contact" />
+                    </td>
+                    <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-700 dark:text-gray-300 font-mono whitespace-nowrap">
+                      <TruncatedCell text={expense.accountNumber} maxLength={20} field={`account-${expense.id}`} label="Account Number" />
+                    </td>
+                    <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-red-600 dark:text-red-400 text-right font-medium whitespace-nowrap">-{formatPKR(expense.amount)}</td>
+                    <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-red-600 dark:text-red-400 text-right whitespace-nowrap">{formatUSD(expense.usdAmount)}</td>
+                    <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-900 dark:text-white text-right font-medium whitespace-nowrap">{formatCurrency(expense.currentBalance)}</td>
+                    <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-600 dark:text-gray-400 text-right whitespace-nowrap">
                       {!isLoadingRate && formatPKR(pkrBalanceAfterById[expense.id] ?? 0)}
                     </td>
                     <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-center">
@@ -288,6 +320,38 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, onDelete,
               </tr>
             </tfoot>
           </table>
+        </div>
+      )}
+
+      {/* Dialog for full text */}
+      {dialogContent && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" onClick={() => setDialogContent(null)}>
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                {dialogContent.label}
+              </h2>
+              <button
+                onClick={() => setDialogContent(null)}
+                className="text-gray-400 dark:text-gray-300 hover:text-gray-600 dark:hover:text-gray-100 transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-6">
+              <p className="text-gray-900 dark:text-white whitespace-pre-wrap break-words">
+                {dialogContent.value || '—'}
+              </p>
+            </div>
+            <div className="flex justify-end p-6 border-t border-gray-200 dark:border-gray-700">
+              <button
+                onClick={() => setDialogContent(null)}
+                className="btn-primary"
+              >
+                Close
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
