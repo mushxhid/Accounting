@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Trash2, User, CreditCard, FileText, Edit, Search, X, DollarSign, TrendingUp, Calendar } from 'lucide-react';
+import { Plus, Trash2, User, CreditCard, FileText, Edit, Search, X, DollarSign, TrendingUp, Calendar, ChevronUp, ChevronDown } from 'lucide-react';
 import { Contact, Expense } from '../types';
 
 import { formatPKR, formatUSD } from '../utils/currencyConverter';
@@ -84,6 +84,11 @@ const ContactsPage: React.FC<ContactsPageProps> = ({
     setSelectedContact(null);
   };
 
+  const SortIcon = ({ field }: { field: 'name' | 'accountNumber' | 'createdAt' }) => {
+    if (sortBy !== field) return <span className="text-gray-300 dark:text-gray-600 ml-1">↕</span>;
+    return sortOrder === 'asc' ? <ChevronUp size={14} className="ml-1" /> : <ChevronDown size={14} className="ml-1" />;
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -139,124 +144,79 @@ const ContactsPage: React.FC<ContactsPageProps> = ({
         </div>
       </div>
 
-      {/* Contacts List */}
-      <div className="card">
-        {sortedContacts.length === 0 ? (
-          <div className="text-center py-12">
-            <User className="mx-auto text-gray-400 mb-4" size={48} />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              {searchTerm ? 'No contacts found' : 'No contacts yet'}
-            </h3>
-            <p className="text-gray-600 mb-6">
-              {searchTerm 
-                ? 'Try adjusting your search terms.'
-                : 'Add your first contact to get started with quick expense entry.'
-              }
-            </p>
-            {!searchTerm && (
-              <button
-                onClick={onAddContact}
-                className="btn-primary"
-              >
-                Add Your First Contact
-              </button>
-            )}
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-left py-3 px-4 font-medium text-gray-700">
-                    <button
-                      onClick={() => handleSort('name')}
-                      className="flex items-center space-x-1 hover:text-gray-900 transition-colors"
-                    >
-                      <User size={16} />
-                      <span>Name</span>
-                    </button>
-                  </th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-700">
-                    <button
-                      onClick={() => handleSort('accountNumber')}
-                      className="flex items-center space-x-1 hover:text-gray-900 transition-colors"
-                    >
-                      <CreditCard size={16} />
-                      <span>Account Number</span>
-                    </button>
-                  </th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-700">
-                    <FileText size={16} className="mr-1" />
-                    Description
-                  </th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-700">
-                    <button
-                      onClick={() => handleSort('createdAt')}
-                      className="flex items-center space-x-1 hover:text-gray-900 transition-colors"
-                    >
-                      <span>Added</span>
-                    </button>
-                  </th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-700">
-                    Actions
-                  </th>
+      {/* Contacts List - Excel Style */}
+      {sortedContacts.length === 0 ? (
+        <div className="text-center py-12 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600">
+          <User className="mx-auto text-gray-400 mb-4" size={48} />
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+            {searchTerm ? 'No contacts found' : 'No contacts yet'}
+          </h3>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">
+            {searchTerm 
+              ? 'Try adjusting your search terms.'
+              : 'Add your first contact to get started with quick expense entry.'
+            }
+          </p>
+          {!searchTerm && (
+            <button onClick={onAddContact} className="btn-primary">
+              Add Your First Contact
+            </button>
+          )}
+        </div>
+      ) : (
+        <div className="overflow-x-auto border border-gray-400 dark:border-gray-500">
+          <table className="w-full border-collapse bg-white dark:bg-gray-800" style={{ minWidth: '700px' }}>
+            <thead>
+              <tr className="bg-gray-200 dark:bg-gray-700">
+                <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-left text-xs font-bold text-gray-800 dark:text-gray-200 w-8">#</th>
+                <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-left text-xs font-bold text-gray-800 dark:text-gray-200 cursor-pointer hover:bg-gray-300 dark:hover:bg-gray-600" onClick={() => handleSort('name')}>
+                  <div className="flex items-center">Name<SortIcon field="name" /></div>
+                </th>
+                <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-left text-xs font-bold text-gray-800 dark:text-gray-200 cursor-pointer hover:bg-gray-300 dark:hover:bg-gray-600" onClick={() => handleSort('accountNumber')}>
+                  <div className="flex items-center">Account Number<SortIcon field="accountNumber" /></div>
+                </th>
+                <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-left text-xs font-bold text-gray-800 dark:text-gray-200">Description</th>
+                <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-left text-xs font-bold text-gray-800 dark:text-gray-200 cursor-pointer hover:bg-gray-300 dark:hover:bg-gray-600" onClick={() => handleSort('createdAt')}>
+                  <div className="flex items-center">Added<SortIcon field="createdAt" /></div>
+                </th>
+                <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-center text-xs font-bold text-gray-800 dark:text-gray-200 w-20">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sortedContacts.map((contact, index) => (
+                <tr
+                  key={contact.id}
+                  className={`cursor-pointer ${index % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-750'}`}
+                  onClick={() => handleContactClick(contact)}
+                >
+                  <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-600 dark:text-gray-400 text-center">{index + 1}</td>
+                  <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-900 dark:text-white font-medium">{contact.name}</td>
+                  <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-700 dark:text-gray-300 font-mono">{contact.accountNumber}</td>
+                  <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-600 dark:text-gray-400 max-w-[200px] truncate" title={contact.description || ''}>{contact.description || '—'}</td>
+                  <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap">{formatPKRDate(contact.createdAt)}</td>
+                  <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-center">
+                    <div className="flex items-center justify-center gap-1">
+                      <button onClick={(e) => { e.stopPropagation(); onEditContact(contact); }} className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 p-1" title="Edit">
+                        <Edit size={14} />
+                      </button>
+                      <button onClick={(e) => { e.stopPropagation(); onDeleteContact(contact.id); }} className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 p-1" title="Delete">
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {sortedContacts.map((contact) => (
-                  <tr
-                    key={contact.id}
-                    className="border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer"
-                    onClick={() => handleContactClick(contact)}
-                  >
-                    <td className="py-4 px-4">
-                      <div className="flex items-center space-x-3">
-                        <div className="p-2 bg-primary-100 rounded-lg">
-                          <User className="text-primary-600" size={16} />
-                        </div>
-                        <div>
-                          <p className="font-medium text-gray-900">{contact.name}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="py-4 px-4">
-                      <p className="font-mono text-sm text-gray-700">{contact.accountNumber}</p>
-                    </td>
-                    <td className="py-4 px-4">
-                      <p className="text-gray-600 text-sm">
-                        {contact.description || '—'}
-                      </p>
-                    </td>
-                    <td className="py-4 px-4">
-                      <p className="text-sm text-gray-500">
-                        {formatPKRDate(contact.createdAt)}
-                      </p>
-                    </td>
-                    <td className="py-4 px-4 text-right">
-                      <div className="flex items-center justify-end space-x-2">
-                        <button
-                          onClick={() => onEditContact(contact)}
-                          className="text-primary-600 hover:text-primary-700 p-2 rounded-lg hover:bg-primary-50 transition-colors"
-                          title="Edit contact"
-                        >
-                          <Edit size={16} />
-                        </button>
-                        <button
-                          onClick={() => onDeleteContact(contact.id)}
-                          className="text-danger-600 hover:text-danger-700 p-2 rounded-lg hover:bg-danger-50 transition-colors"
-                          title="Delete contact"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+              ))}
+            </tbody>
+            <tfoot>
+              <tr className="bg-gray-200 dark:bg-gray-700 font-bold">
+                <td colSpan={6} className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-xs text-gray-800 dark:text-gray-200 text-center">
+                  Total: {filteredContacts.length} contact{filteredContacts.length !== 1 ? 's' : ''}
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      )}
 
       {/* Contact Detail Modal */}
       {selectedContact && (

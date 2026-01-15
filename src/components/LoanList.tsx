@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
-import { Plus, Trash2, UserCheck, Calendar, Filter, Download, Wallet, ChevronDown, ChevronRight, Edit3, X } from 'lucide-react';
+import { Plus, Trash2, UserCheck, Filter, Download, Wallet, ChevronDown, ChevronRight, Edit3, X as XIcon, ChevronUp } from 'lucide-react';
 import { Loan } from '../types';
-import { formatCurrency, exportToCSV, formatPKRDate } from '../utils/helpers';
+import { formatCurrency, exportToCSV, formatPKRDate, formatPKRTime } from '../utils/helpers';
 import { formatPKR, formatUSD } from '../utils/currencyConverter';
 import { sendAudit } from '../utils/audit';
 
@@ -18,10 +18,10 @@ const LoanList: React.FC<LoanListProps> = ({ loans, onDelete, onAddLoan, onOpenR
   const [selectedMonth, setSelectedMonth] = useState<string>('all');
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
-  const [sortBy, setSortBy] = useState<'date' | 'amount' | 'partnerName'>('partnerName');
+  const [sortBy, setSortBy] = useState<'date' | 'amount' | 'partnerName'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
-  // Exact PKR balance-after reconstruction
+
   const pkrBalanceAfterById = useMemo(() => {
     try {
       const loansLocal = loans;
@@ -44,7 +44,6 @@ const LoanList: React.FC<LoanListProps> = ({ loans, onDelete, onAddLoan, onOpenR
     }
   }, [loans]);
 
-  // Get unique months from loans
   const months = useMemo(() => {
     const monthSet = new Set<string>();
     loans.forEach(loan => {
@@ -55,9 +54,8 @@ const LoanList: React.FC<LoanListProps> = ({ loans, onDelete, onAddLoan, onOpenR
     return Array.from(monthSet).sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
   }, [loans]);
 
-  // Filter loans by selected month
   const filteredLoans = useMemo(() => {
-    const base = loans.filter(loan => {
+    return loans.filter(loan => {
       const date = new Date(loan.date);
       const monthYear = date.toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
       if (selectedMonth !== 'all' && monthYear !== selectedMonth) return false;
@@ -72,17 +70,14 @@ const LoanList: React.FC<LoanListProps> = ({ loans, onDelete, onAddLoan, onOpenR
       }
       return true;
     });
-    return base;
-  }, [loans, selectedMonth]);
+  }, [loans, selectedMonth, startDate, endDate]);
 
-  // Sort filtered loans
   const sortedLoans = useMemo(() => {
     return [...filteredLoans].sort((a, b) => {
       let comparison = 0;
-      
       switch (sortBy) {
         case 'date':
-          comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+          comparison = new Date(a.date).getTime() - new Date(b.date).getTime();
           break;
         case 'amount':
           comparison = a.amount - b.amount;
@@ -91,7 +86,6 @@ const LoanList: React.FC<LoanListProps> = ({ loans, onDelete, onAddLoan, onOpenR
           comparison = a.partnerName.localeCompare(b.partnerName);
           break;
       }
-      
       return sortOrder === 'asc' ? comparison : -comparison;
     });
   }, [filteredLoans, sortBy, sortOrder]);
@@ -105,32 +99,30 @@ const LoanList: React.FC<LoanListProps> = ({ loans, onDelete, onAddLoan, onOpenR
     }
   };
 
+  const totalLoans = filteredLoans.length;
+  const totalAmount = filteredLoans.reduce((sum, loan) => sum + loan.usdAmount, 0);
+  const totalAmountPKR = filteredLoans.reduce((sum, loan) => sum + loan.amount, 0);
+
   const handleExportCSV = () => {
     if (filteredLoans.length === 0) {
       alert('No loans to export');
       return;
     }
-
-    // Prepare data for CSV export
     const csvData: any[] = [];
     filteredLoans.forEach(loan => {
-      // Parent loan row
       csvData.push({
-        Type: 'Loan',
-        Date: new Date(loan.date).toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit', timeZone: 'Asia/Karachi' }),
-        Time: new Date(loan.date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Karachi' }),
+        Date: formatPKRDate(loan.date),
+        Time: formatPKRTime(loan.date),
         'Partner Name': loan.partnerName,
         'Amount (PKR)': (-loan.amount).toFixed(2),
         'Amount (USD)': (-loan.usdAmount).toFixed(2),
         Description: loan.description || '',
         'Balance After (USD)': loan.currentBalance.toFixed(2)
       });
-      // Repayment rows
       (loan.repayments || []).forEach(r => {
         csvData.push({
-          Type: 'Repayment',
-          Date: new Date(r.date).toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit', timeZone: 'Asia/Karachi' }),
-          Time: new Date(r.date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Karachi' }),
+          Date: formatPKRDate(r.date),
+          Time: formatPKRTime(r.date),
           'Partner Name': loan.partnerName,
           'Amount (PKR)': r.amount.toFixed(2),
           'Amount (USD)': r.usdAmount.toFixed(2),
@@ -139,241 +131,169 @@ const LoanList: React.FC<LoanListProps> = ({ loans, onDelete, onAddLoan, onOpenR
         });
       });
     });
-
     const monthText = selectedMonth === 'all' ? 'All_Months' : selectedMonth.replace(/\s+/g, '_');
     const filename = `partner_loans_${monthText}_${new Date().toISOString().split('T')[0]}.csv`;
-    
     exportToCSV(csvData, filename);
     sendAudit({ action: 'export', entity: 'loans', details: { count: filteredLoans.length, month: selectedMonth } });
   };
 
-  const totalLoans = filteredLoans.length;
-  const totalAmount = filteredLoans.reduce((sum, loan) => sum + loan.usdAmount, 0);
+  const SortIcon = ({ field }: { field: 'date' | 'amount' | 'partnerName' }) => {
+    if (sortBy !== field) return <span className="text-gray-300 dark:text-gray-600 ml-1">↕</span>;
+    return sortOrder === 'asc' ? <ChevronUp size={14} className="ml-1" /> : <ChevronDown size={14} className="ml-1" />;
+  };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Partner Loans</h1>
-          <p className="text-gray-600 mt-1">
-            {totalLoans} loan{totalLoans !== 1 ? 's' : ''} • Total: {formatCurrency(totalAmount)}
-          </p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Partner Loans</h1>
+          <p className="text-gray-600 dark:text-gray-400 text-sm">{totalLoans} loan{totalLoans !== 1 ? 's' : ''}</p>
         </div>
-        
-        <div className="flex items-center space-x-3">
-          <button
-            onClick={handleExportCSV}
-            className="btn-secondary flex items-center"
-            disabled={filteredLoans.length === 0}
-          >
-            <Download size={20} className="mr-2" />
-            Export CSV
+        <div className="flex items-center space-x-2">
+          <button onClick={handleExportCSV} className="btn-secondary flex items-center text-sm py-1.5 px-3" disabled={filteredLoans.length === 0}>
+            <Download size={16} className="mr-1" />
+            Export
           </button>
-          <button
-            onClick={onAddLoan}
-            className="btn-primary flex items-center"
-          >
-            <Plus size={20} className="mr-2" />
-            Add Loan
+          <button onClick={onAddLoan} className="btn-primary flex items-center text-sm py-1.5 px-3">
+            <Plus size={16} className="mr-1" />
+            Add
           </button>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-lg shadow p-4">
-        <div className="flex items-center flex-wrap gap-3">
-          <div className="flex items-center space-x-2">
-            <Filter size={16} className="text-gray-500" />
-            <span className="text-sm font-medium text-gray-700">Filter:</span>
-          </div>
-          
-          <select
-            value={selectedMonth}
-            onChange={(e) => setSelectedMonth(e.target.value)}
-            className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-          >
-            <option value="all">All Months</option>
-            {months.map(month => (
-              <option key={month} value={month}>{month}</option>
-            ))}
-          </select>
-
-          <div className="flex items-center space-x-2">
-            <span className="text-sm font-medium text-gray-700">Date:</span>
-            <input type="date" value={startDate} onChange={(e)=>setStartDate(e.target.value)} className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
-            <span className="text-sm text-gray-500">to</span>
-            <input type="date" value={endDate} onChange={(e)=>setEndDate(e.target.value)} className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
-          </div>
-        </div>
+      <div className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 p-3 flex flex-wrap items-center gap-3">
+        <Filter size={16} className="text-gray-500" />
+        <select value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)} className="border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white px-2 py-1 text-sm">
+          <option value="all">All Months</option>
+          {months.map(month => (<option key={month} value={month}>{month}</option>))}
+        </select>
+        <span className="text-sm text-gray-600 dark:text-gray-400">From:</span>
+        <input type="date" value={startDate} onChange={(e)=>setStartDate(e.target.value)} className="border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white px-2 py-1 text-sm" />
+        <span className="text-sm text-gray-600 dark:text-gray-400">To:</span>
+        <input type="date" value={endDate} onChange={(e)=>setEndDate(e.target.value)} className="border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white px-2 py-1 text-sm" />
+        <button
+          type="button"
+          onClick={() => { setSelectedMonth('all'); setStartDate(''); setEndDate(''); setSortBy('date'); setSortOrder('desc'); }}
+          className="flex items-center gap-1 px-2 py-1 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 border border-red-300 dark:border-red-600 rounded"
+        >
+          <XIcon size={14} />
+          Clear Filters
+        </button>
       </div>
 
-      {/* Loans List */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        {sortedLoans.length === 0 ? (
-          <div className="text-center py-12">
-            <UserCheck size={48} className="mx-auto text-gray-400 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No loans found</h3>
-            <p className="text-gray-600">
-              {selectedMonth === 'all' 
-                ? 'No partner loans have been added yet.' 
-                : `No loans found for ${selectedMonth}.`
-              }
-            </p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th 
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                    onClick={() => handleSort('partnerName')}
-                  >
-                    <div className="flex items-center space-x-1">
-                      <UserCheck size={14} />
-                      <span>Partner</span>
-                    </div>
-                  </th>
-                  <th 
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                    onClick={() => handleSort('date')}
-                  >
-                    <div className="flex items-center space-x-1">
-                      <Calendar size={14} />
-                      <span>Date</span>
-                    </div>
-                  </th>
-                  <th 
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                    onClick={() => handleSort('amount')}
-                  >
-                    Amount
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Description
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Balance After
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {sortedLoans.map((loan) => {
-                  const principalPKR = loan.principalAmount ?? loan.amount + (loan.repayments?.reduce((s, r) => s + r.amount, 0) ?? 0);
-                  // principalUSD available if needed later
-                  // Remaining shown beneath progress via current outstanding (loan.amount/usdAmount)
-                  const paidRatio = principalPKR > 0 ? 1 - (loan.amount / principalPKR) : 0;
-                  const isOpen = !!expanded[loan.id];
-                  return (
+      {/* Excel-style Table */}
+      {sortedLoans.length === 0 ? (
+        <div className="text-center py-12 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600">
+          <UserCheck className="mx-auto text-gray-400 mb-4" size={48} />
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No loans found</h3>
+          <button onClick={onAddLoan} className="btn-primary mt-4">Add Loan</button>
+        </div>
+      ) : (
+        <div className="overflow-x-auto border border-gray-400 dark:border-gray-500">
+          <table className="w-full border-collapse bg-white dark:bg-gray-800" style={{ minWidth: '900px' }}>
+            <thead>
+              <tr className="bg-gray-200 dark:bg-gray-700">
+                <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-left text-xs font-bold text-gray-800 dark:text-gray-200 w-8">#</th>
+                <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-left text-xs font-bold text-gray-800 dark:text-gray-200 cursor-pointer hover:bg-gray-300 dark:hover:bg-gray-600" onClick={() => handleSort('date')}>
+                  <div className="flex items-center">Date<SortIcon field="date" /></div>
+                </th>
+                <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-left text-xs font-bold text-gray-800 dark:text-gray-200">Time</th>
+                <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-left text-xs font-bold text-gray-800 dark:text-gray-200 cursor-pointer hover:bg-gray-300 dark:hover:bg-gray-600" onClick={() => handleSort('partnerName')}>
+                  <div className="flex items-center">Partner<SortIcon field="partnerName" /></div>
+                </th>
+                <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-left text-xs font-bold text-gray-800 dark:text-gray-200">Description</th>
+                <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-right text-xs font-bold text-gray-800 dark:text-gray-200 cursor-pointer hover:bg-gray-300 dark:hover:bg-gray-600" onClick={() => handleSort('amount')}>
+                  <div className="flex items-center justify-end">Amount (PKR)<SortIcon field="amount" /></div>
+                </th>
+                <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-right text-xs font-bold text-gray-800 dark:text-gray-200">Amount (USD)</th>
+                <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-right text-xs font-bold text-gray-800 dark:text-gray-200">Balance (USD)</th>
+                <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-right text-xs font-bold text-gray-800 dark:text-gray-200">Balance (PKR)</th>
+                <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-center text-xs font-bold text-gray-800 dark:text-gray-200 w-20">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sortedLoans.map((loan, index) => {
+                const isOpen = !!expanded[loan.id];
+                const principalPKR = loan.principalAmount ?? loan.amount + (loan.repayments?.reduce((s, r) => s + r.amount, 0) ?? 0);
+                const paidRatio = principalPKR > 0 ? 1 - (loan.amount / principalPKR) : 0;
+                return (
                   <React.Fragment key={loan.id}>
-                  <tr className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {formatPKRDate(loan.createdAt)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {loan.partnerName}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      <div>
-                        <p className="text-danger-600 font-medium">
-                          -{formatPKR(loan.amount)}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          ({formatUSD(loan.usdAmount)})
-                        </p>
-                        <div className="mt-2">
-                          <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                            <div className="h-1.5 bg-warning-500" style={{ width: `${Math.min(100, Math.max(0, paidRatio * 100))}%` }} />
-                          </div>
-                          <div className="flex items-center justify-between text-xs text-gray-500 mt-1">
-                            <span>Remaining: {formatPKR(loan.amount)}</span>
-                            <span>({formatUSD(loan.usdAmount)})</span>
-                          </div>
+                    <tr className={index % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-750'}>
+                      <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-600 dark:text-gray-400 text-center">{index + 1}</td>
+                      <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-900 dark:text-white whitespace-nowrap">{formatPKRDate(loan.date)}</td>
+                      <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap">{formatPKRTime(loan.date)}</td>
+                      <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-900 dark:text-white font-medium">{loan.partnerName}</td>
+                      <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-600 dark:text-gray-400 max-w-[150px] truncate" title={loan.description || ''}>{loan.description || '—'}</td>
+                      <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-red-600 dark:text-red-400 text-right font-medium">-{formatPKR(loan.amount)}</td>
+                      <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-red-600 dark:text-red-400 text-right">-{formatUSD(loan.usdAmount)}</td>
+                      <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-900 dark:text-white text-right font-medium">{formatCurrency(loan.currentBalance)}</td>
+                      <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-600 dark:text-gray-400 text-right">
+                        {formatPKR(pkrBalanceAfterById[loan.id] ?? 0)}
+                      </td>
+                      <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          <button onClick={() => setExpanded(prev => ({ ...prev, [loan.id]: !prev[loan.id] }))} className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 p-1" title={isOpen ? 'Hide repayments' : 'Show repayments'}>
+                            {isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                          </button>
+                          <button onClick={() => onOpenRepay(loan.id)} className="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300 p-1" title="Record repayment">
+                            <Wallet size={14} />
+                          </button>
+                          <button onClick={() => onDelete(loan.id)} className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 p-1" title="Delete">
+                            <Trash2 size={14} />
+                          </button>
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-900 max-w-xs truncate">
-                      {loan.description || '-'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      <div className="text-right md:text-left">
-                        <p>{formatCurrency(loan.currentBalance)}</p>
-                        <p className="text-xs text-gray-500">{formatPKR(pkrBalanceAfterById[loan.id] ?? 0)}</p>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="inline-flex items-center space-x-3">
-                        <button
-                          onClick={() => setExpanded(prev => ({ ...prev, [loan.id]: !prev[loan.id] }))}
-                          className="text-gray-600 hover:text-gray-800 transition-colors"
-                          title={isOpen ? 'Hide repayments' : 'Show repayments'}
-                        >
-                          {isOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-                        </button>
-                        <button
-                          onClick={() => onOpenRepay(loan.id)}
-                          className="text-success-600 hover:text-success-700 transition-colors"
-                          title="Record repayment"
-                        >
-                          <Wallet size={16} />
-                        </button>
-                        <button
-                          onClick={() => onDelete(loan.id)}
-                          className="text-danger-600 hover:text-danger-900 transition-colors"
-                          title="Delete loan"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                  {isOpen && (
-                    <tr className="bg-gray-50">
-                      <td colSpan={6} className="px-6 py-4">
-                        {(loan.repayments && loan.repayments.length > 0) ? (
-                          <div className="space-y-3">
+                      </td>
+                    </tr>
+                    {isOpen && loan.repayments && loan.repayments.length > 0 && (
+                      <tr className="bg-gray-50 dark:bg-gray-700/30">
+                        <td colSpan={10} className="border border-gray-400 dark:border-gray-500 px-2 py-2">
+                          <div className="ml-4 space-y-1">
+                            <div className="text-xs font-bold text-gray-700 dark:text-gray-300 mb-2">Repayments:</div>
                             {loan.repayments.map((r) => (
-                              <div key={r.id} className="flex items-start justify-between p-3 bg-white rounded border border-gray-200">
+                              <div key={r.id} className="flex items-center justify-between p-2 bg-white dark:bg-gray-800 rounded border border-gray-300 dark:border-gray-600 text-xs">
                                 <div>
-                                  <div className="text-sm font-medium text-gray-900">{new Date(r.date).toLocaleDateString()}</div>
-                                  <div className="text-xs text-gray-500">{r.description || '-'}</div>
+                                  <span className="font-medium text-gray-900 dark:text-white">{formatPKRDate(r.date)}</span>
+                                  {r.description && <span className="text-gray-600 dark:text-gray-400 ml-2">- {r.description}</span>}
                                 </div>
-                                <div className="text-right">
-                                  <div className="text-success-600 font-medium">+{formatPKR(r.amount)}</div>
-                                  <div className="text-xs text-gray-500">({formatUSD(r.usdAmount)})</div>
-                                  <div className="flex items-center justify-end space-x-2 mt-1">
-                                    {onEditRepayment && (
-                                      <button className="text-primary-600 hover:text-primary-700" title="Edit repayment" onClick={() => onEditRepayment(loan.id, r.id)}>
-                                        <Edit3 size={14} />
-                                      </button>
-                                    )}
-                                    {onDeleteRepayment && (
-                                      <button className="text-danger-600 hover:text-danger-700" title="Delete repayment" onClick={() => onDeleteRepayment(loan.id, r.id)}>
-                                        <X size={14} />
-                                      </button>
-                                    )}
-                                  </div>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-success-600 dark:text-success-400 font-medium">+{formatPKR(r.amount)}</span>
+                                  <span className="text-gray-500 dark:text-gray-400">({formatUSD(r.usdAmount)})</span>
+                                  {onEditRepayment && (
+                                    <button onClick={() => onEditRepayment(loan.id, r.id)} className="text-blue-600 hover:text-blue-800 dark:text-blue-400 p-0.5" title="Edit">
+                                      <Edit3 size={12} />
+                                    </button>
+                                  )}
+                                  {onDeleteRepayment && (
+                                    <button onClick={() => onDeleteRepayment(loan.id, r.id)} className="text-red-600 hover:text-red-800 dark:text-red-400 p-0.5" title="Delete">
+                                      <XIcon size={12} />
+                                    </button>
+                                  )}
                                 </div>
                               </div>
                             ))}
                           </div>
-                        ) : (
-                          <div className="text-sm text-gray-500">No repayments yet.</div>
-                        )}
-                      </td>
-                    </tr>
-                  )}
+                        </td>
+                      </tr>
+                    )}
                   </React.Fragment>
-                );})}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+                );
+              })}
+            </tbody>
+            <tfoot>
+              <tr className="bg-gray-200 dark:bg-gray-700 font-bold">
+                <td colSpan={5} className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-xs text-gray-800 dark:text-gray-200 text-right">
+                  Total ({filteredLoans.length} records):
+                </td>
+                <td className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-xs text-red-600 dark:text-red-400 text-right font-bold">-{formatPKR(totalAmountPKR)}</td>
+                <td className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-xs text-red-600 dark:text-red-400 text-right font-bold">-{formatUSD(totalAmount)}</td>
+                <td colSpan={3} className="border border-gray-400 dark:border-gray-500"></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      )}
     </div>
   );
 };
