@@ -172,7 +172,7 @@ const App: React.FC = () => {
       updatedAt: getPKRTimestamp(),
     };
 
-    setExpenses(prev => [newExpense, ...prev]);
+    setExpenses(prev => [...prev, newExpense].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
     setCurrentBalance(newBalance);
     if (orgId) {
       dbUpsertExpense(orgId, newExpense);
@@ -209,7 +209,7 @@ const App: React.FC = () => {
       updatedAt: getPKRTimestamp(),
     };
 
-    setDebits(prev => [newDebit, ...prev]);
+    setDebits(prev => [...prev, newDebit].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
     setCurrentBalance(newBalance);
     if (orgId) {
       dbUpsertDebit(orgId, newDebit);
@@ -247,7 +247,7 @@ const App: React.FC = () => {
       updatedAt: getPKRTimestamp(),
     };
 
-    setLoans(prev => [newLoan, ...prev]);
+    setLoans(prev => [...prev, newLoan].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
     setCurrentBalance(newBalance);
     if (orgId) {
       dbUpsertLoan(orgId, newLoan);
