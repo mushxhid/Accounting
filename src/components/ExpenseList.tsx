@@ -29,10 +29,30 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, debits, l
   const pkrBalanceAfterById = useMemo(() => {
     try {
       const all = [
-        ...expenses.map((x) => ({ id: x.id, date: x.date, deltaPKR: -x.amount })),
-        ...debits.map((x) => ({ id: x.id, date: x.date, deltaPKR: x.amount })),
-        ...loans.map((x) => ({ id: x.id, date: x.date, deltaPKR: -x.amount })),
-      ].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        ...expenses.map((x) => ({ 
+          id: x.id, 
+          date: x.date, 
+          createdAt: x.createdAt || x.updatedAt || '',
+          deltaPKR: -x.amount 
+        })),
+        ...debits.map((x) => ({ 
+          id: x.id, 
+          date: x.date, 
+          createdAt: x.createdAt || x.updatedAt || '',
+          deltaPKR: x.amount 
+        })),
+        ...loans.map((x) => ({ 
+          id: x.id, 
+          date: x.date, 
+          createdAt: x.createdAt || x.updatedAt || '',
+          deltaPKR: -x.amount 
+        })),
+      ].sort((a, b) => {
+        const dateDiff = new Date(a.date).getTime() - new Date(b.date).getTime();
+        if (dateDiff !== 0) return dateDiff;
+        // If same date, sort by createdAt to maintain chronological order
+        return (a.createdAt || '').localeCompare(b.createdAt || '');
+      });
       const map: Record<string, number> = {};
       let running = 0;
       for (const t of all) {
