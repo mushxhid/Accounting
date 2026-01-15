@@ -8,6 +8,8 @@ export interface Expense {
   date: string;
   currentBalance: number;
   description?: string;
+  receiptImageUrl?: string; // Cloudinary URL for payment screenshot
+  receiptImagePublicId?: string; // Cloudinary public ID for deletion
   createdBy?: UserIdentity;
   updatedBy?: UserIdentity;
   createdAt: string;
@@ -65,6 +67,7 @@ export interface ExpenseFormData {
   contactId?: string; // optional contact reference
   date: string;
   description: string;
+  receiptImageUrl?: string; // Cloudinary URL for payment screenshot
 }
 
 export interface DebitFormData {

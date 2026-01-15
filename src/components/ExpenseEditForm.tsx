@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Save, User, ChevronDown } from 'lucide-react';
+import { X, Save, User, ChevronDown, Image as ImageIcon } from 'lucide-react';
 import { Expense, Contact } from '../types';
 
 interface ExpenseEditFormProps {
@@ -51,11 +51,28 @@ const ExpenseEditForm: React.FC<ExpenseEditFormProps> = ({ expense, contacts, on
 
         <div className="p-6 space-y-6">
           {/* Expense Info (Read Only) */}
-          <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-            <p className="text-sm text-gray-600 dark:text-gray-400">Expense Name</p>
-            <p className="font-semibold text-gray-900 dark:text-white">{expense.name}</p>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">Amount</p>
-            <p className="font-semibold text-gray-900 dark:text-white">PKR {expense.amount.toLocaleString()}</p>
+          <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg space-y-3">
+            <div>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Expense Name</p>
+              <p className="font-semibold text-gray-900 dark:text-white">{expense.name}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Amount</p>
+              <p className="font-semibold text-gray-900 dark:text-white">PKR {expense.amount.toLocaleString()}</p>
+            </div>
+            {expense.receiptImageUrl && (
+              <div>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Receipt</p>
+                <button
+                  type="button"
+                  onClick={() => window.open(expense.receiptImageUrl, '_blank')}
+                  className="flex items-center gap-2 px-3 py-2 text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 border border-blue-300 dark:border-blue-600 rounded-md hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                >
+                  <ImageIcon size={16} />
+                  View Receipt
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Contact Selection */}

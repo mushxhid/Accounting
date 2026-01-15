@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Plus, Trash2, DollarSign, Filter, Download, ChevronUp, ChevronDown, X, Edit, ChevronRight } from 'lucide-react';
+import { Plus, Trash2, DollarSign, Filter, Download, ChevronUp, ChevronDown, X, Edit, ChevronRight, Image as ImageIcon } from 'lucide-react';
 import { Expense, Contact, Debit, Loan } from '../types';
 import { formatCurrency, exportToCSV, formatPKRDate, formatPKRTime } from '../utils/helpers';
 import { formatPKR, formatUSD } from '../utils/currencyConverter';
@@ -429,6 +429,19 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, debits, l
                       {!isLoadingRate && formatPKR(pkrBalanceAfterById[expense.id] ?? 0)}
                     </td>
                     <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-center" style={{ minWidth: '70px' }}>
+                      {expense.receiptImageUrl ? (
+                        <button
+                          onClick={() => window.open(expense.receiptImageUrl, '_blank')}
+                          className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 p-1 transition-colors"
+                          title="View receipt"
+                        >
+                          <ImageIcon size={18} />
+                        </button>
+                      ) : (
+                        <span className="text-gray-400 dark:text-gray-600">—</span>
+                      )}
+                    </td>
+                    <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-center" style={{ minWidth: '70px' }}>
                       <div className="flex items-center justify-center gap-1">
                         <button onClick={() => onEditExpense(expense)} className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 p-1" title="Edit">
                           <Edit size={14} />
@@ -449,7 +462,7 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, debits, l
                 </td>
                 <td className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-xs text-red-600 dark:text-red-400 text-right font-bold">-{formatPKR(totalExpensesPKR)}</td>
                 <td className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-xs text-red-600 dark:text-red-400 text-right font-bold">{formatUSD(totalExpenses)}</td>
-                <td colSpan={3} className="border border-gray-400 dark:border-gray-500"></td>
+                <td colSpan={4} className="border border-gray-400 dark:border-gray-500"></td>
               </tr>
             </tfoot>
           </table>

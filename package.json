@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "body-parser": "^2.2.0",
+    "cloudinary": "^2.8.0",
     "clsx": "^2.0.0",
     "date-fns": "^2.30.0",
     "express": "^5.1.0",

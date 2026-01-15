@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, X, Calendar, CreditCard, User, ChevronDown, FileText, RefreshCw } from 'lucide-react';
+import { Plus, X, Calendar, CreditCard, User, ChevronDown, FileText, RefreshCw, Upload, Image as ImageIcon } from 'lucide-react';
 import { ExpenseFormData, Contact } from '../types';
 import { fetchPKRtoUSDRate, convertPKRtoUSD, formatUSD, formatExchangeRate } from '../utils/currencyConverter';
+import { uploadImageToCloudinary } from '../utils/cloudinary';
 
 interface ExpenseFormProps {
   onSubmit: (data: ExpenseFormData) => void;
@@ -28,6 +29,9 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSubmit, onCancel, contacts 
   const [selectedContact, setSelectedContact] = useState<string>('');
   const [showContactDropdown, setShowContactDropdown] = useState(false);
   const [contactSearchQuery, setContactSearchQuery] = useState<string>('');
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   const validateForm = (): boolean => {
     const newErrors: Partial<ExpenseFormData> = {};
@@ -106,6 +110,59 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSubmit, onCancel, contacts 
       (contact.description && contact.description.toLowerCase().includes(query))
     );
   });
+
+  // Handle image selection and upload
+  const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file (PNG, JPG, GIF, etc.)');
+      return;
+    }
+
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      alert('Image size should be less than 10MB');
+      return;
+    }
+
+    setSelectedImage(file);
+    setUploadingImage(true);
+
+    // Create preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+
+    try {
+      // Upload to Cloudinary
+      const result = await uploadImageToCloudinary(file);
+      setFormData(prev => ({
+        ...prev,
+        receiptImageUrl: result.secure_url,
+      }));
+    } catch (error) {
+      console.error('Upload error:', error);
+      alert(error instanceof Error ? error.message : 'Failed to upload image. Please try again.');
+      setSelectedImage(null);
+      setImagePreview(null);
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setSelectedImage(null);
+    setImagePreview(null);
+    setFormData(prev => ({
+      ...prev,
+      receiptImageUrl: undefined,
+    }));
+  };
 
   // Fetch exchange rate on component mount
   useEffect(() => {
@@ -393,6 +450,74 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSubmit, onCancel, contacts 
             {errors.date && (
               <p className="mt-1 text-sm text-danger-600">{errors.date}</p>
             )}
+          </div>
+
+          {/* Payment Screenshot Upload */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Payment Screenshot (Optional)
+            </label>
+            <div className="space-y-3">
+              {!imagePreview ? (
+                <div className="flex items-center justify-center w-full">
+                  <label
+                    htmlFor="receipt-upload"
+                    className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors border-gray-300 dark:border-gray-600 ${
+                      uploadingImage ? 'opacity-50 cursor-not-allowed' : ''
+                    }`}
+                  >
+                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                      <Upload className="w-8 h-8 mb-2 text-gray-400" />
+                      <p className="mb-2 text-sm text-gray-500 dark:text-gray-400">
+                        <span className="font-semibold">Click to upload</span> or drag and drop
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        PNG, JPG, GIF up to 10MB
+                      </p>
+                    </div>
+                    <input
+                      id="receipt-upload"
+                      type="file"
+                      className="hidden"
+                      accept="image/*"
+                      onChange={handleImageSelect}
+                      disabled={uploadingImage}
+                    />
+                  </label>
+                </div>
+              ) : (
+                <div className="relative">
+                  <div className="border-2 border-gray-300 dark:border-gray-600 rounded-lg p-2 bg-gray-50 dark:bg-gray-700">
+                    <img
+                      src={imagePreview}
+                      alt="Receipt preview"
+                      className="max-w-full max-h-48 mx-auto rounded"
+                    />
+                  </div>
+                  {uploadingImage && (
+                    <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center rounded-lg">
+                      <div className="text-white text-sm font-medium">Uploading to Cloudinary...</div>
+                    </div>
+                  )}
+                  {!uploadingImage && (
+                    <button
+                      type="button"
+                      onClick={handleRemoveImage}
+                      className="mt-2 flex items-center gap-2 px-3 py-1.5 text-sm text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 border border-red-300 dark:border-red-600 rounded-md hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                    >
+                      <X size={16} />
+                      Remove Image
+                    </button>
+                  )}
+                </div>
+              )}
+              {uploadingImage && !imagePreview && (
+                <div className="text-center">
+                  <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600"></div>
+                  <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">Uploading image...</p>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Action Buttons */}

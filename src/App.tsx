@@ -183,6 +183,7 @@ const App: React.FC = () => {
       contactId: formData.contactId || undefined,
       date: formData.date,
       description: formData.description,
+      receiptImageUrl: formData.receiptImageUrl, // Cloudinary URL
       currentBalance: newBalance,
       createdBy: { uid: currentUserId, email: currentUserEmail },
       updatedBy: { uid: currentUserId, email: currentUserEmail },
