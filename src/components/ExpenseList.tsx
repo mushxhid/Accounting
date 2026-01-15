@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Plus, Trash2, DollarSign, Filter, Download, ChevronUp, ChevronDown, X } from 'lucide-react';
+import { Plus, Trash2, DollarSign, Filter, Download, ChevronUp, ChevronDown, X, Edit } from 'lucide-react';
 import { Expense, Contact } from '../types';
 import { formatCurrency, exportToCSV, formatPKRDate, formatPKRTime } from '../utils/helpers';
 import { formatPKR, formatUSD } from '../utils/currencyConverter';
@@ -10,9 +10,10 @@ interface ExpenseListProps {
   contacts: Contact[];
   onDelete: (id: string) => void;
   onAddExpense: () => void;
+  onEditExpense: (expense: Expense) => void;
 }
 
-const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, onDelete, onAddExpense }) => {
+const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, onDelete, onAddExpense, onEditExpense }) => {
   const [selectedMonth, setSelectedMonth] = useState<string>('all');
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
@@ -242,7 +243,7 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, onDelete,
                 <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-right text-xs font-bold text-gray-800 dark:text-gray-200">Amount (USD)</th>
                 <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-right text-xs font-bold text-gray-800 dark:text-gray-200">Balance (USD)</th>
                 <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-right text-xs font-bold text-gray-800 dark:text-gray-200">Balance (PKR)</th>
-                <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-center text-xs font-bold text-gray-800 dark:text-gray-200 w-16">Action</th>
+                <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-center text-xs font-bold text-gray-800 dark:text-gray-200 w-20">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -264,9 +265,14 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, onDelete,
                       {!isLoadingRate && formatPKR(pkrBalanceAfterById[expense.id] ?? 0)}
                     </td>
                     <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-center">
-                      <button onClick={() => onDelete(expense.id)} className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 p-1" title="Delete">
-                        <Trash2 size={14} />
-                      </button>
+                      <div className="flex items-center justify-center gap-1">
+                        <button onClick={() => onEditExpense(expense)} className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 p-1" title="Edit">
+                          <Edit size={14} />
+                        </button>
+                        <button onClick={() => onDelete(expense.id)} className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 p-1" title="Delete">
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );

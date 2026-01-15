@@ -11,6 +11,7 @@ import LoanList from './components/LoanList';
 import ContactsPage from './components/ContactsPage';
 import LogsPage from './components/LogsPage';
 import ExpenseForm from './components/ExpenseForm';
+import ExpenseEditForm from './components/ExpenseEditForm';
 import DebitForm from './components/DebitForm';
 import LoanForm from './components/LoanForm';
 import ContactForm from './components/ContactForm';
@@ -49,6 +50,7 @@ const App: React.FC = () => {
   const [editingRepayment, setEditingRepayment] = useState<{ loanId: string; repaymentId: string } | null>(null);
   const [showContactForm, setShowContactForm] = useState(false);
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [currentBalance, setCurrentBalance] = useState<number>(0); // Reset to 0
   const [currentUserEmail, setCurrentUserEmail] = useState<string>('');
   const [currentUserName, setCurrentUserName] = useState<string>('');
@@ -203,6 +205,26 @@ const App: React.FC = () => {
     } else { console.warn('[AddExpense] Missing orgId, write skipped'); }
     sendAudit({ action: 'create', entity: 'expense', details: { id: newExpense.id, name: newExpense.name, amount: newExpense.amount } });
     setShowExpenseForm(false);
+  };
+
+  const handleEditExpense = (updatedExpense: Expense) => {
+    const finalExpense = {
+      ...updatedExpense,
+      updatedBy: { uid: currentUserId, email: currentUserEmail },
+      updatedAt: getPKRTimestamp(),
+    };
+    setExpenses(prev => prev.map(e => e.id === finalExpense.id ? finalExpense : e));
+    if (orgId) {
+      dbUpsertExpense(orgId, finalExpense);
+      recordAuditEvent(orgId, {
+        action: 'update',
+        entity: 'expense',
+        actor: { email: currentUserEmail },
+        details: { id: finalExpense.id, name: finalExpense.name, contactId: finalExpense.contactId },
+        timestamp: getPKRTimestamp(),
+      });
+    }
+    setEditingExpense(null);
   };
 
   const handleAddDebit = (formData: DebitFormData) => {
@@ -632,6 +654,7 @@ const App: React.FC = () => {
             contacts={contacts}
             onDelete={handleDeleteExpense}
             onAddExpense={() => openExpenseForm()}
+            onEditExpense={(expense) => setEditingExpense(expense)}
           />
         ) : currentView === 'credits' ? (
           <DebitList 
@@ -705,6 +728,16 @@ const App: React.FC = () => {
           onSubmit={handleAddExpense}
           onCancel={closeExpenseForm}
           contacts={contacts}
+        />
+      )}
+
+      {/* Expense Edit Modal */}
+      {editingExpense && (
+        <ExpenseEditForm
+          expense={editingExpense}
+          contacts={contacts}
+          onSave={handleEditExpense}
+          onCancel={() => setEditingExpense(null)}
         />
       )}
 
