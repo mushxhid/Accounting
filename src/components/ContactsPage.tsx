@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Trash2, User, CreditCard, FileText, Edit, Search, X, DollarSign, TrendingUp, Calendar, ChevronUp, ChevronDown } from 'lucide-react';
+import { Plus, Trash2, User, Edit, Search, X, DollarSign, TrendingUp, Calendar, ChevronUp, ChevronDown } from 'lucide-react';
 import { Contact, Expense } from '../types';
 
 import { formatPKR, formatUSD } from '../utils/currencyConverter';

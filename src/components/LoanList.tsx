@@ -216,8 +216,6 @@ const LoanList: React.FC<LoanListProps> = ({ loans, onDelete, onAddLoan, onOpenR
             <tbody>
               {sortedLoans.map((loan, index) => {
                 const isOpen = !!expanded[loan.id];
-                const principalPKR = loan.principalAmount ?? loan.amount + (loan.repayments?.reduce((s, r) => s + r.amount, 0) ?? 0);
-                const paidRatio = principalPKR > 0 ? 1 - (loan.amount / principalPKR) : 0;
                 return (
                   <React.Fragment key={loan.id}>
                     <tr className={index % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-750'}>
