@@ -42,6 +42,7 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, debits, l
           date: x.date, 
           createdAt: x.createdAt || x.updatedAt || '',
           deltaPKR: -x.amount,
+          deltaUSD: -(x.usdAmount || 0),
           type: 'expense' as const
         })),
         ...debits.map((x) => ({ 
@@ -49,6 +50,7 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, debits, l
           date: x.date, 
           createdAt: x.createdAt || x.updatedAt || '',
           deltaPKR: x.amount,
+          deltaUSD: x.usdAmount || 0,
           type: 'debit' as const
         })),
         ...loans.map((x) => ({ 
@@ -56,6 +58,7 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, debits, l
           date: x.date, 
           createdAt: x.createdAt || x.updatedAt || '',
           deltaPKR: -x.amount,
+          deltaUSD: -(x.usdAmount || 0),
           type: 'loan' as const
         })),
       ].sort((a, b) => {
@@ -95,6 +98,80 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, debits, l
       return map;
     } catch (error) {
       console.error('[ExpenseList] Error calculating PKR balance:', error);
+      return {} as Record<string, number>;
+    }
+  }, [expenses, debits, loans]);
+
+  // Build exact USD balance-after map from all transactions
+  // This matches Dashboard calculation: totalIncomeUSD - totalExpensesUSD - totalLoansUSD
+  const usdBalanceAfterById = useMemo(() => {
+    try {
+      // Calculate final balance (matches Dashboard)
+      const totalIncomeUSD = debits.reduce((sum, d) => sum + (d.usdAmount || 0), 0);
+      const totalExpensesUSD = expenses.reduce((sum, e) => sum + (e.usdAmount || 0), 0);
+      const totalLoansUSD = loans.reduce((sum, l) => sum + (l.usdAmount || 0), 0);
+      const finalBalanceUSD = totalIncomeUSD - totalExpensesUSD - totalLoansUSD;
+
+      // Get all transactions sorted chronologically (same order as PKR calculation)
+      const all = [
+        ...expenses.map((x) => ({ 
+          id: x.id, 
+          date: x.date, 
+          createdAt: x.createdAt || x.updatedAt || '',
+          deltaUSD: -(x.usdAmount || 0),
+          type: 'expense' as const
+        })),
+        ...debits.map((x) => ({ 
+          id: x.id, 
+          date: x.date, 
+          createdAt: x.createdAt || x.updatedAt || '',
+          deltaUSD: x.usdAmount || 0,
+          type: 'debit' as const
+        })),
+        ...loans.map((x) => ({ 
+          id: x.id, 
+          date: x.date, 
+          createdAt: x.createdAt || x.updatedAt || '',
+          deltaUSD: -(x.usdAmount || 0),
+          type: 'loan' as const
+        })),
+      ].sort((a, b) => {
+        const dateDiff = new Date(a.date).getTime() - new Date(b.date).getTime();
+        if (dateDiff !== 0) return dateDiff;
+        // If same date, sort by createdAt to maintain chronological order
+        const createdAtDiff = (a.createdAt || '').localeCompare(b.createdAt || '');
+        if (createdAtDiff !== 0) return createdAtDiff;
+        // If same createdAt, prioritize debits (income) before expenses/loans
+        if (a.type === 'debit' && b.type !== 'debit') return -1;
+        if (a.type !== 'debit' && b.type === 'debit') return 1;
+        return 0;
+      });
+
+      // Calculate running balance from start (chronological order)
+      const map: Record<string, number> = {};
+      let running = 0;
+      for (const t of all) {
+        running += t.deltaUSD;
+        map[t.id] = running;
+      }
+
+      // Verify final balance matches Dashboard calculation
+      if (all.length > 0) {
+        const lastTransaction = all[all.length - 1];
+        const calculatedFinal = map[lastTransaction.id];
+        // If there's a discrepancy, it means we need to adjust (but this should match)
+        if (Math.abs(calculatedFinal - finalBalanceUSD) > 0.01) {
+          console.warn('[ExpenseList] USD balance mismatch:', {
+            calculated: calculatedFinal,
+            expected: finalBalanceUSD,
+            diff: calculatedFinal - finalBalanceUSD
+          });
+        }
+      }
+
+      return map;
+    } catch (error) {
+      console.error('[ExpenseList] Error calculating USD balance:', error);
       return {} as Record<string, number>;
     }
   }, [expenses, debits, loans]);
@@ -197,7 +274,8 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, debits, l
         'Account Number': expense.accountNumber,
         'Amount (PKR)': expense.amount.toFixed(2),
         'Amount (USD)': expense.usdAmount.toFixed(2),
-        'Balance After': expense.currentBalance.toFixed(2)
+        'Balance After (USD)': (usdBalanceAfterById[expense.id] ?? 0).toFixed(2),
+        'Balance After (PKR)': (pkrBalanceAfterById[expense.id] ?? 0).toFixed(2)
       };
     });
     const monthText = selectedMonth === 'all' ? 'All_Months' : selectedMonth.replace(/\s+/g, '_');
@@ -344,7 +422,9 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, debits, l
                     </td>
                     <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-red-600 dark:text-red-400 text-right font-medium whitespace-nowrap" style={{ minWidth: '95px' }}>-{formatPKR(expense.amount)}</td>
                     <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-red-600 dark:text-red-400 text-right whitespace-nowrap" style={{ minWidth: '95px' }}>{formatUSD(expense.usdAmount)}</td>
-                    <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-900 dark:text-white text-right font-medium whitespace-nowrap" style={{ minWidth: '95px' }}>{formatCurrency(expense.currentBalance)}</td>
+                    <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-900 dark:text-white text-right font-medium whitespace-nowrap" style={{ minWidth: '95px' }}>
+                      {formatCurrency(usdBalanceAfterById[expense.id] ?? 0)}
+                    </td>
                     <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-600 dark:text-gray-400 text-right whitespace-nowrap" style={{ minWidth: '95px' }}>
                       {!isLoadingRate && formatPKR(pkrBalanceAfterById[expense.id] ?? 0)}
                     </td>
