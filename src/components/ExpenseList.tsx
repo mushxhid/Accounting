@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { Plus, Trash2, DollarSign, Filter, Download, ChevronUp, ChevronDown, X, Edit, ChevronRight } from 'lucide-react';
-import { Expense, Contact } from '../types';
+import { Expense, Contact, Debit, Loan } from '../types';
 import { formatCurrency, exportToCSV, formatPKRDate, formatPKRTime } from '../utils/helpers';
 import { formatPKR, formatUSD } from '../utils/currencyConverter';
 import { sendAudit } from '../utils/audit';
@@ -8,12 +8,14 @@ import { sendAudit } from '../utils/audit';
 interface ExpenseListProps {
   expenses: Expense[];
   contacts: Contact[];
+  debits: Debit[];
+  loans: Loan[];
   onDelete: (id: string) => void;
   onAddExpense: () => void;
   onEditExpense: (expense: Expense) => void;
 }
 
-const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, onDelete, onAddExpense, onEditExpense }) => {
+const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, debits, loans, onDelete, onAddExpense, onEditExpense }) => {
   const [selectedMonth, setSelectedMonth] = useState<string>('all');
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
@@ -23,16 +25,13 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, onDelete,
   const [isLoadingRate] = useState<boolean>(false);
   const [dialogContent, setDialogContent] = useState<{ field: string; value: string; label: string } | null>(null);
 
-  // Build exact PKR balance-after map from all transactions in storage
+  // Build exact PKR balance-after map from all transactions
   const pkrBalanceAfterById = useMemo(() => {
     try {
-      const debits = JSON.parse(localStorage.getItem('amazon-agency-debits') || '[]');
-      const loans = JSON.parse(localStorage.getItem('amazon-agency-loans') || '[]');
-      const expensesLocal = expenses;
       const all = [
-        ...expensesLocal.map((x) => ({ id: x.id, date: x.date, deltaPKR: -x.amount })),
-        ...debits.map((x: any) => ({ id: x.id, date: x.date, deltaPKR: x.amount })),
-        ...loans.map((x: any) => ({ id: x.id, date: x.date, deltaPKR: -x.amount })),
+        ...expenses.map((x) => ({ id: x.id, date: x.date, deltaPKR: -x.amount })),
+        ...debits.map((x) => ({ id: x.id, date: x.date, deltaPKR: x.amount })),
+        ...loans.map((x) => ({ id: x.id, date: x.date, deltaPKR: -x.amount })),
       ].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
       const map: Record<string, number> = {};
       let running = 0;
@@ -44,7 +43,7 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, onDelete,
     } catch {
       return {} as Record<string, number>;
     }
-  }, [expenses]);
+  }, [expenses, debits, loans]);
 
   // Get unique months from expenses
   const months = expenses.reduce((acc, expense) => {

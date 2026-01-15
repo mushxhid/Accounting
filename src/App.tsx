@@ -652,6 +652,8 @@ const App: React.FC = () => {
           <ExpenseList 
             expenses={expenses}
             contacts={contacts}
+            debits={debits}
+            loans={loans}
             onDelete={handleDeleteExpense}
             onAddExpense={() => openExpenseForm()}
             onEditExpense={(expense) => setEditingExpense(expense)}
