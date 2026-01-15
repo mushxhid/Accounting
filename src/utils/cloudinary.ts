@@ -15,15 +15,34 @@ export interface CloudinaryUploadResult {
 export const uploadImageToCloudinary = async (
   file: File
 ): Promise<CloudinaryUploadResult> => {
+  // Access environment variables - Vite exposes only VITE_* prefixed variables
   const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
   const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
 
-  if (!cloudName || cloudName === 'your_cloud_name_here') {
-    throw new Error('Cloudinary Cloud Name not configured. Please add VITE_CLOUDINARY_CLOUD_NAME in .env file');
+  // Debug: Log available env vars in development (will be removed in production build)
+  if (import.meta.env.DEV) {
+    console.log('Cloudinary Config Check:', {
+      hasCloudName: !!cloudName,
+      hasUploadPreset: !!uploadPreset,
+      cloudNameLength: cloudName?.length || 0,
+      uploadPresetLength: uploadPreset?.length || 0,
+    });
   }
 
-  if (!uploadPreset || uploadPreset === 'expense_receipts') {
-    throw new Error('Cloudinary Upload Preset not configured. Please create and configure VITE_CLOUDINARY_UPLOAD_PRESET in .env file');
+  if (!cloudName || cloudName === 'your_cloud_name_here' || cloudName.trim() === '') {
+    throw new Error(
+      'Cloudinary Cloud Name not configured. ' +
+      'Please add VITE_CLOUDINARY_CLOUD_NAME environment variable. ' +
+      'For Vercel: Go to Project Settings > Environment Variables and add it for Production, Preview, and Development environments.'
+    );
+  }
+
+  if (!uploadPreset || uploadPreset.trim() === '') {
+    throw new Error(
+      'Cloudinary Upload Preset not configured. ' +
+      'Please add VITE_CLOUDINARY_UPLOAD_PRESET environment variable. ' +
+      'Make sure you have created the preset in Cloudinary Dashboard and added it to Vercel Environment Variables.'
+    );
   }
 
   // Validate file type
