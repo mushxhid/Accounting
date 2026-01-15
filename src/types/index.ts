@@ -4,6 +4,7 @@ export interface Expense {
   amount: number; // PKR amount
   usdAmount: number; // USD amount
   accountNumber: string;
+  contactId?: string; // optional contact reference
   date: string;
   currentBalance: number;
   description?: string;
@@ -61,6 +62,7 @@ export interface ExpenseFormData {
   amount: string; // PKR amount
   usdAmount: string; // USD amount
   accountNumber: string;
+  contactId?: string; // optional contact reference
   date: string;
   description: string;
 }

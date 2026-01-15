@@ -116,8 +116,14 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, onDelete,
   const totalExpenses = filteredExpenses.reduce((sum, expense) => sum + expense.usdAmount, 0);
   const totalExpensesPKR = filteredExpenses.reduce((sum, expense) => sum + expense.amount, 0);
 
-  const getContactName = (accountNumber: string) => {
-    const contact = contacts.find(c => c.accountNumber === accountNumber);
+  const getContactName = (expense: Expense) => {
+    // First try to find by contactId (more reliable)
+    if (expense.contactId) {
+      const contact = contacts.find(c => c.id === expense.contactId);
+      if (contact) return contact.name;
+    }
+    // Fallback to account number for old records
+    const contact = contacts.find(c => c.accountNumber === expense.accountNumber);
     return contact ? contact.name : null;
   };
 
@@ -127,7 +133,7 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, onDelete,
       return;
     }
     const csvData = filteredExpenses.map(expense => {
-      const contactName = getContactName(expense.accountNumber);
+      const contactName = getContactName(expense);
       return {
         Date: formatPKRDate(expense.date),
         Time: formatPKRTime(expense.date),
@@ -241,7 +247,7 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, onDelete,
             </thead>
             <tbody>
               {sortedExpenses.map((expense, index) => {
-                const contactName = getContactName(expense.accountNumber);
+                const contactName = getContactName(expense);
                 return (
                   <tr key={expense.id} className={index % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-750'}>
                     <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-600 dark:text-gray-400 text-center">{index + 1}</td>

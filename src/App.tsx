@@ -163,6 +163,7 @@ const App: React.FC = () => {
       amount: parseFloat(formData.amount), // PKR amount
       usdAmount: usdAmount, // USD amount
       accountNumber: formData.accountNumber,
+      contactId: formData.contactId || undefined,
       date: formData.date,
       description: formData.description,
       currentBalance: newBalance,

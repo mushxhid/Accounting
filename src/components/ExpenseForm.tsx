@@ -15,6 +15,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSubmit, onCancel, contacts 
     amount: '',
     usdAmount: '',
     accountNumber: '',
+    contactId: '',
     date: new Date().toISOString().split('T')[0],
     description: '',
   });
@@ -67,8 +68,8 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSubmit, onCancel, contacts 
   const handleContactSelect = (contact: Contact) => {
     setFormData(prev => ({
       ...prev,
-      accountNumber: contact.accountNumber
-      // Removed automatic name filling - let user type their own expense name
+      accountNumber: contact.accountNumber,
+      contactId: contact.id
     }));
     setSelectedContact(contact.id);
     setShowContactDropdown(false);
@@ -79,7 +80,8 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSubmit, onCancel, contacts 
     setFormData(prev => ({
       ...prev,
       name: '',
-      accountNumber: ''
+      accountNumber: '',
+      contactId: ''
     }));
     setShowContactDropdown(false);
     // Focus on the name field after clearing
