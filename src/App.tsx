@@ -125,6 +125,20 @@ const App: React.FC = () => {
     }
   }, [orgId, expenses, debits, loans]);
 
+  // Migrate old expenses: add contactId based on account number match
+  useEffect(() => {
+    if (!orgId || contacts.length === 0 || expenses.length === 0) return;
+    expenses.forEach(expense => {
+      if (!expense.contactId && expense.accountNumber) {
+        const matchingContact = contacts.find(c => c.accountNumber === expense.accountNumber);
+        if (matchingContact) {
+          const updatedExpense = { ...expense, contactId: matchingContact.id };
+          dbUpsertExpense(orgId, updatedExpense);
+        }
+      }
+    });
+  }, [orgId, contacts, expenses]);
+
   const handleReset = () => {
     if (window.confirm('Are you sure you want to reset everything? This will:\n\n• Set balance to $0\n• Delete all expenses\n• Delete all income\n• Delete all loans\n• Delete all contacts\n\nThis action cannot be undone.')) {
       setExpenses([]);
