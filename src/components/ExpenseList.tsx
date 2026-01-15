@@ -26,41 +26,75 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, debits, l
   const [dialogContent, setDialogContent] = useState<{ field: string; value: string; label: string } | null>(null);
 
   // Build exact PKR balance-after map from all transactions
+  // This matches Dashboard calculation: totalIncomePKR - totalExpensesPKR - totalLoansPKR
   const pkrBalanceAfterById = useMemo(() => {
     try {
+      // Calculate final balance (matches Dashboard)
+      const totalIncomePKR = debits.reduce((sum, d) => sum + (d.amount || 0), 0);
+      const totalExpensesPKR = expenses.reduce((sum, e) => sum + (e.amount || 0), 0);
+      const totalLoansPKR = loans.reduce((sum, l) => sum + (l.amount || 0), 0);
+      const finalBalancePKR = totalIncomePKR - totalExpensesPKR - totalLoansPKR;
+
+      // Get all transactions sorted chronologically
       const all = [
         ...expenses.map((x) => ({ 
           id: x.id, 
           date: x.date, 
           createdAt: x.createdAt || x.updatedAt || '',
-          deltaPKR: -x.amount 
+          deltaPKR: -x.amount,
+          type: 'expense' as const
         })),
         ...debits.map((x) => ({ 
           id: x.id, 
           date: x.date, 
           createdAt: x.createdAt || x.updatedAt || '',
-          deltaPKR: x.amount 
+          deltaPKR: x.amount,
+          type: 'debit' as const
         })),
         ...loans.map((x) => ({ 
           id: x.id, 
           date: x.date, 
           createdAt: x.createdAt || x.updatedAt || '',
-          deltaPKR: -x.amount 
+          deltaPKR: -x.amount,
+          type: 'loan' as const
         })),
       ].sort((a, b) => {
         const dateDiff = new Date(a.date).getTime() - new Date(b.date).getTime();
         if (dateDiff !== 0) return dateDiff;
         // If same date, sort by createdAt to maintain chronological order
-        return (a.createdAt || '').localeCompare(b.createdAt || '');
+        const createdAtDiff = (a.createdAt || '').localeCompare(b.createdAt || '');
+        if (createdAtDiff !== 0) return createdAtDiff;
+        // If same createdAt, prioritize debits (income) before expenses/loans
+        if (a.type === 'debit' && b.type !== 'debit') return -1;
+        if (a.type !== 'debit' && b.type === 'debit') return 1;
+        return 0;
       });
+
+      // Calculate running balance from start (chronological order)
       const map: Record<string, number> = {};
       let running = 0;
       for (const t of all) {
         running += t.deltaPKR;
         map[t.id] = running;
       }
+
+      // Verify final balance matches Dashboard calculation
+      if (all.length > 0) {
+        const lastTransaction = all[all.length - 1];
+        const calculatedFinal = map[lastTransaction.id];
+        // If there's a discrepancy, it means we need to adjust (but this should match)
+        if (Math.abs(calculatedFinal - finalBalancePKR) > 0.01) {
+          console.warn('[ExpenseList] PKR balance mismatch:', {
+            calculated: calculatedFinal,
+            expected: finalBalancePKR,
+            diff: calculatedFinal - finalBalancePKR
+          });
+        }
+      }
+
       return map;
-    } catch {
+    } catch (error) {
+      console.error('[ExpenseList] Error calculating PKR balance:', error);
       return {} as Record<string, number>;
     }
   }, [expenses, debits, loans]);
