@@ -27,6 +27,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSubmit, onCancel, contacts 
   const [errors, setErrors] = useState<Partial<ExpenseFormData>>({});
   const [selectedContact, setSelectedContact] = useState<string>('');
   const [showContactDropdown, setShowContactDropdown] = useState(false);
+  const [contactSearchQuery, setContactSearchQuery] = useState<string>('');
 
   const validateForm = (): boolean => {
     const newErrors: Partial<ExpenseFormData> = {};
@@ -95,10 +96,39 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSubmit, onCancel, contacts 
 
   const selectedContactData = contacts.find(c => c.id === selectedContact);
 
+  // Filter contacts based on search query
+  const filteredContacts = contacts.filter(contact => {
+    if (!contactSearchQuery.trim()) return true;
+    const query = contactSearchQuery.toLowerCase();
+    return (
+      contact.name.toLowerCase().includes(query) ||
+      contact.accountNumber.toLowerCase().includes(query) ||
+      (contact.description && contact.description.toLowerCase().includes(query))
+    );
+  });
+
   // Fetch exchange rate on component mount
   useEffect(() => {
     fetchExchangeRate();
   }, []);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (showContactDropdown && !target.closest('.contact-dropdown-container')) {
+        setShowContactDropdown(false);
+        setContactSearchQuery('');
+      }
+    };
+
+    if (showContactDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+  }, [showContactDropdown]);
 
   const fetchExchangeRate = async () => {
     setIsLoadingRate(true);
@@ -147,28 +177,59 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSubmit, onCancel, contacts 
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {/* Contact Selection */}
-          {contacts.length > 0 && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Select Contact (Optional)
-              </label>
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => setShowContactDropdown(!showContactDropdown)}
-                  className="w-full flex items-center justify-between p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 hover:border-gray-400 dark:hover:border-gray-500 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-colors"
-                >
-                  <div className="flex items-center space-x-3">
-                    <User className="text-gray-400" size={20} />
-                    <span className={selectedContactData ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'}>
-                      {selectedContactData ? selectedContactData.name : 'Choose a contact or enter manually'}
-                    </span>
-                  </div>
-                  <ChevronDown className={`text-gray-400 transition-transform ${showContactDropdown ? 'rotate-180' : ''}`} size={16} />
-                </button>
-                
-                {showContactDropdown && (
-                  <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Select Contact (Optional)
+            </label>
+            <div className="relative contact-dropdown-container">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowContactDropdown(!showContactDropdown);
+                  if (!showContactDropdown) {
+                    setContactSearchQuery('');
+                  }
+                }}
+                className="w-full flex items-center justify-between p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 hover:border-gray-400 dark:hover:border-gray-500 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-colors"
+              >
+                <div className="flex items-center space-x-3">
+                  <User className="text-gray-400" size={20} />
+                  <span className={selectedContactData ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'}>
+                    {selectedContactData ? selectedContactData.name : contacts.length > 0 ? 'Choose a contact or enter manually' : 'No contacts available - Enter manually'}
+                  </span>
+                </div>
+                <ChevronDown className={`text-gray-400 transition-transform ${showContactDropdown ? 'rotate-180' : ''}`} size={16} />
+              </button>
+              
+              {showContactDropdown && (
+                <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-hidden flex flex-col">
+                  {/* Search Input */}
+                  {contacts.length > 0 && (
+                    <div className="p-2 border-b border-gray-200 dark:border-gray-600">
+                      <input
+                        type="text"
+                        value={contactSearchQuery}
+                        onChange={(e) => setContactSearchQuery(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            // Select first filtered contact if available
+                            if (filteredContacts.length > 0) {
+                              handleContactSelect(filteredContacts[0]);
+                            }
+                          }
+                        }}
+                        placeholder="Search contacts..."
+                        className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
+                        onClick={(e) => e.stopPropagation()}
+                        autoFocus
+                      />
+                    </div>
+                  )}
+                  
+                  {/* Contact List */}
+                  <div className="overflow-y-auto max-h-48">
                     <button
                       type="button"
                       onClick={handleManualInput}
@@ -176,25 +237,35 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSubmit, onCancel, contacts 
                     >
                       + Enter manually
                     </button>
-                    {contacts.map((contact) => (
-                      <button
-                        key={contact.id}
-                        type="button"
-                        onClick={() => handleContactSelect(contact)}
-                        className="w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-600 border-b border-gray-100 dark:border-gray-600 last:border-b-0"
-                      >
-                        <div className="font-medium text-gray-900 dark:text-white">{contact.name}</div>
-                        <div className="text-sm text-gray-500 dark:text-gray-400">{contact.accountNumber}</div>
-                        {contact.description && (
-                          <div className="text-xs text-gray-400 dark:text-gray-500">{contact.description}</div>
-                        )}
-                      </button>
-                    ))}
+                    {filteredContacts.length > 0 ? (
+                      filteredContacts.map((contact) => (
+                        <button
+                          key={contact.id}
+                          type="button"
+                          onClick={() => handleContactSelect(contact)}
+                          className={`w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-600 border-b border-gray-100 dark:border-gray-600 last:border-b-0 ${selectedContact === contact.id ? 'bg-primary-50 dark:bg-primary-900/20' : ''}`}
+                        >
+                          <div className="font-medium text-gray-900 dark:text-white">{contact.name}</div>
+                          <div className="text-sm text-gray-500 dark:text-gray-400">{contact.accountNumber}</div>
+                          {contact.description && (
+                            <div className="text-xs text-gray-400 dark:text-gray-500">{contact.description}</div>
+                          )}
+                        </button>
+                      ))
+                    ) : contacts.length > 0 ? (
+                      <div className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 text-center">
+                        No contacts found matching "{contactSearchQuery}"
+                      </div>
+                    ) : (
+                      <div className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 text-center">
+                        No contacts available
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
+                </div>
+              )}
             </div>
-          )}
+          </div>
 
           {/* Expense Name */}
           <div>
