@@ -89,7 +89,7 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, onDelete,
     let comparison = 0;
     switch (sortBy) {
       case 'date':
-        comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+        comparison = new Date(a.date).getTime() - new Date(b.date).getTime();
         break;
       case 'amount':
         comparison = a.amount - b.amount;
@@ -129,8 +129,8 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, onDelete,
     const csvData = filteredExpenses.map(expense => {
       const contactName = getContactName(expense.accountNumber);
       return {
-        Date: formatPKRDate(expense.createdAt),
-        Time: formatPKRTime(expense.createdAt),
+        Date: formatPKRDate(expense.date),
+        Time: formatPKRTime(expense.date),
         'Expense Name': expense.name,
         Description: expense.description || '',
         Contact: contactName || '',
@@ -230,8 +230,8 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, onDelete,
                 return (
                   <tr key={expense.id} className={index % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-750'}>
                     <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-600 dark:text-gray-400 text-center">{index + 1}</td>
-                    <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-900 dark:text-white whitespace-nowrap">{formatPKRDate(expense.createdAt)}</td>
-                    <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap">{formatPKRTime(expense.createdAt)}</td>
+                    <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-900 dark:text-white whitespace-nowrap">{formatPKRDate(expense.date)}</td>
+                    <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap">{formatPKRTime(expense.date)}</td>
                     <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-900 dark:text-white font-medium">{expense.name}</td>
                     <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-600 dark:text-gray-400 max-w-[150px] truncate" title={expense.description || ''}>{expense.description || '—'}</td>
                     <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-900 dark:text-white">{contactName || '—'}</td>
