@@ -62,9 +62,11 @@ const ContactsPage: React.FC<ContactsPageProps> = ({
 
   // Get contact's financial data
   const getContactFinancialData = (contact: Contact) => {
-    const contactExpenses = expenses.filter(expense => expense.accountNumber === contact.accountNumber);
-    // Note: Debits (income) don't have accountNumber, so we'll show all income
-    // You can modify this logic if you want to associate income with specific contacts
+    // Filter by contactId first (more reliable), fallback to accountNumber for old records
+    const contactExpenses = expenses.filter(expense => 
+      expense.contactId === contact.id || 
+      (!expense.contactId && expense.accountNumber === contact.accountNumber)
+    );
     
     return {
       expenses: contactExpenses,
