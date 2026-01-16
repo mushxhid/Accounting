@@ -192,7 +192,7 @@ const LoanList: React.FC<LoanListProps> = ({ loans, onDelete, onAddLoan, onOpenR
         </div>
       ) : (
         <div className="overflow-x-auto border border-gray-400 dark:border-gray-500">
-          <table className="w-full border-collapse bg-white dark:bg-gray-800" style={{ minWidth: '900px' }}>
+          <table className="w-full border-collapse bg-white dark:bg-gray-800" style={{ minWidth: '1100px' }}>
             <thead>
               <tr className="bg-gray-200 dark:bg-gray-700">
                 <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-left text-xs font-bold text-gray-800 dark:text-gray-200 w-8">#</th>
@@ -208,6 +208,8 @@ const LoanList: React.FC<LoanListProps> = ({ loans, onDelete, onAddLoan, onOpenR
                   <div className="flex items-center justify-end">Amount (PKR)<SortIcon field="amount" /></div>
                 </th>
                 <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-right text-xs font-bold text-gray-800 dark:text-gray-200">Amount (USD)</th>
+                <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-right text-xs font-bold text-gray-800 dark:text-gray-200">Total Paid (PKR)</th>
+                <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-right text-xs font-bold text-gray-800 dark:text-gray-200">Total Paid (USD)</th>
                 <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-right text-xs font-bold text-gray-800 dark:text-gray-200">Balance (USD)</th>
                 <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-right text-xs font-bold text-gray-800 dark:text-gray-200">Balance (PKR)</th>
                 <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-center text-xs font-bold text-gray-800 dark:text-gray-200 w-20">Actions</th>
@@ -218,6 +220,12 @@ const LoanList: React.FC<LoanListProps> = ({ loans, onDelete, onAddLoan, onOpenR
                 const isOpen = !!expanded[loan.id];
                 // Check if loan is fully repaid (remaining amount is 0 or less)
                 const isCompleted = loan.amount <= 0.01 && loan.usdAmount <= 0.01;
+                // Calculate total repayments made
+                const totalPaidPKR = (loan.repayments || []).reduce((sum, r) => sum + (r.amount || 0), 0);
+                const totalPaidUSD = (loan.repayments || []).reduce((sum, r) => sum + (r.usdAmount || 0), 0);
+                // Calculate original loan amount (current remaining + total paid)
+                const originalLoanPKR = loan.amount + totalPaidPKR;
+                const originalLoanUSD = loan.usdAmount + totalPaidUSD;
                 return (
                   <React.Fragment key={loan.id}>
                     <tr className={index % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-750'}>
@@ -231,6 +239,12 @@ const LoanList: React.FC<LoanListProps> = ({ loans, onDelete, onAddLoan, onOpenR
                       <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-600 dark:text-gray-400 max-w-[150px] truncate" title={loan.description || ''}>{loan.description || '—'}</td>
                       <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-red-600 dark:text-red-400 text-right font-medium">-{formatPKR(loan.amount)}</td>
                       <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-red-600 dark:text-red-400 text-right">-{formatUSD(loan.usdAmount)}</td>
+                      <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-success-600 dark:text-success-400 text-right font-medium">
+                        {totalPaidPKR > 0 ? formatPKR(totalPaidPKR) : '—'}
+                      </td>
+                      <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-success-600 dark:text-success-400 text-right">
+                        {totalPaidUSD > 0 ? formatUSD(totalPaidUSD) : '—'}
+                      </td>
                       <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-900 dark:text-white text-right font-medium">{formatCurrency(loan.currentBalance)}</td>
                       <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-600 dark:text-gray-400 text-right">
                         {formatPKR(pkrBalanceAfterById[loan.id] ?? 0)}
@@ -253,7 +267,7 @@ const LoanList: React.FC<LoanListProps> = ({ loans, onDelete, onAddLoan, onOpenR
                     </tr>
                     {isOpen && loan.repayments && loan.repayments.length > 0 && (
                       <tr className="bg-gray-50 dark:bg-gray-700/30">
-                        <td colSpan={10} className="border border-gray-400 dark:border-gray-500 px-2 py-2">
+                        <td colSpan={12} className="border border-gray-400 dark:border-gray-500 px-2 py-2">
                           <div className="ml-4 space-y-1">
                             <div className="text-xs font-bold text-gray-700 dark:text-gray-300 mb-2">Repayments:</div>
                             {loan.repayments.map((r) => {
@@ -296,6 +310,12 @@ const LoanList: React.FC<LoanListProps> = ({ loans, onDelete, onAddLoan, onOpenR
                 </td>
                 <td className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-xs text-red-600 dark:text-red-400 text-right font-bold">-{formatPKR(totalAmountPKR)}</td>
                 <td className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-xs text-red-600 dark:text-red-400 text-right font-bold">-{formatUSD(totalAmount)}</td>
+                <td className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-xs text-success-600 dark:text-success-400 text-right font-bold">
+                  {formatPKR(filteredLoans.reduce((sum, loan) => sum + (loan.repayments || []).reduce((rSum, r) => rSum + (r.amount || 0), 0), 0))}
+                </td>
+                <td className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-xs text-success-600 dark:text-success-400 text-right font-bold">
+                  {formatUSD(filteredLoans.reduce((sum, loan) => sum + (loan.repayments || []).reduce((rSum, r) => rSum + (r.usdAmount || 0), 0), 0))}
+                </td>
                 <td colSpan={3} className="border border-gray-400 dark:border-gray-500"></td>
               </tr>
             </tfoot>
