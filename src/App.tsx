@@ -804,6 +804,8 @@ const App: React.FC = () => {
         ) : currentView === 'loans' ? (
           <LoanList 
             loans={loans}
+            expenses={expenses}
+            debits={debits}
             onDelete={handleDeleteLoan}
             onAddLoan={() => openLoanForm()}
             onOpenRepay={openRepayModal}

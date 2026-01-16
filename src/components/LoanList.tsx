@@ -1,12 +1,14 @@
 import React, { useMemo, useState } from 'react';
 import { Plus, Trash2, UserCheck, Filter, Download, Wallet, ChevronDown, ChevronRight, Edit3, X as XIcon, ChevronUp } from 'lucide-react';
-import { Loan } from '../types';
+import { Loan, Expense, Debit } from '../types';
 import { formatCurrency, exportToCSV, formatPKRDate, formatPKRTime } from '../utils/helpers';
 import { formatPKR, formatUSD } from '../utils/currencyConverter';
 import { sendAudit } from '../utils/audit';
 
 interface LoanListProps {
   loans: Loan[];
+  expenses: Expense[];
+  debits: Debit[];
   onDelete: (id: string) => void;
   onAddLoan: () => void;
   onOpenRepay: (loanId: string) => void;
@@ -14,7 +16,7 @@ interface LoanListProps {
   onDeleteRepayment?: (loanId: string, repaymentId: string) => void;
 }
 
-const LoanList: React.FC<LoanListProps> = ({ loans, onDelete, onAddLoan, onOpenRepay, onEditRepayment, onDeleteRepayment }) => {
+const LoanList: React.FC<LoanListProps> = ({ loans, expenses, debits, onDelete, onAddLoan, onOpenRepay, onEditRepayment, onDeleteRepayment }) => {
   const [selectedMonth, setSelectedMonth] = useState<string>('all');
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
@@ -22,27 +24,178 @@ const LoanList: React.FC<LoanListProps> = ({ loans, onDelete, onAddLoan, onOpenR
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
+  // Build exact PKR balance-after map from all transactions
   const pkrBalanceAfterById = useMemo(() => {
     try {
-      const loansLocal = loans;
-      const debits = JSON.parse(localStorage.getItem('amazon-agency-debits') || '[]');
-      const expenses = JSON.parse(localStorage.getItem('amazon-agency-expenses') || '[]');
-      const all = [
-        ...expenses.map((x: any) => ({ id: x.id, date: x.date, deltaPKR: -x.amount })),
-        ...debits.map((x: any) => ({ id: x.id, date: x.date, deltaPKR: x.amount })),
-        ...loansLocal.map((x) => ({ id: x.id, date: x.date, deltaPKR: -x.amount })),
-      ].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      // Calculate final balance (matches Dashboard)
+      const totalIncomePKR = debits.reduce((sum, d) => sum + (d.amount || 0), 0);
+      const totalExpensesPKR = expenses.reduce((sum, e) => sum + (e.amount || 0), 0);
+      const totalLoansPKR = loans.reduce((sum, l) => sum + (l.amount || 0), 0);
+      const finalBalancePKR = totalIncomePKR - totalExpensesPKR - totalLoansPKR;
+
+      // Get all transactions sorted chronologically
+      // Include loan repayments as positive transactions (they increase balance)
+      const all: Array<{ id: string; date: string; createdAt: string; deltaPKR: number; deltaUSD: number; type: 'expense' | 'debit' | 'loan' | 'repayment' }> = [
+        ...expenses.map((x) => ({ 
+          id: x.id, 
+          date: x.date, 
+          createdAt: x.createdAt || x.updatedAt || '',
+          deltaPKR: -x.amount,
+          deltaUSD: -(x.usdAmount || 0),
+          type: 'expense' as const
+        })),
+        ...debits.map((x) => ({ 
+          id: x.id, 
+          date: x.date, 
+          createdAt: x.createdAt || x.updatedAt || '',
+          deltaPKR: x.amount,
+          deltaUSD: x.usdAmount || 0,
+          type: 'debit' as const
+        })),
+        ...loans.flatMap((loan) => {
+          // Add loan as negative transaction
+          const loanTransaction = {
+            id: loan.id,
+            date: loan.date,
+            createdAt: loan.createdAt || loan.updatedAt || '',
+            deltaPKR: -loan.amount,
+            deltaUSD: -(loan.usdAmount || 0),
+            type: 'loan' as const
+          };
+          // Add all repayments as positive transactions (increase balance)
+          const repayments = (loan.repayments || []).map((r) => ({
+            id: r.id,
+            date: r.date,
+            createdAt: r.createdAt || r.updatedAt || '',
+            deltaPKR: r.amount,
+            deltaUSD: r.usdAmount || 0,
+            type: 'repayment' as const
+          }));
+          return [loanTransaction, ...repayments];
+        }),
+      ].sort((a, b) => {
+        const dateDiff = new Date(a.date).getTime() - new Date(b.date).getTime();
+        if (dateDiff !== 0) return dateDiff;
+        // If same date, sort by createdAt to maintain chronological order
+        const createdAtDiff = (a.createdAt || '').localeCompare(b.createdAt || '');
+        if (createdAtDiff !== 0) return createdAtDiff;
+        // If same createdAt, prioritize debits (income) and repayments before expenses/loans
+        if ((a.type === 'debit' || a.type === 'repayment') && (b.type !== 'debit' && b.type !== 'repayment')) return -1;
+        if ((a.type !== 'debit' && a.type !== 'repayment') && (b.type === 'debit' || b.type === 'repayment')) return 1;
+        return 0;
+      });
+
+      // Calculate running balance from start (chronological order)
       const map: Record<string, number> = {};
       let running = 0;
       for (const t of all) {
         running += t.deltaPKR;
         map[t.id] = running;
       }
+
+      // Verify final balance matches Dashboard calculation
+      if (all.length > 0) {
+        const lastTransaction = all[all.length - 1];
+        const calculatedFinal = map[lastTransaction.id];
+        if (Math.abs(calculatedFinal - finalBalancePKR) > 0.01) {
+          console.warn('[LoanList] PKR balance mismatch:', {
+            calculated: calculatedFinal,
+            expected: finalBalancePKR,
+            diff: calculatedFinal - finalBalancePKR
+          });
+        }
+      }
+
       return map;
-    } catch {
+    } catch (error) {
+      console.error('[LoanList] Error calculating PKR balance:', error);
       return {} as Record<string, number>;
     }
-  }, [loans]);
+  }, [loans, expenses, debits]);
+
+  // Build exact USD balance-after map from all transactions
+  const usdBalanceAfterById = useMemo(() => {
+    try {
+      // Calculate final balance (matches Dashboard)
+      const totalIncomeUSD = debits.reduce((sum, d) => sum + (d.usdAmount || 0), 0);
+      const totalExpensesUSD = expenses.reduce((sum, e) => sum + (e.usdAmount || 0), 0);
+      const totalLoansUSD = loans.reduce((sum, l) => sum + (l.usdAmount || 0), 0);
+      const finalBalanceUSD = totalIncomeUSD - totalExpensesUSD - totalLoansUSD;
+
+      // Get all transactions sorted chronologically (same order as PKR calculation)
+      const all: Array<{ id: string; date: string; createdAt: string; deltaUSD: number; type: 'expense' | 'debit' | 'loan' | 'repayment' }> = [
+        ...expenses.map((x) => ({ 
+          id: x.id, 
+          date: x.date, 
+          createdAt: x.createdAt || x.updatedAt || '',
+          deltaUSD: -(x.usdAmount || 0),
+          type: 'expense' as const
+        })),
+        ...debits.map((x) => ({ 
+          id: x.id, 
+          date: x.date, 
+          createdAt: x.createdAt || x.updatedAt || '',
+          deltaUSD: x.usdAmount || 0,
+          type: 'debit' as const
+        })),
+        ...loans.flatMap((loan) => {
+          // Add loan as negative transaction
+          const loanTransaction = {
+            id: loan.id,
+            date: loan.date,
+            createdAt: loan.createdAt || loan.updatedAt || '',
+            deltaUSD: -(loan.usdAmount || 0),
+            type: 'loan' as const
+          };
+          // Add all repayments as positive transactions (increase balance)
+          const repayments = (loan.repayments || []).map((r) => ({
+            id: r.id,
+            date: r.date,
+            createdAt: r.createdAt || r.updatedAt || '',
+            deltaUSD: r.usdAmount || 0,
+            type: 'repayment' as const
+          }));
+          return [loanTransaction, ...repayments];
+        }),
+      ].sort((a, b) => {
+        const dateDiff = new Date(a.date).getTime() - new Date(b.date).getTime();
+        if (dateDiff !== 0) return dateDiff;
+        // If same date, sort by createdAt to maintain chronological order
+        const createdAtDiff = (a.createdAt || '').localeCompare(b.createdAt || '');
+        if (createdAtDiff !== 0) return createdAtDiff;
+        // If same createdAt, prioritize debits (income) and repayments before expenses/loans
+        if ((a.type === 'debit' || a.type === 'repayment') && (b.type !== 'debit' && b.type !== 'repayment')) return -1;
+        if ((a.type !== 'debit' && a.type !== 'repayment') && (b.type === 'debit' || b.type === 'repayment')) return 1;
+        return 0;
+      });
+
+      // Calculate running balance from start (chronological order)
+      const map: Record<string, number> = {};
+      let running = 0;
+      for (const t of all) {
+        running += t.deltaUSD;
+        map[t.id] = running;
+      }
+
+      // Verify final balance matches Dashboard calculation
+      if (all.length > 0) {
+        const lastTransaction = all[all.length - 1];
+        const calculatedFinal = map[lastTransaction.id];
+        if (Math.abs(calculatedFinal - finalBalanceUSD) > 0.01) {
+          console.warn('[LoanList] USD balance mismatch:', {
+            calculated: calculatedFinal,
+            expected: finalBalanceUSD,
+            diff: calculatedFinal - finalBalanceUSD
+          });
+        }
+      }
+
+      return map;
+    } catch (error) {
+      console.error('[LoanList] Error calculating USD balance:', error);
+      return {} as Record<string, number>;
+    }
+  }, [loans, expenses, debits]);
 
   const months = useMemo(() => {
     const monthSet = new Set<string>();
@@ -249,7 +402,9 @@ const LoanList: React.FC<LoanListProps> = ({ loans, onDelete, onAddLoan, onOpenR
                       <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-success-600 dark:text-success-400 text-right">
                         {totalPaidUSD > 0 ? formatUSD(totalPaidUSD) : (isCompleted ? formatUSD(originalLoanUSD) : '—')}
                       </td>
-                      <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-900 dark:text-white text-right font-medium">{formatCurrency(loan.currentBalance)}</td>
+                      <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-900 dark:text-white text-right font-medium">
+                        {formatCurrency(usdBalanceAfterById[loan.id] ?? 0)}
+                      </td>
                       <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-600 dark:text-gray-400 text-right">
                         {formatPKR(pkrBalanceAfterById[loan.id] ?? 0)}
                       </td>
