@@ -726,6 +726,8 @@ const App: React.FC = () => {
         ) : currentView === 'credits' ? (
           <DebitList 
             debits={debits}
+            expenses={expenses}
+            loans={loans}
             onDelete={handleDeleteDebit}
             onAddDebit={() => openDebitForm()}
           />

@@ -1,44 +1,171 @@
 import React, { useMemo, useState } from 'react';
 import { Plus, Trash2, TrendingUp, Filter, Download, ChevronUp, ChevronDown, X } from 'lucide-react';
-import { Debit } from '../types';
+import { Debit, Expense, Loan } from '../types';
 import { formatCurrency, exportToCSV, formatPKRDate, formatPKRTime } from '../utils/helpers';
 import { formatPKR, formatUSD } from '../utils/currencyConverter';
 import { sendAudit } from '../utils/audit';
 
 interface DebitListProps {
   debits: Debit[];
+  expenses: Expense[];
+  loans: Loan[];
   onDelete: (id: string) => void;
   onAddDebit: () => void;
 }
 
-const DebitList: React.FC<DebitListProps> = ({ debits, onDelete, onAddDebit }) => {
+const DebitList: React.FC<DebitListProps> = ({ debits, expenses, loans, onDelete, onAddDebit }) => {
   const [selectedMonth, setSelectedMonth] = useState<string>('all');
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
   const [sortBy, setSortBy] = useState<'date' | 'amount' | 'source' | 'description'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
+  // Build exact PKR balance-after map from all transactions
   const pkrBalanceAfterById = useMemo(() => {
     try {
-      const debitsLocal = debits;
-      const loans = JSON.parse(localStorage.getItem('amazon-agency-loans') || '[]');
-      const expenses = JSON.parse(localStorage.getItem('amazon-agency-expenses') || '[]');
+      // Calculate final balance (matches Dashboard)
+      const totalIncomePKR = debits.reduce((sum, d) => sum + (d.amount || 0), 0);
+      const totalExpensesPKR = expenses.reduce((sum, e) => sum + (e.amount || 0), 0);
+      const totalLoansPKR = loans.reduce((sum, l) => sum + (l.amount || 0), 0);
+      const finalBalancePKR = totalIncomePKR - totalExpensesPKR - totalLoansPKR;
+
+      // Get all transactions sorted chronologically
       const all = [
-        ...expenses.map((x: any) => ({ id: x.id, date: x.date, deltaPKR: -x.amount })),
-        ...debitsLocal.map((x) => ({ id: x.id, date: x.date, deltaPKR: x.amount })),
-        ...loans.map((x: any) => ({ id: x.id, date: x.date, deltaPKR: -x.amount })),
-      ].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        ...expenses.map((x) => ({ 
+          id: x.id, 
+          date: x.date, 
+          createdAt: x.createdAt || x.updatedAt || '',
+          deltaPKR: -x.amount,
+          deltaUSD: -(x.usdAmount || 0),
+          type: 'expense' as const
+        })),
+        ...debits.map((x) => ({ 
+          id: x.id, 
+          date: x.date, 
+          createdAt: x.createdAt || x.updatedAt || '',
+          deltaPKR: x.amount,
+          deltaUSD: x.usdAmount || 0,
+          type: 'debit' as const
+        })),
+        ...loans.map((x) => ({ 
+          id: x.id, 
+          date: x.date, 
+          createdAt: x.createdAt || x.updatedAt || '',
+          deltaPKR: -x.amount,
+          deltaUSD: -(x.usdAmount || 0),
+          type: 'loan' as const
+        })),
+      ].sort((a, b) => {
+        const dateDiff = new Date(a.date).getTime() - new Date(b.date).getTime();
+        if (dateDiff !== 0) return dateDiff;
+        // If same date, sort by createdAt to maintain chronological order
+        const createdAtDiff = (a.createdAt || '').localeCompare(b.createdAt || '');
+        if (createdAtDiff !== 0) return createdAtDiff;
+        // If same createdAt, prioritize debits (income) before expenses/loans
+        if (a.type === 'debit' && b.type !== 'debit') return -1;
+        if (a.type !== 'debit' && b.type === 'debit') return 1;
+        return 0;
+      });
+
+      // Calculate running balance from start (chronological order)
       const map: Record<string, number> = {};
       let running = 0;
       for (const t of all) {
         running += t.deltaPKR;
         map[t.id] = running;
       }
+
+      // Verify final balance matches Dashboard calculation
+      if (all.length > 0) {
+        const lastTransaction = all[all.length - 1];
+        const calculatedFinal = map[lastTransaction.id];
+        if (Math.abs(calculatedFinal - finalBalancePKR) > 0.01) {
+          console.warn('[DebitList] PKR balance mismatch:', {
+            calculated: calculatedFinal,
+            expected: finalBalancePKR,
+            diff: calculatedFinal - finalBalancePKR
+          });
+        }
+      }
+
       return map;
-    } catch {
+    } catch (error) {
+      console.error('[DebitList] Error calculating PKR balance:', error);
       return {} as Record<string, number>;
     }
-  }, [debits]);
+  }, [debits, expenses, loans]);
+
+  // Build exact USD balance-after map from all transactions
+  const usdBalanceAfterById = useMemo(() => {
+    try {
+      // Calculate final balance (matches Dashboard)
+      const totalIncomeUSD = debits.reduce((sum, d) => sum + (d.usdAmount || 0), 0);
+      const totalExpensesUSD = expenses.reduce((sum, e) => sum + (e.usdAmount || 0), 0);
+      const totalLoansUSD = loans.reduce((sum, l) => sum + (l.usdAmount || 0), 0);
+      const finalBalanceUSD = totalIncomeUSD - totalExpensesUSD - totalLoansUSD;
+
+      // Get all transactions sorted chronologically (same order as PKR calculation)
+      const all = [
+        ...expenses.map((x) => ({ 
+          id: x.id, 
+          date: x.date, 
+          createdAt: x.createdAt || x.updatedAt || '',
+          deltaUSD: -(x.usdAmount || 0),
+          type: 'expense' as const
+        })),
+        ...debits.map((x) => ({ 
+          id: x.id, 
+          date: x.date, 
+          createdAt: x.createdAt || x.updatedAt || '',
+          deltaUSD: x.usdAmount || 0,
+          type: 'debit' as const
+        })),
+        ...loans.map((x) => ({ 
+          id: x.id, 
+          date: x.date, 
+          createdAt: x.createdAt || x.updatedAt || '',
+          deltaUSD: -(x.usdAmount || 0),
+          type: 'loan' as const
+        })),
+      ].sort((a, b) => {
+        const dateDiff = new Date(a.date).getTime() - new Date(b.date).getTime();
+        if (dateDiff !== 0) return dateDiff;
+        // If same date, sort by createdAt to maintain chronological order
+        const createdAtDiff = (a.createdAt || '').localeCompare(b.createdAt || '');
+        if (createdAtDiff !== 0) return createdAtDiff;
+        // If same createdAt, prioritize debits (income) before expenses/loans
+        if (a.type === 'debit' && b.type !== 'debit') return -1;
+        if (a.type !== 'debit' && b.type === 'debit') return 1;
+        return 0;
+      });
+
+      // Calculate running balance from start (chronological order)
+      const map: Record<string, number> = {};
+      let running = 0;
+      for (const t of all) {
+        running += t.deltaUSD;
+        map[t.id] = running;
+      }
+
+      // Verify final balance matches Dashboard calculation
+      if (all.length > 0) {
+        const lastTransaction = all[all.length - 1];
+        const calculatedFinal = map[lastTransaction.id];
+        if (Math.abs(calculatedFinal - finalBalanceUSD) > 0.01) {
+          console.warn('[DebitList] USD balance mismatch:', {
+            calculated: calculatedFinal,
+            expected: finalBalanceUSD,
+            diff: calculatedFinal - finalBalanceUSD
+          });
+        }
+      }
+
+      return map;
+    } catch (error) {
+      console.error('[DebitList] Error calculating USD balance:', error);
+      return {} as Record<string, number>;
+    }
+  }, [debits, expenses, loans]);
 
   const months = debits.reduce((acc, debit) => {
     const month = new Date(debit.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
@@ -204,7 +331,9 @@ const DebitList: React.FC<DebitListProps> = ({ debits, onDelete, onAddDebit }) =
                   <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-600 dark:text-gray-400 max-w-[150px] truncate" title={debit.description || ''}>{debit.description || '—'}</td>
                   <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-success-600 dark:text-success-400 text-right font-medium">+{formatPKR(debit.amount)}</td>
                   <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-success-600 dark:text-success-400 text-right">+{formatUSD(debit.usdAmount)}</td>
-                  <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-900 dark:text-white text-right font-medium">{formatCurrency(debit.currentBalance)}</td>
+                  <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-900 dark:text-white text-right font-medium">
+                    {formatCurrency(usdBalanceAfterById[debit.id] ?? 0)}
+                  </td>
                   <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-600 dark:text-gray-400 text-right">
                     {formatPKR(pkrBalanceAfterById[debit.id] ?? 0)}
                   </td>
