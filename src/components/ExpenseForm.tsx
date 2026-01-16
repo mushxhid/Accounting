@@ -3,6 +3,7 @@ import { Plus, X, Calendar, CreditCard, User, ChevronDown, FileText, RefreshCw, 
 import { ExpenseFormData, Contact } from '../types';
 import { fetchPKRtoUSDRate, convertPKRtoUSD, formatUSD, formatExchangeRate } from '../utils/currencyConverter';
 import { uploadImageToCloudinary } from '../utils/cloudinary';
+import { getPKRDateString } from '../utils/helpers';
 
 interface ExpenseFormProps {
   onSubmit: (data: ExpenseFormData) => void;
@@ -17,7 +18,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSubmit, onCancel, contacts 
     usdAmount: '',
     accountNumber: '',
     contactId: '',
-    date: new Date().toISOString().split('T')[0],
+    date: getPKRDateString(), // Use Pakistan timezone date
     description: '',
   });
 

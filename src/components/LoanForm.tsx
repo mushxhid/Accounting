@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, UserCheck, RefreshCw } from 'lucide-react';
 import { LoanFormData } from '../types';
 import { fetchPKRtoUSDRate, convertPKRtoUSD, formatUSD, formatExchangeRate } from '../utils/currencyConverter';
+import { getPKRDateString } from '../utils/helpers';
 
 interface LoanFormProps {
   onSubmit: (formData: LoanFormData) => void;
@@ -16,7 +17,7 @@ const LoanForm: React.FC<LoanFormProps> = ({ onSubmit, onCancel, initialData, ti
     partnerName: initialData?.partnerName ?? '',
     amount: initialData?.amount ?? '',
     usdAmount: initialData?.usdAmount ?? '',
-    date: initialData?.date ?? new Date().toISOString().split('T')[0],
+    date: initialData?.date ?? getPKRDateString(), // Use Pakistan timezone date
     description: initialData?.description ?? ''
   });
 

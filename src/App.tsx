@@ -254,8 +254,15 @@ const App: React.FC = () => {
         // Expense already exists (from sync), merge updates
         return prev.map(e => e.id === newExpense.id ? { ...newExpense, ...e } : e);
       }
-      // Add new expense and sort
-      return [...prev, newExpense].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      // Add new expense and sort by date (newest first), then by createdAt (newest first)
+      return [...prev, newExpense].sort((a, b) => {
+        const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
+        if (dateDiff !== 0) return dateDiff;
+        // If same date, sort by createdAt (newest first)
+        const aCreated = new Date(a.createdAt || a.updatedAt || '').getTime();
+        const bCreated = new Date(b.createdAt || b.updatedAt || '').getTime();
+        return bCreated - aCreated;
+      });
     });
     setCurrentBalance(newBalance);
     

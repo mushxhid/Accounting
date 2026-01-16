@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Plus, X, Calendar, CreditCard, RefreshCw } from 'lucide-react';
 import { DebitFormData } from '../types';
 import { fetchPKRtoUSDRate, convertPKRtoUSD, formatUSD, formatExchangeRate } from '../utils/currencyConverter';
+import { getPKRDateString } from '../utils/helpers';
 
 interface DebitFormProps {
   onSubmit: (data: DebitFormData) => void;
@@ -13,7 +14,7 @@ const DebitForm: React.FC<DebitFormProps> = ({ onSubmit, onCancel }) => {
     amount: '',
     usdAmount: '',
     source: '',
-    date: new Date().toISOString().split('T')[0],
+    date: getPKRDateString(), // Use Pakistan timezone date
     description: '',
   });
 

@@ -29,6 +29,16 @@ export const getPKRTimestamp = (): string => {
   return pkrTime.toISOString();
 };
 
+export const getPKRDateString = (): string => {
+  // Get current date in Pakistan timezone in YYYY-MM-DD format
+  const now = new Date();
+  const pkrDate = new Date(now.toLocaleString("en-US", {timeZone: "Asia/Karachi"}));
+  const year = pkrDate.getFullYear();
+  const month = String(pkrDate.getMonth() + 1).padStart(2, '0');
+  const day = String(pkrDate.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 export const formatPKRDateTime = (dateString: string): string => {
   const date = new Date(dateString);
   return date.toLocaleString('en-US', {

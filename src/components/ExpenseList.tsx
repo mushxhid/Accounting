@@ -239,12 +239,19 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, debits, l
     return true;
   });
 
-  // Sort expenses
+  // Sort expenses - default to newest first (by date descending, then createdAt descending)
   const sortedExpenses = [...filteredExpenses].sort((a, b) => {
     let comparison = 0;
     switch (sortBy) {
       case 'date':
-        comparison = new Date(a.date).getTime() - new Date(b.date).getTime();
+        // First compare by date
+        comparison = new Date(b.date).getTime() - new Date(a.date).getTime();
+        // If same date, sort by createdAt (newest first)
+        if (comparison === 0) {
+          const aCreated = new Date(a.createdAt || a.updatedAt || '').getTime();
+          const bCreated = new Date(b.createdAt || b.updatedAt || '').getTime();
+          comparison = bCreated - aCreated;
+        }
         break;
       case 'amount':
         comparison = a.amount - b.amount;
@@ -256,7 +263,13 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, debits, l
         comparison = a.accountNumber.localeCompare(b.accountNumber);
         break;
     }
-    return sortOrder === 'asc' ? comparison : -comparison;
+    // If sortBy is 'date' and sortOrder is 'desc' (default), newest is already first
+    // Otherwise apply sortOrder
+    if (sortBy !== 'date' || sortOrder === 'asc') {
+      return sortOrder === 'asc' ? comparison : -comparison;
+    }
+    // For date descending (default), comparison is already newest first
+    return comparison;
   });
 
   const handleSort = (field: 'date' | 'amount' | 'name' | 'accountNumber') => {
