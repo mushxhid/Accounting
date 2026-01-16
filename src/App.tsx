@@ -365,16 +365,31 @@ const App: React.FC = () => {
     setShowLoanForm(false);
   };
 
-  const handleRepayLoan = (loanId: string, data: LoanRepaymentFormData) => {
+  const handleRepayLoan = async (loanId: string, data: LoanRepaymentFormData) => {
     // Convert PKR to USD using the same conversion stored in forms: usdAmount is already provided/derived by form
     const usdAmount = parseFloat(data.usdAmount || '0');
     const pkrAmount = parseFloat(data.amount || '0');
-    if (usdAmount <= 0 || pkrAmount <= 0) return;
+    if (usdAmount <= 0 || pkrAmount <= 0) {
+      alert('Invalid repayment amount. Please enter a valid amount.');
+      return;
+    }
+
+    const loan = loans.find(l => l.id === loanId);
+    if (!loan) {
+      alert('Loan not found. Please refresh and try again.');
+      return;
+    }
+
+    // Check if repayment amount exceeds remaining loan amount
+    if (pkrAmount > loan.amount) {
+      alert(`Repayment amount (${pkrAmount.toFixed(2)} PKR) exceeds remaining loan amount (${loan.amount.toFixed(2)} PKR).`);
+      return;
+    }
 
     const newBalance = currentBalance + usdAmount; // repayments increase USD balance
-    setCurrentBalance(newBalance);
+    const newLoanAmount = Math.max(0, loan.amount - pkrAmount);
+    const newLoanUsdAmount = Math.max(0, loan.usdAmount - usdAmount);
 
-    let updatedLoanForDb: Loan | null = null;
     const repayment: LoanRepayment = {
       id: generateId(),
       loanId,
@@ -386,28 +401,57 @@ const App: React.FC = () => {
       createdAt: getPKRTimestamp(),
       updatedAt: getPKRTimestamp(),
     };
-    setLoans(prev => prev.map(loan => {
-      if (loan.id !== loanId) return loan;
-      const updatedLoan: Loan = {
-        ...loan,
-        amount: Math.max(0, loan.amount - pkrAmount),
-        usdAmount: Math.max(0, loan.usdAmount - usdAmount),
-        currentBalance: newBalance,
-        repayments: [...(loan.repayments || []), repayment],
-        updatedAt: getPKRTimestamp(),
-      };
-      updatedLoanForDb = updatedLoan;
-      return updatedLoan;
-    }));
+
+    const updatedLoan: Loan = {
+      ...loan,
+      amount: newLoanAmount,
+      usdAmount: newLoanUsdAmount,
+      currentBalance: newBalance,
+      repayments: [...(loan.repayments || []), repayment],
+      updatedAt: getPKRTimestamp(),
+    };
+
+    // Update local state first
+    setLoans(prev => prev.map(l => (l.id === loanId ? updatedLoan : l)));
+    setCurrentBalance(newBalance);
+
+    // Save to Firestore
     if (orgId) {
-      appendRepayment(orgId, loanId, repayment).catch(() => dbUpsertLoan(orgId, updatedLoanForDb!));
-      dbSetBalance(orgId, newBalance);
-    } else { console.warn('[RepayLoan] Missing orgId'); }
+      try {
+        // Try atomic append first
+        await appendRepayment(orgId, loanId, repayment);
+        await dbSetBalance(orgId, newBalance);
+        console.log('[RepayLoan] Repayment saved successfully via appendRepayment');
+      } catch (error) {
+        console.error('[RepayLoan] appendRepayment failed, falling back to dbUpsertLoan:', error);
+        // Fallback to full upsert if atomic append fails
+        try {
+          await dbUpsertLoan(orgId, updatedLoan);
+          await dbSetBalance(orgId, newBalance);
+          console.log('[RepayLoan] Repayment saved successfully via dbUpsertLoan');
+        } catch (fallbackError) {
+          console.error('[RepayLoan] dbUpsertLoan also failed:', fallbackError);
+          alert('Failed to save repayment to database. Please try again.');
+          // Revert local state on error
+          setLoans(prev => prev.map(l => (l.id === loanId ? loan : l)));
+          setCurrentBalance(currentBalance);
+          return;
+        }
+      }
+    } else {
+      console.warn('[RepayLoan] Missing orgId');
+      alert('Unable to save repayment. Please refresh the page and try again.');
+      // Revert local state
+      setLoans(prev => prev.map(l => (l.id === loanId ? loan : l)));
+      setCurrentBalance(currentBalance);
+      return;
+    }
+
+    // Record audit
     if (orgId) {
-      const loan = loans.find(l => l.id === loanId);
       recordAuditEvent(orgId, {
         action: 'repayment', entity: 'loan', actor: { email: currentUserEmail },
-        details: { loanId, name: loan?.partnerName, amountPKR: pkrAmount, amountUSD: usdAmount },
+        details: { loanId, name: loan.partnerName, amountPKR: pkrAmount, amountUSD: usdAmount },
         timestamp: getPKRTimestamp(),
       });
     }
@@ -835,8 +879,8 @@ const App: React.FC = () => {
           return (
             <LoanRepaymentForm
               key={`repay-${repayLoanId}`}
-              onSubmit={(data) => { 
-                handleRepayLoan(repayLoanId, data); 
+              onSubmit={async (data) => { 
+                await handleRepayLoan(repayLoanId, data); 
                 closeRepayModal(); 
               }}
               onCancel={closeRepayModal}

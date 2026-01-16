@@ -216,13 +216,18 @@ const LoanList: React.FC<LoanListProps> = ({ loans, onDelete, onAddLoan, onOpenR
             <tbody>
               {sortedLoans.map((loan, index) => {
                 const isOpen = !!expanded[loan.id];
+                // Check if loan is fully repaid (remaining amount is 0 or less)
+                const isCompleted = loan.amount <= 0.01 && loan.usdAmount <= 0.01;
                 return (
                   <React.Fragment key={loan.id}>
                     <tr className={index % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-750'}>
                       <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-600 dark:text-gray-400 text-center">{index + 1}</td>
                       <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-900 dark:text-white whitespace-nowrap">{formatPKRDate(loan.date)}</td>
                       <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap">{formatPKRTime(loan.date)}</td>
-                      <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-900 dark:text-white font-medium">{loan.partnerName}</td>
+                      <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-900 dark:text-white font-medium">
+                        {loan.partnerName}
+                        {isCompleted && <span className="ml-2 px-1.5 py-0.5 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 text-[10px] font-bold rounded">Completed</span>}
+                      </td>
                       <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-600 dark:text-gray-400 max-w-[150px] truncate" title={loan.description || ''}>{loan.description || '—'}</td>
                       <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-red-600 dark:text-red-400 text-right font-medium">-{formatPKR(loan.amount)}</td>
                       <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-red-600 dark:text-red-400 text-right">-{formatUSD(loan.usdAmount)}</td>
@@ -235,9 +240,11 @@ const LoanList: React.FC<LoanListProps> = ({ loans, onDelete, onAddLoan, onOpenR
                           <button onClick={() => setExpanded(prev => ({ ...prev, [loan.id]: !prev[loan.id] }))} className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 p-1" title={isOpen ? 'Hide repayments' : 'Show repayments'}>
                             {isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                           </button>
-                          <button onClick={() => onOpenRepay(loan.id)} className="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300 p-1" title="Record repayment">
-                            <Wallet size={14} />
-                          </button>
+                          {!isCompleted && (
+                            <button onClick={() => onOpenRepay(loan.id)} className="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300 p-1" title="Record repayment">
+                              <Wallet size={14} />
+                            </button>
+                          )}
                           <button onClick={() => onDelete(loan.id)} className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 p-1" title="Delete">
                             <Trash2 size={14} />
                           </button>
@@ -249,28 +256,31 @@ const LoanList: React.FC<LoanListProps> = ({ loans, onDelete, onAddLoan, onOpenR
                         <td colSpan={10} className="border border-gray-400 dark:border-gray-500 px-2 py-2">
                           <div className="ml-4 space-y-1">
                             <div className="text-xs font-bold text-gray-700 dark:text-gray-300 mb-2">Repayments:</div>
-                            {loan.repayments.map((r) => (
-                              <div key={r.id} className="flex items-center justify-between p-2 bg-white dark:bg-gray-800 rounded border border-gray-300 dark:border-gray-600 text-xs">
-                                <div>
-                                  <span className="font-medium text-gray-900 dark:text-white">{formatPKRDate(r.date)}</span>
-                                  {r.description && <span className="text-gray-600 dark:text-gray-400 ml-2">- {r.description}</span>}
+                            {loan.repayments.map((r) => {
+                              const isLoanCompleted = loan.amount <= 0.01 && loan.usdAmount <= 0.01;
+                              return (
+                                <div key={r.id} className="flex items-center justify-between p-2 bg-white dark:bg-gray-800 rounded border border-gray-300 dark:border-gray-600 text-xs">
+                                  <div>
+                                    <span className="font-medium text-gray-900 dark:text-white">{formatPKRDate(r.date)}</span>
+                                    {r.description && <span className="text-gray-600 dark:text-gray-400 ml-2">- {r.description}</span>}
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-success-600 dark:text-success-400 font-medium">+{formatPKR(r.amount)}</span>
+                                    <span className="text-gray-500 dark:text-gray-400">({formatUSD(r.usdAmount)})</span>
+                                    {!isLoanCompleted && onEditRepayment && (
+                                      <button onClick={() => onEditRepayment(loan.id, r.id)} className="text-blue-600 hover:text-blue-800 dark:text-blue-400 p-0.5" title="Edit">
+                                        <Edit3 size={12} />
+                                      </button>
+                                    )}
+                                    {!isLoanCompleted && onDeleteRepayment && (
+                                      <button onClick={() => onDeleteRepayment(loan.id, r.id)} className="text-red-600 hover:text-red-800 dark:text-red-400 p-0.5" title="Delete">
+                                        <XIcon size={12} />
+                                      </button>
+                                    )}
+                                  </div>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                  <span className="text-success-600 dark:text-success-400 font-medium">+{formatPKR(r.amount)}</span>
-                                  <span className="text-gray-500 dark:text-gray-400">({formatUSD(r.usdAmount)})</span>
-                                  {onEditRepayment && (
-                                    <button onClick={() => onEditRepayment(loan.id, r.id)} className="text-blue-600 hover:text-blue-800 dark:text-blue-400 p-0.5" title="Edit">
-                                      <Edit3 size={12} />
-                                    </button>
-                                  )}
-                                  {onDeleteRepayment && (
-                                    <button onClick={() => onDeleteRepayment(loan.id, r.id)} className="text-red-600 hover:text-red-800 dark:text-red-400 p-0.5" title="Delete">
-                                      <XIcon size={12} />
-                                    </button>
-                                  )}
-                                </div>
-                              </div>
-                            ))}
+                              );
+                            })}
                           </div>
                         </td>
                       </tr>
