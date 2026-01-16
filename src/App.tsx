@@ -367,11 +367,30 @@ const App: React.FC = () => {
 
   const handleRepayLoan = async (loanId: string, data: LoanRepaymentFormData) => {
     // Convert PKR to USD using the same conversion stored in forms: usdAmount is already provided/derived by form
-    const usdAmount = parseFloat(data.usdAmount || '0');
     const pkrAmount = parseFloat(data.amount || '0');
-    if (usdAmount <= 0 || pkrAmount <= 0) {
-      alert('Invalid repayment amount. Please enter a valid amount.');
+    let usdAmount = parseFloat(data.usdAmount || '0');
+    
+    // Validate PKR amount first (primary validation)
+    if (isNaN(pkrAmount) || pkrAmount <= 0) {
+      alert('Invalid repayment amount. Please enter a valid PKR amount.');
       return;
+    }
+    
+    // If USD amount is 0 or invalid (can happen with very small PKR amounts), recalculate it
+    if (usdAmount <= 0 || isNaN(usdAmount)) {
+      // Calculate USD from PKR using a standard rate (if form didn't provide valid USD)
+      // This handles edge cases where small PKR amounts round to 0 USD
+      const estimatedRate = pkrAmount > 0 ? (parseFloat(data.usdAmount || '0') / pkrAmount) : 280;
+      if (isNaN(estimatedRate) || estimatedRate <= 0) {
+        usdAmount = pkrAmount / 280; // Fallback to default rate
+      } else {
+        usdAmount = pkrAmount * estimatedRate;
+      }
+    }
+    
+    // Ensure minimum USD value for very small PKR amounts
+    if (usdAmount < 0.001) {
+      usdAmount = 0.001; // Set minimum to allow very small repayments
     }
 
     const loan = loans.find(l => l.id === loanId);
