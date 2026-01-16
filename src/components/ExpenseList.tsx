@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Plus, Trash2, DollarSign, Filter, Download, ChevronUp, ChevronDown, X, Edit, ChevronRight, Image as ImageIcon } from 'lucide-react';
+import { Plus, Trash2, DollarSign, Filter, Download, ChevronUp, ChevronDown, X, Edit, ChevronRight, Image as ImageIcon, Search } from 'lucide-react';
 import { Expense, Contact, Debit, Loan } from '../types';
 import { formatCurrency, exportToCSV, formatPKRDate, formatPKRTime } from '../utils/helpers';
 import { formatPKR, formatUSD } from '../utils/currencyConverter';
@@ -20,6 +20,7 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, debits, l
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
   const [selectedContact, setSelectedContact] = useState<string>('all');
+  const [searchTerm, setSearchTerm] = useState<string>('');
   const [sortBy, setSortBy] = useState<'date' | 'amount' | 'name' | 'accountNumber'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [isLoadingRate] = useState<boolean>(false);
@@ -194,6 +195,16 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, debits, l
     return acc;
   }, [] as Contact[]);
 
+  const getContactName = (expense: Expense) => {
+    // First try to find by contactId (more reliable)
+    if (expense.contactId && expense.contactId !== '') {
+      const contact = contacts.find(c => c.id === expense.contactId);
+      if (contact) return contact.name;
+    }
+    // No fallback - only show contact if explicitly linked
+    return null;
+  };
+
   // Filter expenses
   const filteredExpenses = expenses.filter(expense => {
     if (selectedMonth !== 'all') {
@@ -212,6 +223,18 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, debits, l
     if (endDate) {
       const e = new Date(endDate).setHours(23,59,59,999);
       if (t > e) return false;
+    }
+    // Search filter
+    if (searchTerm.trim()) {
+      const searchLower = searchTerm.toLowerCase();
+      const contactName = getContactName(expense)?.toLowerCase() || '';
+      const matchesName = expense.name.toLowerCase().includes(searchLower);
+      const matchesDescription = (expense.description || '').toLowerCase().includes(searchLower);
+      const matchesContact = contactName.includes(searchLower);
+      const matchesAccountNumber = expense.accountNumber.toLowerCase().includes(searchLower);
+      if (!matchesName && !matchesDescription && !matchesContact && !matchesAccountNumber) {
+        return false;
+      }
     }
     return true;
   });
@@ -247,16 +270,6 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, debits, l
 
   const totalExpenses = filteredExpenses.reduce((sum, expense) => sum + expense.usdAmount, 0);
   const totalExpensesPKR = filteredExpenses.reduce((sum, expense) => sum + expense.amount, 0);
-
-  const getContactName = (expense: Expense) => {
-    // First try to find by contactId (more reliable)
-    if (expense.contactId && expense.contactId !== '') {
-      const contact = contacts.find(c => c.id === expense.contactId);
-      if (contact) return contact.name;
-    }
-    // No fallback - only show contact if explicitly linked
-    return null;
-  };
 
   const handleExportCSV = () => {
     if (filteredExpenses.length === 0) {
@@ -336,6 +349,16 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, debits, l
       <div className="w-full overflow-x-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
         <div className="bg-white dark:bg-gray-800 border border-gray-400 dark:border-gray-500 p-3 flex flex-wrap items-center gap-3" style={{ minWidth: '1135px' }}>
         <Filter size={16} className="text-gray-500" />
+        <div className="relative flex items-center">
+          <Search className="absolute left-2 text-gray-400" size={16} />
+          <input
+            type="text"
+            placeholder="Search expenses..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white px-2 py-1 pl-8 text-sm w-48"
+          />
+        </div>
         <select value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)} className="border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white px-2 py-1 text-sm">
           <option value="all">All Months</option>
           {months.map((month) => (<option key={month} value={month}>{month}</option>))}
@@ -356,7 +379,8 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, debits, l
             setSelectedMonth('all'); 
             setSelectedContact('all'); 
             setStartDate(''); 
-            setEndDate(''); 
+            setEndDate('');
+            setSearchTerm(''); 
             setSortBy('date');
             setSortOrder('desc');
           }}
