@@ -769,6 +769,7 @@ const App: React.FC = () => {
             onAddContact={() => openContactForm()}
             onDeleteContact={handleDeleteContact}
             onEditContact={handleEditContact}
+            onNavigateToExpense={() => setCurrentView('expenses')}
           />
         )}
       </main>

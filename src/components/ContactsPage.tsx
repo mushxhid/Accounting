@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Trash2, User, Edit, Search, X, DollarSign, TrendingUp, Calendar, ChevronUp, ChevronDown } from 'lucide-react';
+import { Plus, Trash2, User, Edit, Search, X, ChevronUp, ChevronDown } from 'lucide-react';
 import { Contact, Expense } from '../types';
 
 import { formatPKR, formatUSD } from '../utils/currencyConverter';
@@ -11,6 +11,7 @@ interface ContactsPageProps {
   onAddContact: () => void;
   onDeleteContact: (id: string) => void;
   onEditContact: (contact: Contact) => void;
+  onNavigateToExpense?: (expenseId?: string) => void;
 }
 
 const ContactsPage: React.FC<ContactsPageProps> = ({ 
@@ -18,7 +19,8 @@ const ContactsPage: React.FC<ContactsPageProps> = ({
   expenses,
   onAddContact, 
   onDeleteContact,
-  onEditContact 
+  onEditContact,
+  onNavigateToExpense
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState<'name' | 'accountNumber' | 'createdAt'>('createdAt');
@@ -218,146 +220,109 @@ const ContactsPage: React.FC<ContactsPageProps> = ({
         </div>
       )}
 
-      {/* Contact Detail Modal */}
+      {/* Contact Detail Modal - Basic Excel Style */}
       {selectedContact && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-6xl max-h-[90vh] overflow-hidden">
-            <div className="flex items-center justify-between p-6 border-b border-gray-200">
-              <div className="flex items-center space-x-4">
-                <div className="p-3 bg-primary-100 rounded-lg">
-                  <User className="text-primary-600" size={24} />
-                </div>
+        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center p-4 z-50" onClick={closeContactDetail}>
+          <div className="bg-white dark:bg-gray-900 border-2 border-gray-400 dark:border-gray-600 shadow-lg w-full max-w-5xl max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+            {/* Header - Excel style */}
+            <div className="bg-gray-200 dark:bg-gray-700 border-b-2 border-gray-400 dark:border-gray-600 px-3 py-2 flex items-center justify-between flex-shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-3 h-3 bg-red-500 border border-gray-600"></div>
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900">{selectedContact.name}</h2>
-                  <p className="text-gray-600">{selectedContact.accountNumber}</p>
+                  <h2 className="text-sm font-bold text-gray-900 dark:text-white" style={{ fontFamily: 'Arial, sans-serif' }}>
+                    {selectedContact.name}
+                  </h2>
+                  <p className="text-xs text-gray-600 dark:text-gray-300">{selectedContact.accountNumber}</p>
                   {selectedContact.description && (
-                    <p className="text-sm text-gray-500 mt-1">{selectedContact.description}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">{selectedContact.description}</p>
                   )}
                 </div>
               </div>
               <button
                 onClick={closeContactDetail}
-                className="text-gray-400 hover:text-gray-600 transition-colors p-2 rounded-lg hover:bg-gray-100"
+                className="text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 px-2 py-1 border border-gray-400 dark:border-gray-500"
+                title="Close"
               >
-                <X size={24} />
+                <X size={16} />
               </button>
             </div>
 
-            <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
-              {/* Financial Summary */}
+            {/* Content - Excel cell style */}
+            <div className="flex-1 overflow-y-auto p-4 bg-white dark:bg-gray-900">
               {(() => {
                 const financialData = getContactFinancialData(selectedContact);
+                
+                if (financialData.expenses.length === 0) {
+                  return (
+                    <div className="text-center py-8 border border-gray-400 dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
+                      <p className="text-sm text-gray-700 dark:text-gray-300">No expenses recorded for this contact</p>
+                    </div>
+                  );
+                }
+
                 return (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    <div className="card">
-                      <div className="flex items-center">
-                        <div className="p-3 bg-danger-100 rounded-lg">
-                          <DollarSign className="text-danger-600" size={24} />
-                        </div>
-                        <div className="ml-4">
-                          <p className="text-sm font-medium text-gray-600">Total Expenses</p>
-                          <p className="text-2xl font-bold text-gray-900">
-                            {formatUSD(financialData.totalExpenses)}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="card">
-                      <div className="flex items-center">
-                        <div className="p-3 bg-success-100 rounded-lg">
-                          <TrendingUp className="text-success-600" size={24} />
-                        </div>
-                        <div className="ml-4">
-                          <p className="text-sm font-medium text-gray-600">Total Income</p>
-                          <p className="text-2xl font-bold text-gray-900">
-                            {formatUSD(financialData.totalIncome)}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="card">
-                      <div className="flex items-center">
-                        <div className={`p-3 rounded-lg ${financialData.netAmount >= 0 ? 'bg-success-100' : 'bg-danger-100'}`}>
-                          <DollarSign className={financialData.netAmount >= 0 ? 'text-success-600' : 'text-danger-600'} size={24} />
-                        </div>
-                        <div className="ml-4">
-                          <p className="text-sm font-medium text-gray-600">Net Amount</p>
-                          <p className={`text-2xl font-bold ${financialData.netAmount >= 0 ? 'text-success-600' : 'text-danger-600'}`}>
-                            {formatUSD(Math.abs(financialData.netAmount))}
-                          </p>
-                          <p className="text-sm text-gray-500">
-                            {financialData.netAmount >= 0 ? 'Net Income' : 'Net Expense'}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
+                  <div className="border border-gray-400 dark:border-gray-600 bg-white dark:bg-gray-800">
+                    <table className="w-full border-collapse" style={{ minWidth: '600px' }}>
+                      <thead>
+                        <tr className="bg-gray-200 dark:bg-gray-700">
+                          <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-left text-xs font-bold text-gray-800 dark:text-gray-200 w-8">#</th>
+                          <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-left text-xs font-bold text-gray-800 dark:text-gray-200">Date</th>
+                          <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-left text-xs font-bold text-gray-800 dark:text-gray-200">Expense Name</th>
+                          <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-left text-xs font-bold text-gray-800 dark:text-gray-200">Description</th>
+                          <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-right text-xs font-bold text-gray-800 dark:text-gray-200">Amount (PKR)</th>
+                          <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-right text-xs font-bold text-gray-800 dark:text-gray-200">Amount (USD)</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {financialData.expenses.map((expense, idx) => (
+                          <tr
+                            key={expense.id}
+                            className={`cursor-pointer ${idx % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-750'} hover:bg-blue-50 dark:hover:bg-blue-900/20`}
+                            onClick={() => {
+                              if (onNavigateToExpense) {
+                                onNavigateToExpense();
+                                closeContactDetail();
+                              }
+                            }}
+                            title="Click to view in Expenses page"
+                          >
+                            <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-600 dark:text-gray-400 text-center">{idx + 1}</td>
+                            <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-900 dark:text-white whitespace-nowrap">{formatPKRDate(expense.date)}</td>
+                            <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-900 dark:text-white font-medium">{expense.name}</td>
+                            <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-600 dark:text-gray-400 max-w-[200px] truncate" title={expense.description || ''}>{expense.description || '—'}</td>
+                            <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-red-600 dark:text-red-400 text-right font-medium">-{formatPKR(expense.amount)}</td>
+                            <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-red-600 dark:text-red-400 text-right">-{formatUSD(expense.usdAmount)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                      <tfoot>
+                        <tr className="bg-gray-200 dark:bg-gray-700 font-bold">
+                          <td colSpan={4} className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-xs text-gray-800 dark:text-gray-200 text-right">
+                            Total ({financialData.expenses.length} expenses):
+                          </td>
+                          <td className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-xs text-red-600 dark:text-red-400 text-right font-bold">
+                            -{formatPKR(financialData.expenses.reduce((sum, exp) => sum + exp.amount, 0))}
+                          </td>
+                          <td className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-xs text-red-600 dark:text-red-400 text-right font-bold">
+                            -{formatUSD(financialData.totalExpenses)}
+                          </td>
+                        </tr>
+                      </tfoot>
+                    </table>
                   </div>
                 );
               })()}
-
-              {/* Expenses List */}
-              {(() => {
-                const financialData = getContactFinancialData(selectedContact);
-                return (
-                  <div className="space-y-6">
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                        <DollarSign className="text-danger-600 mr-2" size={20} />
-                        Expenses ({financialData.expenses.length})
-                      </h3>
-                      {financialData.expenses.length === 0 ? (
-                        <div className="text-center py-8 bg-gray-50 rounded-lg">
-                          <DollarSign className="mx-auto text-gray-400 mb-2" size={32} />
-                          <p className="text-gray-600">No expenses recorded for this contact</p>
-                        </div>
-                      ) : (
-                        <div className="space-y-3">
-                          {financialData.expenses.map((expense) => (
-                            <div key={expense.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                              <div className="flex items-center space-x-4">
-                                <div className="p-2 bg-danger-100 rounded-lg">
-                                  <DollarSign className="text-danger-600" size={16} />
-                                </div>
-                                <div>
-                                  <p className="font-medium text-gray-900">{expense.name}</p>
-                                  <p className="text-sm text-gray-500">{expense.description || '—'}</p>
-                                  <p className="text-xs text-gray-400 flex items-center mt-1">
-                                    <Calendar size={12} className="mr-1" />
-                                    {formatPKRDate(expense.createdAt)}
-                                  </p>
-                                </div>
-                              </div>
-                              <div className="text-right">
-                                <p className="font-bold text-danger-600">
-                                  -{formatUSD(expense.usdAmount)}
-                                </p>
-                                <p className="text-sm text-gray-500">
-                                  {formatPKR(expense.amount)}
-                                </p>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                                         {/* Income List */}
-                     <div>
-                       <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                         <TrendingUp className="text-success-600 mr-2" size={20} />
-                         Income
-                       </h3>
-                       <div className="text-center py-8 bg-gray-50 rounded-lg">
-                         <TrendingUp className="mx-auto text-gray-400 mb-2" size={32} />
-                         <p className="text-gray-600">Income is not currently associated with contacts</p>
-                         <p className="text-sm text-gray-500 mt-1">All income is shown in the Income section</p>
-                       </div>
-                     </div>
-                  </div>
-                );
-              })()}
+            </div>
+            
+            {/* Footer - Excel style */}
+            <div className="bg-gray-200 dark:bg-gray-700 border-t-2 border-gray-400 dark:border-gray-600 px-3 py-2 flex justify-end gap-2 flex-shrink-0">
+              <button
+                onClick={closeContactDetail}
+                className="px-4 py-1.5 text-xs font-medium bg-white dark:bg-gray-800 border-2 border-gray-400 dark:border-gray-500 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-1 focus:ring-gray-400"
+                style={{ fontFamily: 'Arial, sans-serif' }}
+              >
+                Close
+              </button>
             </div>
           </div>
         </div>
