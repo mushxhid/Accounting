@@ -55,10 +55,15 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSubmit, onCancel, contacts 
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (validateForm()) {
-      onSubmit(formData);
+      try {
+        onSubmit(formData);
+      } catch (error) {
+        console.error('Error submitting expense:', error);
+        alert('Failed to save expense. Please try again.');
+      }
     }
   };
 
@@ -145,8 +150,14 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSubmit, onCancel, contacts 
       }));
     } catch (error) {
       console.error('Upload error:', error);
-      alert(error instanceof Error ? error.message : 'Failed to upload image. Please try again.');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to upload image. Please try again.';
+      alert(errorMessage);
       setImagePreview(null);
+      // Clear the receipt URL from form data so form can still be submitted without image
+      setFormData(prev => ({
+        ...prev,
+        receiptImageUrl: undefined,
+      }));
     } finally {
       setUploadingImage(false);
     }
