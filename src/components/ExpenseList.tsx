@@ -395,7 +395,7 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, debits, l
                 <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-right text-xs font-bold text-gray-800 dark:text-gray-200 cursor-pointer hover:bg-gray-300 dark:hover:bg-gray-600" onClick={() => handleSort('amount')} style={{ minWidth: '95px' }}>
                   <div className="flex items-center justify-end">Amount (PKR)<SortIcon field="amount" /></div>
                 </th>
-                <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-right text-xs font-bold text-gray-800 dark:text-gray-200" style={{ minWidth: '95px' }}>Amount (USD)</th>
+                <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-right text-xs font-bold text-gray-800 dark:text-gray-200" style={{ minWidth: '85px' }}>Amount (USD)</th>
                 <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-right text-xs font-bold text-gray-800 dark:text-gray-200" style={{ minWidth: '95px' }}>Balance (USD)</th>
                 <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-right text-xs font-bold text-gray-800 dark:text-gray-200" style={{ minWidth: '95px' }}>Balance (PKR)</th>
                 <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-center text-xs font-bold text-gray-800 dark:text-gray-200" style={{ minWidth: '70px' }}>Actions</th>
@@ -421,7 +421,7 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, debits, l
                       <TruncatedCell text={expense.accountNumber} maxLength={9} field={`account-${expense.id}`} label="Account Number" />
                     </td>
                     <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-red-600 dark:text-red-400 text-right font-medium whitespace-nowrap" style={{ minWidth: '95px' }}>-{formatPKR(expense.amount)}</td>
-                    <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-red-600 dark:text-red-400 text-right whitespace-nowrap" style={{ minWidth: '95px' }}>{formatUSD(expense.usdAmount)}</td>
+                    <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-red-600 dark:text-red-400 text-right whitespace-nowrap" style={{ minWidth: '85px' }}>{formatUSD(expense.usdAmount)}</td>
                     <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-900 dark:text-white text-right font-medium whitespace-nowrap" style={{ minWidth: '95px' }}>
                       {formatCurrency(usdBalanceAfterById[expense.id] ?? 0)}
                     </td>
