@@ -387,7 +387,7 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, debits, l
                 <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-left text-xs font-bold text-gray-800 dark:text-gray-200 cursor-pointer hover:bg-gray-300 dark:hover:bg-gray-600" onClick={() => handleSort('name')} style={{ minWidth: '130px' }}>
                   <div className="flex items-center">Expense Name<SortIcon field="name" /></div>
                 </th>
-                <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-left text-xs font-bold text-gray-800 dark:text-gray-200" style={{ minWidth: '85px' }}>Description</th>
+                <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-left text-xs font-bold text-gray-800 dark:text-gray-200" style={{ minWidth: '75px' }}>Description</th>
                 <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-left text-xs font-bold text-gray-800 dark:text-gray-200" style={{ minWidth: '85px' }}>Contact</th>
                 <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-left text-xs font-bold text-gray-800 dark:text-gray-200 cursor-pointer hover:bg-gray-300 dark:hover:bg-gray-600" onClick={() => handleSort('accountNumber')} style={{ minWidth: '75px' }}>
                   <div className="flex items-center">Account<SortIcon field="accountNumber" /></div>
@@ -411,7 +411,7 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, debits, l
                     <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-900 dark:text-white font-medium whitespace-nowrap" style={{ minWidth: '130px' }}>
                       <TruncatedCell text={expense.name} maxLength={22} field={`name-${expense.id}`} label="Expense Name" />
                     </td>
-                    <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap" style={{ minWidth: '85px' }}>
+                    <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap" style={{ minWidth: '75px' }}>
                       <TruncatedCell text={expense.description || ''} maxLength={16} field={`desc-${expense.id}`} label="Description" />
                     </td>
                     <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-900 dark:text-white whitespace-nowrap" style={{ minWidth: '85px' }}>
