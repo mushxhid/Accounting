@@ -9,9 +9,31 @@ const docRef = (orgId: string, name: 'expenses' | 'debits' | 'loans' | 'contacts
 const metaDocRef = (orgId: string, name: string) => doc(db, 'orgs', orgId, 'meta', name);
 
 export const upsertExpense = async (orgId: string, expense: Expense) => {
-  if (!orgId) return;
+  if (!orgId) {
+    throw new Error('orgId is required to save expense');
+  }
   console.log('[DB] upsertExpense', orgId, expense.id);
-  await setDoc(docRef(orgId, 'expenses', expense.id), { ...expense, _updatedAt: serverTimestamp() }, { merge: true });
+  
+  try {
+    // Clean up the expense object - remove undefined fields for Firestore
+    const expenseData: any = {
+      ...expense,
+      _updatedAt: serverTimestamp(),
+    };
+    
+    // Remove undefined fields (Firestore doesn't handle undefined well)
+    Object.keys(expenseData).forEach(key => {
+      if (expenseData[key] === undefined) {
+        delete expenseData[key];
+      }
+    });
+    
+    await setDoc(docRef(orgId, 'expenses', expense.id), expenseData, { merge: true });
+    console.log('[DB] upsertExpense success', orgId, expense.id);
+  } catch (error) {
+    console.error('[DB] upsertExpense error:', error);
+    throw error;
+  }
 };
 
 export const deleteExpense = async (orgId: string, id: string) => {

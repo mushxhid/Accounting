@@ -204,12 +204,28 @@ const App: React.FC = () => {
     // Save to Firestore first, then update local state
     if (orgId) {
       try {
+        console.log('[AddExpense] Attempting to save to Firestore...', { orgId, expenseId: newExpense.id });
         await dbUpsertExpense(orgId, newExpense);
-        await dbSetBalance(orgId, newBalance);
         console.log('[AddExpense] Expense saved to Firestore successfully');
+        
+        // Update balance separately
+        try {
+          await dbSetBalance(orgId, newBalance);
+          console.log('[AddExpense] Balance updated successfully');
+        } catch (balanceError) {
+          console.warn('[AddExpense] Balance update failed (non-critical):', balanceError);
+          // Continue even if balance update fails
+        }
       } catch (error) {
         console.error('[AddExpense] Error saving to Firestore:', error);
-        alert('Failed to save expense to database. Please try again.');
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        console.error('[AddExpense] Full error details:', {
+          error,
+          errorMessage,
+          expense: newExpense,
+          orgId
+        });
+        alert(`Failed to save expense to database: ${errorMessage}. Please check console for details and try again.`);
         return;
       }
     } else { 
