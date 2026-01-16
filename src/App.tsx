@@ -40,7 +40,14 @@ const App: React.FC = () => {
   const [debits, setDebits] = useState<Debit[]>([]);
   const [loans, setLoans] = useState<Loan[]>([]);
   const [contacts, setContacts] = useState<Contact[]>([]);
-  const [currentView, setCurrentView] = useState<'dashboard' | 'expenses' | 'credits' | 'loans' | 'contacts' | 'logs'>('dashboard');
+  // Initialize currentView from localStorage or default to 'dashboard'
+  const [currentView, setCurrentView] = useState<'dashboard' | 'expenses' | 'credits' | 'loans' | 'contacts' | 'logs'>(() => {
+    const savedView = localStorage.getItem('currentView') as typeof currentView | null;
+    if (savedView && ['dashboard', 'expenses', 'credits', 'loans', 'contacts', 'logs'].includes(savedView)) {
+      return savedView;
+    }
+    return 'dashboard';
+  });
   const [audit, setAudit] = useState<any[]>([]);
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
   const [showExpenseForm, setShowExpenseForm] = useState(false);
@@ -57,6 +64,11 @@ const App: React.FC = () => {
   const [currentUserId, setCurrentUserId] = useState<string>('');
   const [orgId, setOrgId] = useState<string>('');
   const [authReady, setAuthReady] = useState<boolean>(false);
+
+  // Save currentView to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('currentView', currentView);
+  }, [currentView]);
 
   useEffect(() => {
     if (authReady) {
