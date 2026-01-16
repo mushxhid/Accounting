@@ -827,47 +827,71 @@ const App: React.FC = () => {
         />
       )}
 
-      {repayLoanId && (
-        (() => {
-          const loan = loans.find(l => l.id === repayLoanId);
-          if (!loan) return null;
-          if (!editingRepayment) {
-            return (
-              <LoanRepaymentForm
-                onSubmit={(data) => { handleRepayLoan(repayLoanId, data); closeRepayModal(); }}
-                onCancel={closeRepayModal}
-                maxPKR={loan.amount}
-              />
-            );
-          }
-          const repayment = loan.repayments?.find(r => r.id === editingRepayment.repaymentId);
-          if (!repayment) return null;
+      {repayLoanId && (() => {
+        const loan = loans.find(l => l.id === repayLoanId);
+        if (!loan) return null;
+        
+        if (!editingRepayment) {
           return (
             <LoanRepaymentForm
-              onSubmit={(data) => {
-                const oldUsd = repayment.usdAmount;
-                const newUsd = parseFloat(data.usdAmount || '0');
-                const oldPkr = repayment.amount;
-                const newPkr = parseFloat(data.amount || '0');
-                const deltaUsd = newUsd - oldUsd;
-                setCurrentBalance(prev => prev + deltaUsd);
-                const updatedRepayments = (loan.repayments || []).map(r => r.id === repayment.id ? { ...r, amount: newPkr, usdAmount: newUsd, date: data.date, description: data.description, updatedAt: new Date().toISOString() } : r);
-                const usdOutstanding = Math.max(0, (loan.usdAmount + oldUsd) - newUsd);
-                const pkrOutstanding = Math.max(0, (loan.amount + oldPkr) - newPkr);
-                const updatedLoan: Loan = { ...loan, usdAmount: usdOutstanding, amount: pkrOutstanding, repayments: updatedRepayments, updatedAt: new Date().toISOString() };
-                setLoans(prev => prev.map(l => (l.id === loan.id ? updatedLoan : l)));
-                if (orgId) { dbUpsertLoan(orgId, updatedLoan); dbSetBalance(orgId, currentBalance + deltaUsd); }
-                closeRepayModal();
+              key={`repay-${repayLoanId}`}
+              onSubmit={(data) => { 
+                handleRepayLoan(repayLoanId, data); 
+                closeRepayModal(); 
               }}
               onCancel={closeRepayModal}
-              maxPKR={loan.amount + repayment.amount}
-              initialData={{ amount: String(repayment.amount), usdAmount: String(repayment.usdAmount), date: repayment.date, description: repayment.description || '' }}
-              title="Edit Repayment"
-              submitText="Update Repayment"
+              maxPKR={loan.amount}
             />
           );
-        })()
-      )}
+        }
+        
+        const repayment = loan.repayments?.find(r => r.id === editingRepayment.repaymentId);
+        if (!repayment) return null;
+        
+        return (
+          <LoanRepaymentForm
+            key={`edit-repay-${editingRepayment.repaymentId}`}
+            onSubmit={(data) => {
+              const oldUsd = repayment.usdAmount;
+              const newUsd = parseFloat(data.usdAmount || '0');
+              const oldPkr = repayment.amount;
+              const newPkr = parseFloat(data.amount || '0');
+              const deltaUsd = newUsd - oldUsd;
+              setCurrentBalance(prev => prev + deltaUsd);
+              const updatedRepayments = (loan.repayments || []).map(r => 
+                r.id === repayment.id 
+                  ? { ...r, amount: newPkr, usdAmount: newUsd, date: data.date, description: data.description, updatedAt: getPKRTimestamp() } 
+                  : r
+              );
+              const usdOutstanding = Math.max(0, (loan.usdAmount + oldUsd) - newUsd);
+              const pkrOutstanding = Math.max(0, (loan.amount + oldPkr) - newPkr);
+              const updatedLoan: Loan = { 
+                ...loan, 
+                usdAmount: usdOutstanding, 
+                amount: pkrOutstanding, 
+                repayments: updatedRepayments, 
+                updatedAt: getPKRTimestamp() 
+              };
+              setLoans(prev => prev.map(l => (l.id === loan.id ? updatedLoan : l)));
+              if (orgId) { 
+                dbUpsertLoan(orgId, updatedLoan); 
+                dbSetBalance(orgId, currentBalance + deltaUsd); 
+              }
+              closeRepayModal();
+            }}
+            onCancel={closeRepayModal}
+            maxPKR={loan.amount + repayment.amount}
+            initialData={{ 
+              amount: String(repayment.amount), 
+              usdAmount: String(repayment.usdAmount), 
+              date: repayment.date, 
+              description: repayment.description || '' 
+            }}
+            title="Edit Repayment"
+            submitText="Update Repayment"
+          />
+        );
+      })()}
 
       {/* Contact Form Modal */}
       {showContactForm && (
