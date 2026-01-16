@@ -168,22 +168,25 @@ const App: React.FC = () => {
     }
   };
 
-  const handleAddExpense = (formData: ExpenseFormData) => {
+  const handleAddExpense = async (formData: ExpenseFormData) => {
     // Calculate the new current balance (using USD amount for balance calculations)
     const usdAmount = parseFloat(formData.usdAmount) || 0;
     console.log('[AddExpense] orgId =', orgId, 'usd =', usdAmount);
     const newBalance = currentBalance - usdAmount;
 
+    // Clean up contactId - use undefined instead of empty string for proper Firestore handling
+    const cleanContactId = formData.contactId && formData.contactId.trim() !== '' ? formData.contactId : undefined;
+    
     const newExpense: Expense = {
       id: generateId(),
       name: formData.name,
       amount: parseFloat(formData.amount), // PKR amount
       usdAmount: usdAmount, // USD amount
       accountNumber: formData.accountNumber,
-      contactId: formData.contactId || undefined,
+      contactId: cleanContactId,
       date: formData.date,
-      description: formData.description,
-      receiptImageUrl: formData.receiptImageUrl, // Cloudinary URL
+      description: formData.description || undefined,
+      receiptImageUrl: formData.receiptImageUrl || undefined, // Cloudinary URL
       currentBalance: newBalance,
       createdBy: { uid: currentUserId, email: currentUserEmail },
       updatedBy: { uid: currentUserId, email: currentUserEmail },
@@ -191,11 +194,43 @@ const App: React.FC = () => {
       updatedAt: getPKRTimestamp(),
     };
 
-    setExpenses(prev => [...prev, newExpense].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
-    setCurrentBalance(newBalance);
+    console.log('[AddExpense] Saving expense:', {
+      id: newExpense.id,
+      name: newExpense.name,
+      contactId: newExpense.contactId,
+      receiptImageUrl: newExpense.receiptImageUrl ? 'present' : 'missing'
+    });
+
+    // Save to Firestore first, then update local state
     if (orgId) {
-      dbUpsertExpense(orgId, newExpense);
-      dbSetBalance(orgId, newBalance);
+      try {
+        await dbUpsertExpense(orgId, newExpense);
+        await dbSetBalance(orgId, newBalance);
+        console.log('[AddExpense] Expense saved to Firestore successfully');
+      } catch (error) {
+        console.error('[AddExpense] Error saving to Firestore:', error);
+        alert('Failed to save expense to database. Please try again.');
+        return;
+      }
+    } else { 
+      console.warn('[AddExpense] Missing orgId, write skipped');
+      alert('Unable to save expense. Please refresh the page and try again.');
+      return;
+    }
+
+    // Update local state after successful Firestore write
+    setExpenses(prev => {
+      const existing = prev.find(e => e.id === newExpense.id);
+      if (existing) {
+        // Expense already exists (from sync), merge updates
+        return prev.map(e => e.id === newExpense.id ? { ...newExpense, ...e } : e);
+      }
+      // Add new expense and sort
+      return [...prev, newExpense].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    });
+    setCurrentBalance(newBalance);
+    
+    if (orgId) {
       recordAuditEvent(orgId, {
         action: 'create',
         entity: 'expense',
