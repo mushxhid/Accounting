@@ -41,9 +41,10 @@ const App: React.FC = () => {
   const [loans, setLoans] = useState<Loan[]>([]);
   const [contacts, setContacts] = useState<Contact[]>([]);
   // Initialize currentView from localStorage or default to 'dashboard'
-  const [currentView, setCurrentView] = useState<'dashboard' | 'expenses' | 'credits' | 'loans' | 'contacts' | 'logs'>(() => {
-    const savedView = localStorage.getItem('currentView') as typeof currentView | null;
-    if (savedView && ['dashboard', 'expenses', 'credits', 'loans', 'contacts', 'logs'].includes(savedView)) {
+  type ViewType = 'dashboard' | 'expenses' | 'credits' | 'loans' | 'contacts' | 'logs';
+  const [currentView, setCurrentView] = useState<ViewType>(() => {
+    const savedView = localStorage.getItem('currentView') as ViewType | null;
+    if (savedView && (['dashboard', 'expenses', 'credits', 'loans', 'contacts', 'logs'] as ViewType[]).includes(savedView)) {
       return savedView;
     }
     return 'dashboard';
