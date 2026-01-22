@@ -149,9 +149,9 @@ const LoanList: React.FC<LoanListProps> = ({ loans, expenses, debits, onDelete, 
         // If same date, sort by createdAt to maintain chronological order
         const createdAtDiff = (a.createdAt || '').localeCompare(b.createdAt || '');
         if (createdAtDiff !== 0) return createdAtDiff;
-        // If same createdAt, prioritize debits (income) and repayments before expenses/loans
-        if ((a.type === 'debit' || a.type === 'repayment') && (b.type !== 'debit' && b.type !== 'repayment')) return -1;
-        if ((a.type !== 'debit' && a.type !== 'repayment') && (b.type === 'debit' || b.type === 'repayment')) return 1;
+        // If same createdAt, prioritize debits (income) before expenses/loans
+        if (a.type === 'debit' && b.type !== 'debit') return -1;
+        if (a.type !== 'debit' && b.type === 'debit') return 1;
         return 0;
       });
 
