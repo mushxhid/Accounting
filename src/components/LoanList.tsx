@@ -34,8 +34,9 @@ const LoanList: React.FC<LoanListProps> = ({ loans, expenses, debits, onDelete, 
       const finalBalancePKR = totalIncomePKR - totalExpensesPKR - totalLoansPKR;
 
       // Get all transactions sorted chronologically
-      // Include loan repayments as positive transactions (they increase balance)
-      const all: Array<{ id: string; date: string; createdAt: string; deltaPKR: number; deltaUSD: number; type: 'expense' | 'debit' | 'loan' | 'repayment' }> = [
+      // Note: Loan repayments are now debits, so they're already included in the debits array above
+      // We only need to count loans themselves (negative transactions)
+      const all: Array<{ id: string; date: string; createdAt: string; deltaPKR: number; deltaUSD: number; type: 'expense' | 'debit' | 'loan' }> = [
         ...expenses.map((x) => ({ 
           id: x.id, 
           date: x.date, 
@@ -52,9 +53,10 @@ const LoanList: React.FC<LoanListProps> = ({ loans, expenses, debits, onDelete, 
           deltaUSD: x.usdAmount || 0,
           type: 'debit' as const
         })),
-        ...loans.flatMap((loan) => {
+        ...loans.map((loan) => {
           // Add loan as negative transaction
-          const loanTransaction = {
+          // Repayments are now debits, so they're already counted above
+          return {
             id: loan.id,
             date: loan.date,
             createdAt: loan.createdAt || loan.updatedAt || '',
@@ -62,16 +64,6 @@ const LoanList: React.FC<LoanListProps> = ({ loans, expenses, debits, onDelete, 
             deltaUSD: -(loan.usdAmount || 0),
             type: 'loan' as const
           };
-          // Add all repayments as positive transactions (increase balance)
-          const repayments = (loan.repayments || []).map((r) => ({
-            id: r.id,
-            date: r.date,
-            createdAt: r.createdAt || r.updatedAt || '',
-            deltaPKR: r.amount,
-            deltaUSD: r.usdAmount || 0,
-            type: 'repayment' as const
-          }));
-          return [loanTransaction, ...repayments];
         }),
       ].sort((a, b) => {
         const dateDiff = new Date(a.date).getTime() - new Date(b.date).getTime();
@@ -79,9 +71,9 @@ const LoanList: React.FC<LoanListProps> = ({ loans, expenses, debits, onDelete, 
         // If same date, sort by createdAt to maintain chronological order
         const createdAtDiff = (a.createdAt || '').localeCompare(b.createdAt || '');
         if (createdAtDiff !== 0) return createdAtDiff;
-        // If same createdAt, prioritize debits (income) and repayments before expenses/loans
-        if ((a.type === 'debit' || a.type === 'repayment') && (b.type !== 'debit' && b.type !== 'repayment')) return -1;
-        if ((a.type !== 'debit' && a.type !== 'repayment') && (b.type === 'debit' || b.type === 'repayment')) return 1;
+        // If same createdAt, prioritize debits (income) before expenses/loans
+        if (a.type === 'debit' && b.type !== 'debit') return -1;
+        if (a.type !== 'debit' && b.type === 'debit') return 1;
         return 0;
       });
 
@@ -123,7 +115,8 @@ const LoanList: React.FC<LoanListProps> = ({ loans, expenses, debits, onDelete, 
       const finalBalanceUSD = totalIncomeUSD - totalExpensesUSD - totalLoansUSD;
 
       // Get all transactions sorted chronologically (same order as PKR calculation)
-      const all: Array<{ id: string; date: string; createdAt: string; deltaUSD: number; type: 'expense' | 'debit' | 'loan' | 'repayment' }> = [
+      // Note: Loan repayments are now debits, so they're already included in the debits array above
+      const all: Array<{ id: string; date: string; createdAt: string; deltaUSD: number; type: 'expense' | 'debit' | 'loan' }> = [
         ...expenses.map((x) => ({ 
           id: x.id, 
           date: x.date, 
@@ -138,24 +131,17 @@ const LoanList: React.FC<LoanListProps> = ({ loans, expenses, debits, onDelete, 
           deltaUSD: x.usdAmount || 0,
           type: 'debit' as const
         })),
-        ...loans.flatMap((loan) => {
+        ...loans.map((loan) => {
           // Add loan as negative transaction
-          const loanTransaction = {
+          // Note: Repayments are now debits, so they're already included in the debits array above
+          // We only need to count the loan itself (negative transaction)
+          return {
             id: loan.id,
             date: loan.date,
             createdAt: loan.createdAt || loan.updatedAt || '',
             deltaUSD: -(loan.usdAmount || 0),
             type: 'loan' as const
           };
-          // Add all repayments as positive transactions (increase balance)
-          const repayments = (loan.repayments || []).map((r) => ({
-            id: r.id,
-            date: r.date,
-            createdAt: r.createdAt || r.updatedAt || '',
-            deltaUSD: r.usdAmount || 0,
-            type: 'repayment' as const
-          }));
-          return [loanTransaction, ...repayments];
         }),
       ].sort((a, b) => {
         const dateDiff = new Date(a.date).getTime() - new Date(b.date).getTime();

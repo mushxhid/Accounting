@@ -412,7 +412,24 @@ const App: React.FC = () => {
       return;
     }
 
-    const newBalance = currentBalance + usdAmount; // repayments increase USD balance
+    // Create a debit entry for the loan repayment (income)
+    const repaymentDescription = data.description || `Loan repayment from ${loan.partnerName}`;
+    const debitSource = `Loan Repayment - ${loan.partnerName}`;
+    
+    const newDebit: Debit = {
+      id: generateId(),
+      amount: pkrAmount, // PKR amount
+      usdAmount: usdAmount, // USD amount
+      source: debitSource,
+      date: data.date,
+      description: repaymentDescription,
+      currentBalance: currentBalance + usdAmount, // Will be recalculated, but keeping for consistency
+      createdBy: { uid: currentUserId, email: currentUserEmail },
+      updatedBy: { uid: currentUserId, email: currentUserEmail },
+      createdAt: getPKRTimestamp(),
+      updatedAt: getPKRTimestamp(),
+    };
+
     const newLoanAmount = Math.max(0, loan.amount - pkrAmount);
     const newLoanUsdAmount = Math.max(0, loan.usdAmount - usdAmount);
 
@@ -432,26 +449,37 @@ const App: React.FC = () => {
       ...loan,
       amount: newLoanAmount,
       usdAmount: newLoanUsdAmount,
-      currentBalance: newBalance,
       repayments: [...(loan.repayments || []), repayment],
       updatedAt: getPKRTimestamp(),
     };
 
+    // Calculate new balance from debits (including the new repayment debit)
+    const newBalance = currentBalance + usdAmount;
+
     // Update local state first
+    setDebits(prev => [...prev, newDebit].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
     setLoans(prev => prev.map(l => (l.id === loanId ? updatedLoan : l)));
     setCurrentBalance(newBalance);
 
     // Save to Firestore
     if (orgId) {
       try {
-        // Try atomic append first
+        // Save the debit entry (income)
+        await dbUpsertDebit(orgId, newDebit);
+        console.log('[RepayLoan] Debit entry saved successfully');
+        
+        // Try atomic append first for loan repayment
         await appendRepayment(orgId, loanId, repayment);
-        await dbSetBalance(orgId, newBalance);
         console.log('[RepayLoan] Repayment saved successfully via appendRepayment');
+        
+        // Update balance
+        await dbSetBalance(orgId, newBalance);
+        console.log('[RepayLoan] Balance updated successfully');
       } catch (error) {
-        console.error('[RepayLoan] appendRepayment failed, falling back to dbUpsertLoan:', error);
+        console.error('[RepayLoan] Error saving repayment, falling back to dbUpsertLoan:', error);
         // Fallback to full upsert if atomic append fails
         try {
+          await dbUpsertDebit(orgId, newDebit);
           await dbUpsertLoan(orgId, updatedLoan);
           await dbSetBalance(orgId, newBalance);
           console.log('[RepayLoan] Repayment saved successfully via dbUpsertLoan');
@@ -459,6 +487,7 @@ const App: React.FC = () => {
           console.error('[RepayLoan] dbUpsertLoan also failed:', fallbackError);
           alert('Failed to save repayment to database. Please try again.');
           // Revert local state on error
+          setDebits(prev => prev.filter(d => d.id !== newDebit.id));
           setLoans(prev => prev.map(l => (l.id === loanId ? loan : l)));
           setCurrentBalance(currentBalance);
           return;
@@ -468,19 +497,26 @@ const App: React.FC = () => {
       console.warn('[RepayLoan] Missing orgId');
       alert('Unable to save repayment. Please refresh the page and try again.');
       // Revert local state
+      setDebits(prev => prev.filter(d => d.id !== newDebit.id));
       setLoans(prev => prev.map(l => (l.id === loanId ? loan : l)));
       setCurrentBalance(currentBalance);
       return;
     }
 
-    // Record audit
+    // Record audit for both debit and repayment
     if (orgId) {
+      recordAuditEvent(orgId, {
+        action: 'create', entity: 'debit', actor: { email: currentUserEmail },
+        details: { id: newDebit.id, name: newDebit.source, amountPKR: newDebit.amount, amountUSD: newDebit.usdAmount },
+        timestamp: getPKRTimestamp(),
+      });
       recordAuditEvent(orgId, {
         action: 'repayment', entity: 'loan', actor: { email: currentUserEmail },
         details: { loanId, name: loan.partnerName, amountPKR: pkrAmount, amountUSD: usdAmount },
         timestamp: getPKRTimestamp(),
       });
     }
+    sendAudit({ action: 'create', entity: 'debit', details: { id: newDebit.id, amount: newDebit.amount, source: newDebit.source } });
     sendAudit({ action: 'create', entity: 'repayment', details: { loanId, amount: pkrAmount } });
   };
 
