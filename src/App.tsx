@@ -127,11 +127,13 @@ const App: React.FC = () => {
     dbSetBalance(orgId, currentBalance);
   }, [currentBalance, orgId]);
 
-  // Auto-recalculate USD balance from transactions to avoid stale or zero meta balance
+  // Auto-recalculate USD balance from transactions to avoid stale or zero meta balance.
+  // Exclude loan-repayment debits so repayment is counted only once (via reduced loan amount).
   useEffect(() => {
     if (!orgId) return;
+    const nonRepaymentDebits = debits.filter(d => !d.source?.startsWith('Loan Repayment'));
     const derived =
-      debits.reduce((sum, d) => sum + (d.usdAmount || 0), 0) -
+      nonRepaymentDebits.reduce((sum, d) => sum + (d.usdAmount || 0), 0) -
       expenses.reduce((sum, e) => sum + (e.usdAmount || 0), 0) -
       loans.reduce((sum, l) => sum + (l.usdAmount || 0), 0);
     if (Number.isFinite(derived) && Math.abs(derived - currentBalance) > 0.001) {
@@ -453,43 +455,35 @@ const App: React.FC = () => {
       updatedAt: getPKRTimestamp(),
     };
 
-    // Calculate new balance from debits (including the new repayment debit)
-    const newBalance = currentBalance + usdAmount;
+    // Balance is recalculated by useEffect (repayment debit excluded; only loan reduction counts).
 
     // Update local state first
     setDebits(prev => [...prev, newDebit].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
     setLoans(prev => prev.map(l => (l.id === loanId ? updatedLoan : l)));
-    setCurrentBalance(newBalance);
 
-    // Save to Firestore
+    // Save to Firestore (do not update balance here — derivation excludes repayment debits)
     if (orgId) {
       try {
-        // Save the debit entry (income)
+        // Save the debit entry (income) — one record only; balance comes from loan reduction
         await dbUpsertDebit(orgId, newDebit);
         console.log('[RepayLoan] Debit entry saved successfully');
         
         // Try atomic append first for loan repayment
         await appendRepayment(orgId, loanId, repayment);
         console.log('[RepayLoan] Repayment saved successfully via appendRepayment');
-        
-        // Update balance
-        await dbSetBalance(orgId, newBalance);
-        console.log('[RepayLoan] Balance updated successfully');
       } catch (error) {
         console.error('[RepayLoan] Error saving repayment, falling back to dbUpsertLoan:', error);
         // Fallback to full upsert if atomic append fails
         try {
           await dbUpsertDebit(orgId, newDebit);
           await dbUpsertLoan(orgId, updatedLoan);
-          await dbSetBalance(orgId, newBalance);
           console.log('[RepayLoan] Repayment saved successfully via dbUpsertLoan');
         } catch (fallbackError) {
           console.error('[RepayLoan] dbUpsertLoan also failed:', fallbackError);
           alert('Failed to save repayment to database. Please try again.');
-          // Revert local state on error
+          // Revert local state on error (balance will sync via useEffect)
           setDebits(prev => prev.filter(d => d.id !== newDebit.id));
           setLoans(prev => prev.map(l => (l.id === loanId ? loan : l)));
-          setCurrentBalance(currentBalance);
           return;
         }
       }
@@ -499,7 +493,6 @@ const App: React.FC = () => {
       // Revert local state
       setDebits(prev => prev.filter(d => d.id !== newDebit.id));
       setLoans(prev => prev.map(l => (l.id === loanId ? loan : l)));
-      setCurrentBalance(currentBalance);
       return;
     }
 
