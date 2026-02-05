@@ -49,6 +49,8 @@ const Dashboard: React.FC<DashboardProps> = ({
   const totalExpenses = calculateTotalExpenses(expenses);
   const totalIncome = debits.reduce((sum, debit) => sum + debit.usdAmount, 0);
   const totalLoans = loans.reduce((sum, loan) => sum + loan.usdAmount, 0);
+  // Exclude loan-repayment debits from balance so repayment is counted once (via reduced loan only)
+  const debitsExcludingRepayments = debits.filter(d => !d.source?.startsWith('Loan Repayment'));
   const monthlyExpenses = expenses
     .filter(expense => {
       const expenseDate = new Date(expense.date);
@@ -62,17 +64,18 @@ const Dashboard: React.FC<DashboardProps> = ({
   const totalExpensesPKR = expenses.reduce((sum, expense) => sum + expense.amount, 0);
   const totalIncomePKR = debits.reduce((sum, debit) => sum + debit.amount, 0);
   const totalLoansPKR = loans.reduce((sum, loan) => sum + loan.amount, 0);
+  const totalIncomePKRExcludingRepayments = debitsExcludingRepayments.reduce((sum, d) => sum + (d.amount || 0), 0);
   const monthlyExpensesPKR = expenses
     .filter(expense => {
       const expenseDate = new Date(expense.date);
       const currentDate = new Date();
-      return expenseDate.getMonth() === currentDate.getMonth() && 
+      return expenseDate.getMonth() === currentDate.getMonth() &&
              expenseDate.getFullYear() === currentDate.getFullYear();
     })
     .reduce((total, expense) => total + expense.amount, 0);
 
-  // Exact PKR balance derived from PKR transaction amounts
-  const currentBalancePKRExact = totalIncomePKR - totalExpensesPKR - totalLoansPKR;
+  // Exact PKR balance: same logic as App (exclude repayment debits to avoid double-count)
+  const currentBalancePKRExact = totalIncomePKRExcludingRepayments - totalExpensesPKR - totalLoansPKR;
 
   // Get only current month expenses for recent expenses
   const currentMonthExpenses = expenses
