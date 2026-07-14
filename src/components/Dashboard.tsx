@@ -1,9 +1,8 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { DollarSign, TrendingDown, Calendar, Trash2, Wallet, Edit, TrendingUp as TrendingUpIcon, UserCheck } from 'lucide-react';
+import { DollarSign, TrendingDown, Calendar, Trash2, Wallet, TrendingUp as TrendingUpIcon, UserCheck } from 'lucide-react';
 import { Expense, Debit, Loan } from '../types';
 import { calculateTotalExpenses } from '../utils/helpers';
 import { formatPKR, formatUSD } from '../utils/currencyConverter';
-import BalanceModal from './BalanceModal';
 import DebitForm from './DebitForm';
 
 interface DashboardProps {
@@ -16,7 +15,6 @@ interface DashboardProps {
   onDeleteExpense: (id: string) => void;
   onDeleteDebit: (id: string) => void;
   onDeleteLoan: (id: string) => void;
-  onUpdateBalance: (newBalance: number) => void;
   // New: handler to switch view in parent
   onNavigate?: (view: 'expenses' | 'credits' | 'loans') => void;
   audit?: any[];
@@ -32,11 +30,9 @@ const Dashboard: React.FC<DashboardProps> = ({
   onDeleteExpense, 
   onDeleteDebit,
   onDeleteLoan,
-  onUpdateBalance,
   onNavigate,
   audit,
 }) => {
-  const [showBalanceModal, setShowBalanceModal] = useState(false);
   const [showDebitModal, setShowDebitModal] = useState(false);
   // We no longer fetch exchange rate here; all USD totals are stored as USD
   // and PKR totals are computed from original PKR amounts.
@@ -154,11 +150,6 @@ const Dashboard: React.FC<DashboardProps> = ({
     return currentDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
   };
 
-  const handleUpdateBalance = (newBalance: number) => {
-    onUpdateBalance(newBalance);
-    setShowBalanceModal(false);
-  };
-
   const handleAddDebit = () => {
     // This will be handled by the parent component
     setShowDebitModal(false);
@@ -207,13 +198,6 @@ const Dashboard: React.FC<DashboardProps> = ({
                 {expenses.length} expense{expenses.length !== 1 ? 's' : ''} • {debits.length} income{debits.length !== 1 ? 's' : ''} • {loans.length} loan{loans.length !== 1 ? 's' : ''}
               </p>
             </div>
-            <button
-              onClick={() => setShowBalanceModal(true)}
-              className="p-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg transition-colors"
-              title="Update Balance"
-            >
-              <Edit className="text-white" size={20} />
-            </button>
           </div>
         </div>
       </div>
@@ -503,15 +487,6 @@ const Dashboard: React.FC<DashboardProps> = ({
            )}
          </div>
        </div>
-
-      {/* Balance Modal */}
-      {showBalanceModal && (
-        <BalanceModal
-          currentBalance={currentBalance}
-          onSubmit={handleUpdateBalance}
-          onCancel={() => setShowBalanceModal(false)}
-        />
-      )}
 
       {/* Audit Log */}
       {Array.isArray(auditList) && (

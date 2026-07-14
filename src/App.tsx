@@ -558,9 +558,18 @@ const App: React.FC = () => {
         updatedAt: getPKRTimestamp(),
       };
 
-      setContacts(prev => prev.map(contact => 
+      setContacts(prev => prev.map(contact =>
         contact.id === editingContact.id ? updatedContact : contact
       ));
+      if (orgId) {
+        dbUpsertContact(orgId, updatedContact);
+        recordAuditEvent(orgId, {
+          action: 'update', entity: 'contact', actor: { email: currentUserEmail },
+          details: { id: updatedContact.id, name: updatedContact.name },
+          timestamp: getPKRTimestamp(),
+        });
+      } else { console.warn('[UpdateContact] Missing orgId, write skipped'); }
+      sendAudit({ action: 'update', entity: 'contact', details: { id: updatedContact.id, name: updatedContact.name } });
       setShowContactForm(false);
       setEditingContact(null);
     }
@@ -610,16 +619,6 @@ const App: React.FC = () => {
       setContacts(prev => prev.filter(contact => contact.id !== id));
       if (orgId) { dbDeleteContact(orgId, id); recordAuditEvent(orgId, { action: 'delete', entity: 'contact', actor: { email: currentUserEmail }, details: { id, name: contacts.find(c=>c.id===id)?.name }, timestamp: getPKRTimestamp() }); }
     sendAudit({ action: 'delete', entity: 'contact', details: { id } });
-    }
-  };
-
-  const handleUpdateBalance = (newBalance: number) => {
-    // Simply update the current balance without recalculating transaction amounts
-    // This preserves PKR amounts and only changes the current available balance
-    setCurrentBalance(newBalance);
-    
-    if (orgId) {
-      dbSetBalance(orgId, newBalance);
     }
   };
 
@@ -808,7 +807,6 @@ const App: React.FC = () => {
             onDeleteExpense={handleDeleteExpense}
             onDeleteDebit={handleDeleteDebit}
             onDeleteLoan={handleDeleteLoan}
-            onUpdateBalance={handleUpdateBalance}
             onNavigate={(view) => { console.log('[Nav] setCurrentView', view); setCurrentView(view); }}
             audit={audit}
           />

@@ -23,20 +23,21 @@ export const generateId = (): string => {
 
 // PKR Timezone utilities
 export const getPKRTimestamp = (): string => {
-  // Create a date in PKR timezone (Asia/Karachi)
-  const now = new Date();
-  const pkrTime = new Date(now.toLocaleString("en-US", {timeZone: "Asia/Karachi"}));
-  return pkrTime.toISOString();
+  // Store the true absolute instant as a UTC ISO string. The display helpers
+  // (formatPKRDateTime/Date/Time) apply the Asia/Karachi timezone when rendering,
+  // so we must NOT pre-shift here — doing so double-shifted the displayed time.
+  return new Date().toISOString();
 };
 
 export const getPKRDateString = (): string => {
-  // Get current date in Pakistan timezone in YYYY-MM-DD format
-  const now = new Date();
-  const pkrDate = new Date(now.toLocaleString("en-US", {timeZone: "Asia/Karachi"}));
-  const year = pkrDate.getFullYear();
-  const month = String(pkrDate.getMonth() + 1).padStart(2, '0');
-  const day = String(pkrDate.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
+  // Current calendar date in Pakistan timezone as YYYY-MM-DD.
+  // en-CA formats as YYYY-MM-DD; timeZone ensures the correct PK day near midnight.
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Karachi',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date());
 };
 
 export const formatPKRDateTime = (dateString: string): string => {
@@ -98,12 +99,22 @@ export const exportToCSV = (data: any[], filename: string) => {
   // Get headers from the first object
   const headers = Object.keys(data[0]);
   
+  // Neutralize CSV/formula injection: a leading =, +, -, @ (or tab/CR) can be
+  // interpreted as a formula by Excel/Sheets. Prefix such values with a quote.
+  const sanitizeForCSV = (value: any): any => {
+    if (typeof value !== 'string') return value;
+    // Only escape genuine formula-like strings, not plain numbers (e.g. "-1234.00"
+    // negative balances must stay numeric in the export).
+    if (/^[=+\-@\t\r]/.test(value) && Number.isNaN(Number(value))) return `'${value}`;
+    return value;
+  };
+
   // Create CSV content
   const csvContent = [
     headers.join(','), // Header row
-    ...data.map(row => 
+    ...data.map(row =>
       headers.map(header => {
-        const value = row[header];
+        const value = sanitizeForCSV(row[header]);
         // Handle values that need quotes (contain commas, quotes, or newlines)
         if (typeof value === 'string' && (value.includes(',') || value.includes('"') || value.includes('\n'))) {
           return `"${value.replace(/"/g, '""')}"`;
