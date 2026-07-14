@@ -71,12 +71,6 @@ const App: React.FC = () => {
     localStorage.setItem('currentView', currentView);
   }, [currentView]);
 
-  useEffect(() => {
-    if (authReady) {
-      console.log('[Auth] orgId =', orgId, 'email =', currentUserEmail);
-    }
-  }, [authReady, orgId, currentUserEmail]);
-
   // Auth listener and Firestore sync
   useEffect(() => {
     let stopSync: (() => void) | null = null;
@@ -186,7 +180,6 @@ const App: React.FC = () => {
   const handleAddExpense = async (formData: ExpenseFormData) => {
     // Calculate the new current balance (using USD amount for balance calculations)
     const usdAmount = parseFloat(formData.usdAmount) || 0;
-    console.log('[AddExpense] orgId =', orgId, 'usd =', usdAmount);
     const newBalance = currentBalance - usdAmount;
 
     // Clean up contactId - use undefined instead of empty string for proper Firestore handling
@@ -209,24 +202,14 @@ const App: React.FC = () => {
       updatedAt: getPKRTimestamp(),
     };
 
-    console.log('[AddExpense] Saving expense:', {
-      id: newExpense.id,
-      name: newExpense.name,
-      contactId: newExpense.contactId,
-      receiptImageUrl: newExpense.receiptImageUrl ? 'present' : 'missing'
-    });
-
     // Save to Firestore first, then update local state
     if (orgId) {
       try {
-        console.log('[AddExpense] Attempting to save to Firestore...', { orgId, expenseId: newExpense.id });
         await dbUpsertExpense(orgId, newExpense);
-        console.log('[AddExpense] Expense saved to Firestore successfully');
         
         // Update balance separately
         try {
           await dbSetBalance(orgId, newBalance);
-          console.log('[AddExpense] Balance updated successfully');
         } catch (balanceError) {
           console.warn('[AddExpense] Balance update failed (non-critical):', balanceError);
           // Continue even if balance update fails
@@ -304,7 +287,6 @@ const App: React.FC = () => {
   const handleAddDebit = (formData: DebitFormData) => {
     // Calculate the new current balance (using USD amount for balance calculations)
     const usdAmount = parseFloat(formData.usdAmount) || 0;
-    console.log('[AddDebit] orgId =', orgId, 'usd =', usdAmount);
     const newBalance = currentBalance + usdAmount;
 
     const newDebit: Debit = {
@@ -339,7 +321,6 @@ const App: React.FC = () => {
   const handleAddLoan = (formData: LoanFormData) => {
     // Calculate the new current balance (loans reduce the balance, using USD amount)
     const usdAmount = parseFloat(formData.usdAmount) || 0;
-    console.log('[AddLoan] orgId =', orgId, 'usd =', usdAmount);
     const newBalance = currentBalance - usdAmount;
 
     const newLoan: Loan = {
@@ -466,18 +447,15 @@ const App: React.FC = () => {
       try {
         // Save the debit entry (income) — one record only; balance comes from loan reduction
         await dbUpsertDebit(orgId, newDebit);
-        console.log('[RepayLoan] Debit entry saved successfully');
         
         // Try atomic append first for loan repayment
         await appendRepayment(orgId, loanId, repayment);
-        console.log('[RepayLoan] Repayment saved successfully via appendRepayment');
       } catch (error) {
         console.error('[RepayLoan] Error saving repayment, falling back to dbUpsertLoan:', error);
         // Fallback to full upsert if atomic append fails
         try {
           await dbUpsertDebit(orgId, newDebit);
           await dbUpsertLoan(orgId, updatedLoan);
-          console.log('[RepayLoan] Repayment saved successfully via dbUpsertLoan');
         } catch (fallbackError) {
           console.error('[RepayLoan] dbUpsertLoan also failed:', fallbackError);
           alert('Failed to save repayment to database. Please try again.');
@@ -807,7 +785,7 @@ const App: React.FC = () => {
             onDeleteExpense={handleDeleteExpense}
             onDeleteDebit={handleDeleteDebit}
             onDeleteLoan={handleDeleteLoan}
-            onNavigate={(view) => { console.log('[Nav] setCurrentView', view); setCurrentView(view); }}
+            onNavigate={(view) => { setCurrentView(view); }}
             audit={audit}
           />
         ) : currentView === 'expenses' ? (

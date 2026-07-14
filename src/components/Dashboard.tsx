@@ -290,7 +290,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Recent Expenses</h2>
               <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">{getCurrentMonthName()} only</p>
             </div>
-            <button type="button" className="text-primary-600 hover:text-primary-700 font-medium text-sm" onClick={(e) => { e.stopPropagation(); console.log('[Nav] View All → expenses'); onNavigate && onNavigate('expenses'); }}>
+            <button type="button" className="text-primary-600 hover:text-primary-700 font-medium text-sm" onClick={(e) => { e.stopPropagation(); onNavigate && onNavigate('expenses'); }}>
               View All
             </button>
           </div>
@@ -360,7 +360,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Recent Income</h2>
               <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">{getCurrentMonthName()} only</p>
             </div>
-            <button type="button" className="text-primary-600 hover:text-primary-700 font-medium text-sm" onClick={(e) => { e.stopPropagation(); console.log('[Nav] View All → credits'); onNavigate && onNavigate('credits'); }}>
+            <button type="button" className="text-primary-600 hover:text-primary-700 font-medium text-sm" onClick={(e) => { e.stopPropagation(); onNavigate && onNavigate('credits'); }}>
               View All
             </button>
           </div>
@@ -430,7 +430,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Recent Loans</h2>
                <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">{getCurrentMonthName()} only</p>
              </div>
-             <button type="button" className="text-primary-600 hover:text-primary-700 font-medium text-sm" onClick={(e) => { e.stopPropagation(); console.log('[Nav] View All → loans'); onNavigate && onNavigate('loans'); }}>
+             <button type="button" className="text-primary-600 hover:text-primary-700 font-medium text-sm" onClick={(e) => { e.stopPropagation(); onNavigate && onNavigate('loans'); }}>
                View All
              </button>
            </div>

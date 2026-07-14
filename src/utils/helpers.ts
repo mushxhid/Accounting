@@ -18,7 +18,11 @@ export const formatDateForInput = (dateString: string): string => {
 };
 
 export const generateId = (): string => {
-  return Date.now().toString(36) + Math.random().toString(36).substr(2);
+  // Prefer a collision-resistant UUID; fall back for older environments.
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return Date.now().toString(36) + Math.random().toString(36).slice(2);
 };
 
 // PKR Timezone utilities
