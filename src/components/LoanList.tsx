@@ -1,8 +1,8 @@
 import React, { useMemo, useState } from 'react';
 import { Plus, Trash2, UserCheck, Filter, Download, Wallet, ChevronDown, ChevronRight, Edit3, X as XIcon, ChevronUp } from 'lucide-react';
 import { Loan, Expense, Debit } from '../types';
-import { formatCurrency, exportToCSV, formatPKRDate, formatPKRTime } from '../utils/helpers';
-import { formatPKR, formatUSD } from '../utils/currencyConverter';
+import { exportToCSV, formatPKRDate, formatPKRTime } from '../utils/helpers';
+import { formatPKR } from '../utils/currencyConverter';
 import { sendAudit } from '../utils/audit';
 
 interface LoanListProps {
@@ -105,84 +105,6 @@ const LoanList: React.FC<LoanListProps> = ({ loans, expenses, debits, onDelete, 
     }
   }, [loans, expenses, debits]);
 
-  // Build exact USD balance-after map from all transactions
-  const usdBalanceAfterById = useMemo(() => {
-    try {
-      // Calculate final balance (matches Dashboard)
-      const totalIncomeUSD = debits.reduce((sum, d) => sum + (d.usdAmount || 0), 0);
-      const totalExpensesUSD = expenses.reduce((sum, e) => sum + (e.usdAmount || 0), 0);
-      const totalLoansUSD = loans.reduce((sum, l) => sum + (l.usdAmount || 0), 0);
-      const finalBalanceUSD = totalIncomeUSD - totalExpensesUSD - totalLoansUSD;
-
-      // Get all transactions sorted chronologically (same order as PKR calculation)
-      // Note: Loan repayments are now debits, so they're already included in the debits array above
-      const all: Array<{ id: string; date: string; createdAt: string; deltaUSD: number; type: 'expense' | 'debit' | 'loan' }> = [
-        ...expenses.map((x) => ({ 
-          id: x.id, 
-          date: x.date, 
-          createdAt: x.createdAt || x.updatedAt || '',
-          deltaUSD: -(x.usdAmount || 0),
-          type: 'expense' as const
-        })),
-        ...debits.map((x) => ({ 
-          id: x.id, 
-          date: x.date, 
-          createdAt: x.createdAt || x.updatedAt || '',
-          deltaUSD: x.usdAmount || 0,
-          type: 'debit' as const
-        })),
-        ...loans.map((loan) => {
-          // Add loan as negative transaction
-          // Note: Repayments are now debits, so they're already included in the debits array above
-          // We only need to count the loan itself (negative transaction)
-          return {
-            id: loan.id,
-            date: loan.date,
-            createdAt: loan.createdAt || loan.updatedAt || '',
-            deltaUSD: -(loan.usdAmount || 0),
-            type: 'loan' as const
-          };
-        }),
-      ].sort((a, b) => {
-        const dateDiff = new Date(a.date).getTime() - new Date(b.date).getTime();
-        if (dateDiff !== 0) return dateDiff;
-        // If same date, sort by createdAt to maintain chronological order
-        const createdAtDiff = (a.createdAt || '').localeCompare(b.createdAt || '');
-        if (createdAtDiff !== 0) return createdAtDiff;
-        // If same createdAt, prioritize debits (income) before expenses/loans
-        if (a.type === 'debit' && b.type !== 'debit') return -1;
-        if (a.type !== 'debit' && b.type === 'debit') return 1;
-        return 0;
-      });
-
-      // Calculate running balance from start (chronological order)
-      const map: Record<string, number> = {};
-      let running = 0;
-      for (const t of all) {
-        running += t.deltaUSD;
-        map[t.id] = running;
-      }
-
-      // Verify final balance matches Dashboard calculation
-      if (all.length > 0) {
-        const lastTransaction = all[all.length - 1];
-        const calculatedFinal = map[lastTransaction.id];
-        if (Math.abs(calculatedFinal - finalBalanceUSD) > 0.01) {
-          console.warn('[LoanList] USD balance mismatch:', {
-            calculated: calculatedFinal,
-            expected: finalBalanceUSD,
-            diff: calculatedFinal - finalBalanceUSD
-          });
-        }
-      }
-
-      return map;
-    } catch (error) {
-      console.error('[LoanList] Error calculating USD balance:', error);
-      return {} as Record<string, number>;
-    }
-  }, [loans, expenses, debits]);
-
   const months = useMemo(() => {
     const monthSet = new Set<string>();
     loans.forEach(loan => {
@@ -239,7 +161,6 @@ const LoanList: React.FC<LoanListProps> = ({ loans, expenses, debits, onDelete, 
   };
 
   const totalLoans = filteredLoans.length;
-  const totalAmount = filteredLoans.reduce((sum, loan) => sum + loan.usdAmount, 0);
   const totalAmountPKR = filteredLoans.reduce((sum, loan) => sum + loan.amount, 0);
 
   const handleExportCSV = () => {
@@ -254,9 +175,8 @@ const LoanList: React.FC<LoanListProps> = ({ loans, expenses, debits, onDelete, 
         Time: formatPKRTime(loan.date),
         'Partner Name': loan.partnerName,
         'Amount (PKR)': (-loan.amount).toFixed(2),
-        'Amount (USD)': (-loan.usdAmount).toFixed(2),
         Description: loan.description || '',
-        'Balance After (USD)': loan.currentBalance.toFixed(2)
+        'Balance After (PKR)': (pkrBalanceAfterById[loan.id] ?? 0).toFixed(2)
       });
       (loan.repayments || []).forEach(r => {
         csvData.push({
@@ -264,9 +184,8 @@ const LoanList: React.FC<LoanListProps> = ({ loans, expenses, debits, onDelete, 
           Time: formatPKRTime(r.date),
           'Partner Name': loan.partnerName,
           'Amount (PKR)': r.amount.toFixed(2),
-          'Amount (USD)': r.usdAmount.toFixed(2),
           Description: r.description || '',
-          'Balance After (USD)': ''
+          'Balance After (PKR)': ''
         });
       });
     });
@@ -345,12 +264,8 @@ const LoanList: React.FC<LoanListProps> = ({ loans, expenses, debits, onDelete, 
                 <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-right text-xs font-bold text-gray-800 dark:text-gray-200 cursor-pointer hover:bg-gray-300 dark:hover:bg-gray-600" onClick={() => handleSort('amount')}>
                   <div className="flex items-center justify-end">Original Loan (PKR)<SortIcon field="amount" /></div>
                 </th>
-                <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-right text-xs font-bold text-gray-800 dark:text-gray-200">Original Loan (USD)</th>
                 <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-right text-xs font-bold text-gray-800 dark:text-gray-200">Remaining (PKR)</th>
-                <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-right text-xs font-bold text-gray-800 dark:text-gray-200">Remaining (USD)</th>
                 <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-right text-xs font-bold text-gray-800 dark:text-gray-200">Total Paid (PKR)</th>
-                <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-right text-xs font-bold text-gray-800 dark:text-gray-200">Total Paid (USD)</th>
-                <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-right text-xs font-bold text-gray-800 dark:text-gray-200">Balance (USD)</th>
                 <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-right text-xs font-bold text-gray-800 dark:text-gray-200">Balance (PKR)</th>
                 <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-center text-xs font-bold text-gray-800 dark:text-gray-200 w-20">Actions</th>
               </tr>
@@ -358,14 +273,12 @@ const LoanList: React.FC<LoanListProps> = ({ loans, expenses, debits, onDelete, 
             <tbody>
               {sortedLoans.map((loan, index) => {
                 const isOpen = !!expanded[loan.id];
-                // Check if loan is fully repaid (remaining amount is 0 or less)
-                const isCompleted = loan.amount <= 0.01 && loan.usdAmount <= 0.01;
+                // Check if loan is fully repaid (PKR-only app)
+                const isCompleted = loan.amount <= 0.01;
                 // Calculate total repayments made
                 const totalPaidPKR = (loan.repayments || []).reduce((sum, r) => sum + (r.amount || 0), 0);
-                const totalPaidUSD = (loan.repayments || []).reduce((sum, r) => sum + (r.usdAmount || 0), 0);
                 // Calculate original loan amount (current remaining + total paid, or use principalAmount if available)
                 const originalLoanPKR = loan.principalAmount ?? (loan.amount + totalPaidPKR);
-                const originalLoanUSD = loan.principalUSDAmount ?? (loan.usdAmount + totalPaidUSD);
                 return (
                   <React.Fragment key={loan.id}>
                     <tr className={index % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-750'}>
@@ -377,19 +290,11 @@ const LoanList: React.FC<LoanListProps> = ({ loans, expenses, debits, onDelete, 
                       </td>
                       <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-600 dark:text-gray-400 max-w-[150px] truncate" title={loan.description || ''}>{loan.description || '—'}</td>
                       <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-red-600 dark:text-red-400 text-right font-medium">-{formatPKR(originalLoanPKR)}</td>
-                      <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-red-600 dark:text-red-400 text-right">-{formatUSD(originalLoanUSD)}</td>
                       <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-red-600 dark:text-red-400 text-right font-medium">-{formatPKR(loan.amount)}</td>
-                      <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-red-600 dark:text-red-400 text-right">-{formatUSD(loan.usdAmount)}</td>
                       <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-success-600 dark:text-success-400 text-right font-medium">
                         {totalPaidPKR > 0 ? formatPKR(totalPaidPKR) : (isCompleted ? formatPKR(originalLoanPKR) : '—')}
                       </td>
-                      <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-success-600 dark:text-success-400 text-right">
-                        {totalPaidUSD > 0 ? formatUSD(totalPaidUSD) : (isCompleted ? formatUSD(originalLoanUSD) : '—')}
-                      </td>
                       <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-900 dark:text-white text-right font-medium">
-                        {formatCurrency(usdBalanceAfterById[loan.id] ?? 0)}
-                      </td>
-                      <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-600 dark:text-gray-400 text-right">
                         {formatPKR(pkrBalanceAfterById[loan.id] ?? 0)}
                       </td>
                       <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-center">
@@ -410,11 +315,11 @@ const LoanList: React.FC<LoanListProps> = ({ loans, expenses, debits, onDelete, 
                     </tr>
                     {isOpen && loan.repayments && loan.repayments.length > 0 && (
                       <tr className="bg-gray-50 dark:bg-gray-700/30">
-                        <td colSpan={14} className="border border-gray-400 dark:border-gray-500 px-2 py-2">
+                        <td colSpan={9} className="border border-gray-400 dark:border-gray-500 px-2 py-2">
                           <div className="ml-4 space-y-1">
                             <div className="text-xs font-bold text-gray-700 dark:text-gray-300 mb-2">Repayments:</div>
                             {loan.repayments.map((r) => {
-                              const isLoanCompleted = loan.amount <= 0.01 && loan.usdAmount <= 0.01;
+                              const isLoanCompleted = loan.amount <= 0.01;
                               return (
                                 <div key={r.id} className="flex items-center justify-between p-2 bg-white dark:bg-gray-800 rounded border border-gray-300 dark:border-gray-600 text-xs">
                                   <div>
@@ -423,7 +328,6 @@ const LoanList: React.FC<LoanListProps> = ({ loans, expenses, debits, onDelete, 
                                   </div>
                                   <div className="flex items-center gap-2">
                                     <span className="text-success-600 dark:text-success-400 font-medium">+{formatPKR(r.amount)}</span>
-                                    <span className="text-gray-500 dark:text-gray-400">({formatUSD(r.usdAmount)})</span>
                                     {!isLoanCompleted && onEditRepayment && (
                                       <button onClick={() => onEditRepayment(loan.id, r.id)} className="text-blue-600 hover:text-blue-800 dark:text-blue-400 p-0.5" title="Edit">
                                         <Edit3 size={12} />
@@ -448,7 +352,7 @@ const LoanList: React.FC<LoanListProps> = ({ loans, expenses, debits, onDelete, 
             </tbody>
             <tfoot>
               <tr className="bg-gray-200 dark:bg-gray-700 font-bold">
-                <td colSpan={5} className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-xs text-gray-800 dark:text-gray-200 text-right">
+                <td colSpan={4} className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-xs text-gray-800 dark:text-gray-200 text-right">
                   Total ({filteredLoans.length} records):
                 </td>
                 <td className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-xs text-red-600 dark:text-red-400 text-right font-bold">
@@ -458,28 +362,14 @@ const LoanList: React.FC<LoanListProps> = ({ loans, expenses, debits, onDelete, 
                     return sum + original;
                   }, 0))}
                 </td>
-                <td className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-xs text-red-600 dark:text-red-400 text-right font-bold">
-                  -{formatUSD(filteredLoans.reduce((sum, loan) => {
-                    const totalPaid = (loan.repayments || []).reduce((rSum, r) => rSum + (r.usdAmount || 0), 0);
-                    const original = loan.principalUSDAmount ?? (loan.usdAmount + totalPaid);
-                    return sum + original;
-                  }, 0))}
-                </td>
                 <td className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-xs text-red-600 dark:text-red-400 text-right font-bold">-{formatPKR(totalAmountPKR)}</td>
-                <td className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-xs text-red-600 dark:text-red-400 text-right font-bold">-{formatUSD(totalAmount)}</td>
                 <td className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-xs text-success-600 dark:text-success-400 text-right font-bold">
                   {formatPKR(filteredLoans.reduce((sum, loan) => {
                     const totalPaid = (loan.repayments || []).reduce((rSum, r) => rSum + (r.amount || 0), 0);
                     return sum + totalPaid;
                   }, 0))}
                 </td>
-                <td className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-xs text-success-600 dark:text-success-400 text-right font-bold">
-                  {formatUSD(filteredLoans.reduce((sum, loan) => {
-                    const totalPaid = (loan.repayments || []).reduce((rSum, r) => rSum + (r.usdAmount || 0), 0);
-                    return sum + totalPaid;
-                  }, 0))}
-                </td>
-                <td colSpan={3} className="border border-gray-400 dark:border-gray-500"></td>
+                <td colSpan={2} className="border border-gray-400 dark:border-gray-500"></td>
               </tr>
             </tfoot>
           </table>

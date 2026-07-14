@@ -12,7 +12,6 @@ export const upsertExpense = async (orgId: string, expense: Expense) => {
   if (!orgId) {
     throw new Error('orgId is required to save expense');
   }
-  console.log('[DB] upsertExpense', orgId, expense.id);
   
   try {
     // Clean up the expense object - remove undefined fields for Firestore
@@ -29,7 +28,6 @@ export const upsertExpense = async (orgId: string, expense: Expense) => {
     });
     
     await setDoc(docRef(orgId, 'expenses', expense.id), expenseData, { merge: true });
-    console.log('[DB] upsertExpense success', orgId, expense.id);
   } catch (error) {
     console.error('[DB] upsertExpense error:', error);
     throw error;
@@ -38,31 +36,26 @@ export const upsertExpense = async (orgId: string, expense: Expense) => {
 
 export const deleteExpense = async (orgId: string, id: string) => {
   if (!orgId) return;
-  console.log('[DB] deleteExpense', orgId, id);
   await deleteDoc(docRef(orgId, 'expenses', id));
 };
 
 export const upsertDebit = async (orgId: string, debit: Debit) => {
   if (!orgId) return;
-  console.log('[DB] upsertDebit', orgId, debit.id);
   await setDoc(docRef(orgId, 'debits', debit.id), { ...debit, _updatedAt: serverTimestamp() }, { merge: true });
 };
 
 export const deleteDebit = async (orgId: string, id: string) => {
   if (!orgId) return;
-  console.log('[DB] deleteDebit', orgId, id);
   await deleteDoc(docRef(orgId, 'debits', id));
 };
 
 export const upsertLoan = async (orgId: string, loan: Loan) => {
   if (!orgId) return;
-  console.log('[DB] upsertLoan', orgId, loan.id);
   await setDoc(docRef(orgId, 'loans', loan.id), { ...loan, _updatedAt: serverTimestamp() }, { merge: true });
 };
 
 export const deleteLoan = async (orgId: string, id: string) => {
   if (!orgId) return;
-  console.log('[DB] deleteLoan', orgId, id);
   await deleteDoc(docRef(orgId, 'loans', id));
 };
 
@@ -74,7 +67,6 @@ export const appendRepayment = async (
 ) => {
   if (!orgId) return;
   const ref = docRef(orgId, 'loans', loanId);
-  console.log('[DB] appendRepayment', orgId, loanId, repayment?.id);
   await updateDoc(ref, {
     repayments: arrayUnion(repayment),
     usdAmount: increment(-Number(repayment.usdAmount || 0)),
@@ -85,19 +77,16 @@ export const appendRepayment = async (
 
 export const upsertContact = async (orgId: string, contact: Contact) => {
   if (!orgId) return;
-  console.log('[DB] upsertContact', orgId, contact.id);
   await setDoc(docRef(orgId, 'contacts', contact.id), { ...contact, _updatedAt: serverTimestamp() }, { merge: true });
 };
 
 export const deleteContact = async (orgId: string, id: string) => {
   if (!orgId) return;
-  console.log('[DB] deleteContact', orgId, id);
   await deleteDoc(docRef(orgId, 'contacts', id));
 };
 
 export const setBalance = async (orgId: string, currentBalance: number) => {
   if (!orgId) return;
-  console.log('[DB] setBalance', orgId, currentBalance);
   await setDoc(metaDocRef(orgId, 'balance'), { currentBalance, _updatedAt: serverTimestamp() }, { merge: true });
 };
 
@@ -117,35 +106,30 @@ export const startRealtimeSync = (orgId: string, handlers: SyncHandlers) => {
   if (handlers.onExpenses) {
     unsubs.push(onSnapshot(colRef(orgId, 'expenses'), (snap) => {
       const list: Expense[] = snap.docs.map((d) => d.data() as Expense).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-      console.log('[Sync] expenses', list.length);
       handlers.onExpenses!(list);
     }));
   }
   if (handlers.onDebits) {
     unsubs.push(onSnapshot(colRef(orgId, 'debits'), (snap) => {
       const list: Debit[] = snap.docs.map((d) => d.data() as Debit).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-      console.log('[Sync] debits', list.length);
       handlers.onDebits!(list);
     }));
   }
   if (handlers.onLoans) {
     unsubs.push(onSnapshot(colRef(orgId, 'loans'), (snap) => {
       const list: Loan[] = snap.docs.map((d) => d.data() as Loan).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-      console.log('[Sync] loans', list.length);
       handlers.onLoans!(list);
     }));
   }
   if (handlers.onContacts) {
     unsubs.push(onSnapshot(colRef(orgId, 'contacts'), (snap) => {
       const list: Contact[] = snap.docs.map((d) => d.data() as Contact);
-      console.log('[Sync] contacts', list.length);
       handlers.onContacts!(list);
     }));
   }
   if (handlers.onBalance) {
     unsubs.push(onSnapshot(metaDocRef(orgId, 'balance'), (snap) => {
       const data = snap.data() as any;
-      console.log('[Sync] balance doc exists =', !!data);
       if (data && typeof data.currentBalance === 'number') handlers.onBalance!(data.currentBalance);
     }));
   }
@@ -177,7 +161,6 @@ export const recordAuditEvent = async (orgId: string, event: any) => {
 export const clearOrgData = async (orgId: string) => {
   if (!orgId) return;
   try {
-    console.log('[DB] clearOrgData start', orgId);
     const collNames: Array<'expenses' | 'debits' | 'loans' | 'contacts' | 'audit'> = ['expenses', 'debits', 'loans', 'contacts', 'audit'];
     for (const name of collNames) {
       const snap = await getDocs(colRef(orgId, name));
@@ -191,12 +174,6 @@ export const clearOrgData = async (orgId: string) => {
     metaSnap.forEach((d) => metaDeletes.push(deleteDoc(doc(db, 'orgs', orgId, 'meta', d.id))));
     await Promise.all(metaDeletes);
     await setBalance(orgId, 0);
-    // Hard check: verify collections are empty
-    for (const name of collNames) {
-      const verify = await getDocs(colRef(orgId, name));
-      console.log('[DB] verify empty', name, verify.empty);
-    }
-    console.log('[DB] clearOrgData done', orgId);
   } catch (e) {
     // eslint-disable-next-line no-console
     console.error('[DB] clearOrgData failed', e);
@@ -224,7 +201,6 @@ export const clearAllLegacyUsersData = async () => {
       }
     });
     await Promise.all(perUserDeletes);
-    console.log('[DB] clearAllLegacyUsersData done');
   } catch (e) {
     console.warn('[DB] clearAllLegacyUsersData skipped/failed', e);
   }

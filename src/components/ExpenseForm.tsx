@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, X, Calendar, CreditCard, User, ChevronDown, FileText, RefreshCw, Upload } from 'lucide-react';
+import { Plus, X, Calendar, CreditCard, User, ChevronDown, FileText, Upload } from 'lucide-react';
 import { ExpenseFormData, Contact } from '../types';
-import { fetchPKRtoUSDRate, convertPKRtoUSD, formatUSD, formatExchangeRate } from '../utils/currencyConverter';
 import { uploadImageToCloudinary } from '../utils/cloudinary';
 import { getPKRDateString } from '../utils/helpers';
 
@@ -15,16 +14,11 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSubmit, onCancel, contacts 
   const [formData, setFormData] = useState<ExpenseFormData>({
     name: '',
     amount: '',
-    usdAmount: '',
     accountNumber: '',
     contactId: '',
     date: getPKRDateString(), // Use Pakistan timezone date
     description: '',
   });
-
-  const [exchangeRate, setExchangeRate] = useState<number>(280); // Default fallback rate
-  const [isLoadingRate, setIsLoadingRate] = useState<boolean>(false);
-  const [lastRateUpdate, setLastRateUpdate] = useState<string>('');
 
   const [errors, setErrors] = useState<Partial<ExpenseFormData>>({});
   const [selectedContact, setSelectedContact] = useState<string>('');
@@ -177,11 +171,6 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSubmit, onCancel, contacts 
     }
   };
 
-  // Fetch exchange rate on component mount
-  useEffect(() => {
-    fetchExchangeRate();
-  }, []);
-
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -199,36 +188,6 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSubmit, onCancel, contacts 
       };
     }
   }, [showContactDropdown]);
-
-  const fetchExchangeRate = async () => {
-    setIsLoadingRate(true);
-    try {
-      const rate = await fetchPKRtoUSDRate();
-      setExchangeRate(rate);
-      setLastRateUpdate(new Date().toLocaleTimeString());
-    } catch (error) {
-      console.error('Failed to fetch exchange rate:', error);
-    } finally {
-      setIsLoadingRate(false);
-    }
-  };
-
-  // Auto-convert PKR to USD when amount changes
-  useEffect(() => {
-    if (formData.amount && !isNaN(parseFloat(formData.amount))) {
-      const pkrAmount = parseFloat(formData.amount);
-      const usdAmount = convertPKRtoUSD(pkrAmount, exchangeRate);
-      setFormData(prev => ({
-        ...prev,
-        usdAmount: usdAmount.toFixed(2)
-      }));
-    } else {
-      setFormData(prev => ({
-        ...prev,
-        usdAmount: ''
-      }));
-    }
-  }, [formData.amount, exchangeRate]);
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto">
@@ -364,21 +323,6 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSubmit, onCancel, contacts 
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Amount (PKR)
               </label>
-              <div className="flex items-center space-x-2">
-                <button
-                  type="button"
-                  onClick={fetchExchangeRate}
-                  disabled={isLoadingRate}
-                  className="flex items-center text-xs text-primary-600 hover:text-primary-700 disabled:opacity-50"
-                  title="Refresh exchange rate"
-                >
-                  <RefreshCw size={12} className={`mr-1 ${isLoadingRate ? 'animate-spin' : ''}`} />
-                  {isLoadingRate ? 'Updating...' : 'Refresh Rate'}
-                </button>
-                <span className="text-xs text-gray-500 dark:text-gray-400">
-                  Rate: {formatExchangeRate(exchangeRate)} = $1.00
-                </span>
-              </div>
             </div>
             <div className="relative">
               <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 text-sm font-medium">PKR</span>
@@ -392,19 +336,6 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSubmit, onCancel, contacts 
                 placeholder="0.00"
               />
             </div>
-            {formData.usdAmount && (
-              <div className="mt-2 p-2 bg-gray-50 dark:bg-gray-700 rounded-md">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-600 dark:text-gray-300">USD Equivalent:</span>
-                  <span className="font-medium text-gray-900 dark:text-white">{formatUSD(parseFloat(formData.usdAmount))}</span>
-                </div>
-                {lastRateUpdate && (
-                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    Rate updated: {lastRateUpdate}
-                  </div>
-                )}
-              </div>
-            )}
             {errors.amount && (
               <p className="mt-1 text-sm text-danger-600">{errors.amount}</p>
             )}

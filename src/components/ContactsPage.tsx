@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Plus, Trash2, User, Edit, Search, X, ChevronUp, ChevronDown } from 'lucide-react';
 import { Contact, Expense } from '../types';
 
-import { formatPKR, formatUSD } from '../utils/currencyConverter';
+import { formatPKR } from '../utils/currencyConverter';
 import { formatPKRDate } from '../utils/helpers';
 
 interface ContactsPageProps {
@@ -72,9 +72,9 @@ const ContactsPage: React.FC<ContactsPageProps> = ({
     return {
       expenses: contactExpenses,
       debits: [], // No debits associated with contacts for now
-      totalExpenses: contactExpenses.reduce((sum, exp) => sum + exp.usdAmount, 0),
+      totalExpenses: contactExpenses.reduce((sum, exp) => sum + exp.amount, 0),
       totalIncome: 0, // No income associated with contacts
-      netAmount: -contactExpenses.reduce((sum, exp) => sum + exp.usdAmount, 0) // Only expenses for now
+      netAmount: -contactExpenses.reduce((sum, exp) => sum + exp.amount, 0) // Only expenses for now
     };
   };
 
@@ -270,7 +270,6 @@ const ContactsPage: React.FC<ContactsPageProps> = ({
                           <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-left text-xs font-bold text-gray-800 dark:text-gray-200">Expense Name</th>
                           <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-left text-xs font-bold text-gray-800 dark:text-gray-200">Description</th>
                           <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-right text-xs font-bold text-gray-800 dark:text-gray-200">Amount (PKR)</th>
-                          <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-right text-xs font-bold text-gray-800 dark:text-gray-200">Amount (USD)</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -291,7 +290,6 @@ const ContactsPage: React.FC<ContactsPageProps> = ({
                             <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-900 dark:text-white font-medium">{expense.name}</td>
                             <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-600 dark:text-gray-400 max-w-[200px] truncate" title={expense.description || ''}>{expense.description || '—'}</td>
                             <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-red-600 dark:text-red-400 text-right font-medium">-{formatPKR(expense.amount)}</td>
-                            <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-red-600 dark:text-red-400 text-right">-{formatUSD(expense.usdAmount)}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -302,9 +300,6 @@ const ContactsPage: React.FC<ContactsPageProps> = ({
                           </td>
                           <td className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-xs text-red-600 dark:text-red-400 text-right font-bold">
                             -{formatPKR(financialData.expenses.reduce((sum, exp) => sum + exp.amount, 0))}
-                          </td>
-                          <td className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-xs text-red-600 dark:text-red-400 text-right font-bold">
-                            -{formatUSD(financialData.totalExpenses)}
                           </td>
                         </tr>
                       </tfoot>

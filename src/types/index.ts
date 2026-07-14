@@ -62,7 +62,6 @@ export interface Contact {
 export interface ExpenseFormData {
   name: string;
   amount: string; // PKR amount
-  usdAmount: string; // USD amount
   accountNumber: string;
   contactId?: string; // optional contact reference
   date: string;
@@ -72,7 +71,6 @@ export interface ExpenseFormData {
 
 export interface DebitFormData {
   amount: string; // PKR amount
-  usdAmount: string; // USD amount
   source: string;
   date: string;
   description: string;
@@ -81,7 +79,6 @@ export interface DebitFormData {
 export interface LoanFormData {
   partnerName: string;
   amount: string; // PKR amount
-  usdAmount: string; // USD amount
   date: string;
   description: string;
 }
@@ -100,7 +97,6 @@ export interface LoanRepayment {
 
 export interface LoanRepaymentFormData {
   amount: string; // PKR amount
-  usdAmount: string; // USD amount
   date: string;
   description: string;
 }

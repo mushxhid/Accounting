@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Download, Filter, ChevronUp, ChevronDown, X } from 'lucide-react';
 import { exportToCSV, formatPKRDate, formatPKRTime } from '../utils/helpers';
-import { formatPKR, formatUSD } from '../utils/currencyConverter';
+import { formatPKR } from '../utils/currencyConverter';
 
 type AuditEvent = {
   id: string;
@@ -100,7 +100,6 @@ const LogsPage: React.FC<LogsPageProps> = ({ audit }) => {
       Entity: e.entity,
       Name: e.details?.name || '',
       'Amount (PKR)': typeof e.details?.amountPKR === 'number' ? e.details!.amountPKR : '',
-      'Amount (USD)': typeof e.details?.amountUSD === 'number' ? e.details!.amountUSD : '',
       By: e.actor?.email || '',
     }));
     exportToCSV(rows, `logs_${new Date().toISOString().slice(0, 10)}.csv`);
@@ -112,7 +111,6 @@ const LogsPage: React.FC<LogsPageProps> = ({ audit }) => {
   };
 
   const totalAmountPKR = filtered.reduce((sum, e) => sum + (e.details?.amountPKR || 0), 0);
-  const totalAmountUSD = filtered.reduce((sum, e) => sum + (e.details?.amountUSD || 0), 0);
 
   return (
     <div className="space-y-4">
@@ -184,7 +182,6 @@ const LogsPage: React.FC<LogsPageProps> = ({ audit }) => {
                 <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-right text-xs font-bold text-gray-800 dark:text-gray-200 cursor-pointer hover:bg-gray-300 dark:hover:bg-gray-600" onClick={() => handleSort('amountPKR')}>
                   <div className="flex items-center justify-end">Amount (PKR)<SortIcon field="amountPKR" /></div>
                 </th>
-                <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-right text-xs font-bold text-gray-800 dark:text-gray-200">Amount (USD)</th>
                 <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-left text-xs font-bold text-gray-800 dark:text-gray-200">By</th>
               </tr>
             </thead>
@@ -202,9 +199,6 @@ const LogsPage: React.FC<LogsPageProps> = ({ audit }) => {
                     <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-700 dark:text-gray-300 text-right">
                       {typeof e.details?.amountPKR === 'number' ? formatPKR(e.details.amountPKR) : '—'}
                     </td>
-                    <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-700 dark:text-gray-300 text-right">
-                      {typeof e.details?.amountUSD === 'number' ? formatUSD(e.details.amountUSD) : '—'}
-                    </td>
                     <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-600 dark:text-gray-400 max-w-[150px] truncate" title={e.actor?.email || ''}>{e.actor?.email || '—'}</td>
                   </tr>
                 );
@@ -217,9 +211,6 @@ const LogsPage: React.FC<LogsPageProps> = ({ audit }) => {
                 </td>
                 <td className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-xs text-gray-800 dark:text-gray-200 text-right font-bold">
                   {totalAmountPKR > 0 ? formatPKR(totalAmountPKR) : '—'}
-                </td>
-                <td className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-xs text-gray-800 dark:text-gray-200 text-right font-bold">
-                  {totalAmountUSD > 0 ? formatUSD(totalAmountUSD) : '—'}
                 </td>
                 <td className="border border-gray-400 dark:border-gray-500"></td>
               </tr>

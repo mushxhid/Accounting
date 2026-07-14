@@ -1,0 +1,41 @@
+rules_version = '2';
+
+// Firestore Security Rules for the Accounting app.
+//
+// IMPORTANT: These rules are NOT deployed automatically. To apply them:
+//   Firebase Console -> Firestore Database -> Rules -> paste this file -> Publish
+//   (or run `firebase deploy --only firestore:rules` if you use the Firebase CLI).
+//
+// Until these are published, the client-side email allow-list in src/utils/auth.ts
+// is the ONLY access control, which any authenticated user could bypass via the SDK.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // The two agency admins who are allowed to access shared data.
+    // Keep this list in sync with ALLOWED_EMAILS in src/utils/auth.ts.
+    function isAllowedAdmin() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.email in [
+          'mushahidyaseen56@gmail.com',
+          'rizwanelahi481@gmail.com'
+        ];
+    }
+
+    // Shared "agency" org: all expenses, debits, loans, contacts, audit, meta.
+    match /orgs/{orgId}/{document=**} {
+      allow read, write: if isAllowedAdmin();
+    }
+
+    // Legacy per-user collections (used only by the one-time cleanup path).
+    match /users/{userId}/{document=**} {
+      allow read, write: if isAllowedAdmin();
+    }
+
+    // Deny everything else by default.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
