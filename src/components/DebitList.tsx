@@ -23,30 +23,38 @@ const DebitList: React.FC<DebitListProps> = ({ debits, expenses, loans, onDelete
   // Build exact PKR balance-after map from all transactions
   const pkrBalanceAfterById = useMemo(() => {
     try {
+      // Loan-repayment debits are display-only rows; they must NOT change the balance
+      // (the repayment is already reflected via the reduced loan). Matches App/Dashboard.
+      const nonRepaymentDebits = debits.filter(d => !d.source?.startsWith('Loan Repayment'));
       // Calculate final balance (matches Dashboard)
-      const totalIncomePKR = debits.reduce((sum, d) => sum + (d.amount || 0), 0);
+      const totalIncomePKR = nonRepaymentDebits.reduce((sum, d) => sum + (d.amount || 0), 0);
       const totalExpensesPKR = expenses.reduce((sum, e) => sum + (e.amount || 0), 0);
       const totalLoansPKR = loans.reduce((sum, l) => sum + (l.amount || 0), 0);
       const finalBalancePKR = totalIncomePKR - totalExpensesPKR - totalLoansPKR;
 
       // Get all transactions sorted chronologically
       const all = [
-        ...expenses.map((x) => ({ 
-          id: x.id, 
-          date: x.date, 
+        ...expenses.map((x) => ({
+          id: x.id,
+          date: x.date,
           createdAt: x.createdAt || x.updatedAt || '',
           deltaPKR: -x.amount,
           deltaUSD: -(x.usdAmount || 0),
           type: 'expense' as const
         })),
-        ...debits.map((x) => ({ 
-          id: x.id, 
-          date: x.date, 
-          createdAt: x.createdAt || x.updatedAt || '',
-          deltaPKR: x.amount,
-          deltaUSD: x.usdAmount || 0,
-          type: 'debit' as const
-        })),
+        ...debits.map((x) => {
+          // Repayment debits contribute 0 to the running balance but still get a map
+          // entry so their row shows the (unchanged) balance at that point.
+          const isRepayment = x.source?.startsWith('Loan Repayment');
+          return {
+            id: x.id,
+            date: x.date,
+            createdAt: x.createdAt || x.updatedAt || '',
+            deltaPKR: isRepayment ? 0 : x.amount,
+            deltaUSD: isRepayment ? 0 : (x.usdAmount || 0),
+            type: 'debit' as const
+          };
+        }),
         ...loans.map((x) => ({ 
           id: x.id, 
           date: x.date, 
@@ -98,28 +106,34 @@ const DebitList: React.FC<DebitListProps> = ({ debits, expenses, loans, onDelete
   // Build exact USD balance-after map from all transactions
   const usdBalanceAfterById = useMemo(() => {
     try {
+      // Loan-repayment debits are display-only; excluded from balance (matches App/Dashboard).
+      const nonRepaymentDebits = debits.filter(d => !d.source?.startsWith('Loan Repayment'));
       // Calculate final balance (matches Dashboard)
-      const totalIncomeUSD = debits.reduce((sum, d) => sum + (d.usdAmount || 0), 0);
+      const totalIncomeUSD = nonRepaymentDebits.reduce((sum, d) => sum + (d.usdAmount || 0), 0);
       const totalExpensesUSD = expenses.reduce((sum, e) => sum + (e.usdAmount || 0), 0);
       const totalLoansUSD = loans.reduce((sum, l) => sum + (l.usdAmount || 0), 0);
       const finalBalanceUSD = totalIncomeUSD - totalExpensesUSD - totalLoansUSD;
 
       // Get all transactions sorted chronologically (same order as PKR calculation)
       const all = [
-        ...expenses.map((x) => ({ 
-          id: x.id, 
-          date: x.date, 
+        ...expenses.map((x) => ({
+          id: x.id,
+          date: x.date,
           createdAt: x.createdAt || x.updatedAt || '',
           deltaUSD: -(x.usdAmount || 0),
           type: 'expense' as const
         })),
-        ...debits.map((x) => ({ 
-          id: x.id, 
-          date: x.date, 
-          createdAt: x.createdAt || x.updatedAt || '',
-          deltaUSD: x.usdAmount || 0,
-          type: 'debit' as const
-        })),
+        ...debits.map((x) => {
+          // Repayment debits contribute 0 but still get a running-balance map entry.
+          const isRepayment = x.source?.startsWith('Loan Repayment');
+          return {
+            id: x.id,
+            date: x.date,
+            createdAt: x.createdAt || x.updatedAt || '',
+            deltaUSD: isRepayment ? 0 : (x.usdAmount || 0),
+            type: 'debit' as const
+          };
+        }),
         ...loans.map((x) => ({ 
           id: x.id, 
           date: x.date, 

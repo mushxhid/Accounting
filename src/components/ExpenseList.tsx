@@ -30,23 +30,26 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, debits, l
   // This matches Dashboard calculation: totalIncomePKR - totalExpensesPKR - totalLoansPKR
   const pkrBalanceAfterById = useMemo(() => {
     try {
+      // Exclude loan-repayment debits so repayment is counted once (via reduced loan),
+      // matching App/Dashboard balance logic. Prevents double-counting.
+      const nonRepaymentDebits = debits.filter(d => !d.source?.startsWith('Loan Repayment'));
       // Calculate final balance (matches Dashboard)
-      const totalIncomePKR = debits.reduce((sum, d) => sum + (d.amount || 0), 0);
+      const totalIncomePKR = nonRepaymentDebits.reduce((sum, d) => sum + (d.amount || 0), 0);
       const totalExpensesPKR = expenses.reduce((sum, e) => sum + (e.amount || 0), 0);
       const totalLoansPKR = loans.reduce((sum, l) => sum + (l.amount || 0), 0);
       const finalBalancePKR = totalIncomePKR - totalExpensesPKR - totalLoansPKR;
 
       // Get all transactions sorted chronologically
       const all = [
-        ...expenses.map((x) => ({ 
-          id: x.id, 
-          date: x.date, 
+        ...expenses.map((x) => ({
+          id: x.id,
+          date: x.date,
           createdAt: x.createdAt || x.updatedAt || '',
           deltaPKR: -x.amount,
           deltaUSD: -(x.usdAmount || 0),
           type: 'expense' as const
         })),
-        ...debits.map((x) => ({ 
+        ...nonRepaymentDebits.map((x) => ({
           id: x.id, 
           date: x.date, 
           createdAt: x.createdAt || x.updatedAt || '',
@@ -107,22 +110,24 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, debits, l
   // This matches Dashboard calculation: totalIncomeUSD - totalExpensesUSD - totalLoansUSD
   const usdBalanceAfterById = useMemo(() => {
     try {
+      // Exclude loan-repayment debits (counted via reduced loan), matching App/Dashboard.
+      const nonRepaymentDebits = debits.filter(d => !d.source?.startsWith('Loan Repayment'));
       // Calculate final balance (matches Dashboard)
-      const totalIncomeUSD = debits.reduce((sum, d) => sum + (d.usdAmount || 0), 0);
+      const totalIncomeUSD = nonRepaymentDebits.reduce((sum, d) => sum + (d.usdAmount || 0), 0);
       const totalExpensesUSD = expenses.reduce((sum, e) => sum + (e.usdAmount || 0), 0);
       const totalLoansUSD = loans.reduce((sum, l) => sum + (l.usdAmount || 0), 0);
       const finalBalanceUSD = totalIncomeUSD - totalExpensesUSD - totalLoansUSD;
 
       // Get all transactions sorted chronologically (same order as PKR calculation)
       const all = [
-        ...expenses.map((x) => ({ 
-          id: x.id, 
-          date: x.date, 
+        ...expenses.map((x) => ({
+          id: x.id,
+          date: x.date,
           createdAt: x.createdAt || x.updatedAt || '',
           deltaUSD: -(x.usdAmount || 0),
           type: 'expense' as const
         })),
-        ...debits.map((x) => ({ 
+        ...nonRepaymentDebits.map((x) => ({
           id: x.id, 
           date: x.date, 
           createdAt: x.createdAt || x.updatedAt || '',

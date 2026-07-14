@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { DollarSign, TrendingDown, Calendar, Trash2, Wallet, Edit, TrendingUp as TrendingUpIcon, UserCheck } from 'lucide-react';
 import { Expense, Debit, Loan } from '../types';
 import { calculateTotalExpenses } from '../utils/helpers';
@@ -76,6 +76,45 @@ const Dashboard: React.FC<DashboardProps> = ({
 
   // Exact PKR balance: same logic as App (exclude repayment debits to avoid double-count)
   const currentBalancePKRExact = totalIncomePKRExcludingRepayments - totalExpensesPKR - totalLoansPKR;
+
+  // Per-transaction running balance-after maps (USD + PKR), excluding loan-repayment
+  // debits so figures match the App balance and the Expenses/Income pages exactly.
+  const { usdBalanceAfterById, pkrBalanceAfterById } = useMemo(() => {
+    const nonRepaymentDebits = debits.filter(d => !d.source?.startsWith('Loan Repayment'));
+    const all = [
+      ...expenses.map((x) => ({
+        id: x.id, date: x.date, createdAt: x.createdAt || x.updatedAt || '',
+        deltaUSD: -(x.usdAmount || 0), deltaPKR: -(x.amount || 0), type: 'expense' as const,
+      })),
+      ...nonRepaymentDebits.map((x) => ({
+        id: x.id, date: x.date, createdAt: x.createdAt || x.updatedAt || '',
+        deltaUSD: (x.usdAmount || 0), deltaPKR: (x.amount || 0), type: 'debit' as const,
+      })),
+      ...loans.map((x) => ({
+        id: x.id, date: x.date, createdAt: x.createdAt || x.updatedAt || '',
+        deltaUSD: -(x.usdAmount || 0), deltaPKR: -(x.amount || 0), type: 'loan' as const,
+      })),
+    ].sort((a, b) => {
+      const dateDiff = new Date(a.date).getTime() - new Date(b.date).getTime();
+      if (dateDiff !== 0) return dateDiff;
+      const createdAtDiff = (a.createdAt || '').localeCompare(b.createdAt || '');
+      if (createdAtDiff !== 0) return createdAtDiff;
+      if (a.type === 'debit' && b.type !== 'debit') return -1;
+      if (a.type !== 'debit' && b.type === 'debit') return 1;
+      return 0;
+    });
+    const usd: Record<string, number> = {};
+    const pkr: Record<string, number> = {};
+    let runUSD = 0;
+    let runPKR = 0;
+    for (const t of all) {
+      runUSD += t.deltaUSD;
+      runPKR += t.deltaPKR;
+      usd[t.id] = runUSD;
+      pkr[t.id] = runPKR;
+    }
+    return { usdBalanceAfterById: usd, pkrBalanceAfterById: pkr };
+  }, [expenses, debits, loans]);
 
   // Get only current month expenses for recent expenses
   const currentMonthExpenses = expenses
@@ -313,7 +352,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                         </p>
                       </div>
                       <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Balance: {formatUSD(expense.currentBalance)} / {formatPKR(currentBalancePKRExact)}
+                        Balance: {formatUSD(usdBalanceAfterById[expense.id] ?? 0)} / {formatPKR(pkrBalanceAfterById[expense.id] ?? 0)}
                       </p>
                     </div>
                     <button
@@ -383,7 +422,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                         </p>
                       </div>
                       <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Balance: {formatUSD(debit.currentBalance)} / {formatPKR(currentBalancePKRExact)}
+                        Balance: {formatUSD(usdBalanceAfterById[debit.id] ?? 0)} / {formatPKR(pkrBalanceAfterById[debit.id] ?? 0)}
                       </p>
                     </div>
                     <button
@@ -447,7 +486,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                          </p>
                        </div>
                         <p className="text-sm text-gray-500 dark:text-gray-400">
-                          Balance: {formatUSD(loan.currentBalance)} / {formatPKR(currentBalancePKRExact)}
+                          Balance: {formatUSD(usdBalanceAfterById[loan.id] ?? 0)} / {formatPKR(pkrBalanceAfterById[loan.id] ?? 0)}
                         </p>
                      </div>
                      <button
