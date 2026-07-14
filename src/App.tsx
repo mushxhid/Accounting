@@ -121,15 +121,15 @@ const App: React.FC = () => {
     dbSetBalance(orgId, currentBalance);
   }, [currentBalance, orgId]);
 
-  // Auto-recalculate USD balance from transactions to avoid stale or zero meta balance.
+  // Auto-recalculate PKR balance from transactions to avoid stale or zero meta balance.
   // Exclude loan-repayment debits so repayment is counted only once (via reduced loan amount).
   useEffect(() => {
     if (!orgId) return;
     const nonRepaymentDebits = debits.filter(d => !d.source?.startsWith('Loan Repayment'));
     const derived =
-      nonRepaymentDebits.reduce((sum, d) => sum + (d.usdAmount || 0), 0) -
-      expenses.reduce((sum, e) => sum + (e.usdAmount || 0), 0) -
-      loans.reduce((sum, l) => sum + (l.usdAmount || 0), 0);
+      nonRepaymentDebits.reduce((sum, d) => sum + (d.amount || 0), 0) -
+      expenses.reduce((sum, e) => sum + (e.amount || 0), 0) -
+      loans.reduce((sum, l) => sum + (l.amount || 0), 0);
     if (Number.isFinite(derived) && Math.abs(derived - currentBalance) > 0.001) {
       setCurrentBalance(derived);
       dbSetBalance(orgId, derived);
@@ -178,18 +178,18 @@ const App: React.FC = () => {
   };
 
   const handleAddExpense = async (formData: ExpenseFormData) => {
-    // Calculate the new current balance (using USD amount for balance calculations)
-    const usdAmount = parseFloat(formData.usdAmount) || 0;
-    const newBalance = currentBalance - usdAmount;
+    // Calculate the new current balance (PKR only)
+    const pkrAmount = parseFloat(formData.amount) || 0;
+    const newBalance = currentBalance - pkrAmount;
 
     // Clean up contactId - use undefined instead of empty string for proper Firestore handling
     const cleanContactId = formData.contactId && formData.contactId.trim() !== '' ? formData.contactId : undefined;
-    
+
     const newExpense: Expense = {
       id: generateId(),
       name: formData.name,
-      amount: parseFloat(formData.amount), // PKR amount
-      usdAmount: usdAmount, // USD amount
+      amount: pkrAmount, // PKR amount
+      usdAmount: 0, // deprecated (PKR-only app)
       accountNumber: formData.accountNumber,
       contactId: cleanContactId,
       date: formData.date,
@@ -285,14 +285,14 @@ const App: React.FC = () => {
   };
 
   const handleAddDebit = (formData: DebitFormData) => {
-    // Calculate the new current balance (using USD amount for balance calculations)
-    const usdAmount = parseFloat(formData.usdAmount) || 0;
-    const newBalance = currentBalance + usdAmount;
+    // Calculate the new current balance (PKR only)
+    const pkrAmount = parseFloat(formData.amount) || 0;
+    const newBalance = currentBalance + pkrAmount;
 
     const newDebit: Debit = {
       id: generateId(),
-      amount: parseFloat(formData.amount), // PKR amount
-      usdAmount: usdAmount, // USD amount
+      amount: pkrAmount, // PKR amount
+      usdAmount: 0, // deprecated (PKR-only app)
       source: formData.source,
       date: formData.date,
       description: formData.description,
@@ -319,17 +319,17 @@ const App: React.FC = () => {
   };
 
   const handleAddLoan = (formData: LoanFormData) => {
-    // Calculate the new current balance (loans reduce the balance, using USD amount)
-    const usdAmount = parseFloat(formData.usdAmount) || 0;
-    const newBalance = currentBalance - usdAmount;
+    // Calculate the new current balance (loans reduce the balance, PKR only)
+    const pkrAmount = parseFloat(formData.amount) || 0;
+    const newBalance = currentBalance - pkrAmount;
 
     const newLoan: Loan = {
       id: generateId(),
       partnerName: formData.partnerName,
-      amount: parseFloat(formData.amount), // PKR amount (outstanding)
-      usdAmount: usdAmount, // USD amount (outstanding)
-      principalAmount: parseFloat(formData.amount),
-      principalUSDAmount: usdAmount,
+      amount: pkrAmount, // PKR amount (outstanding)
+      usdAmount: 0, // deprecated (PKR-only app)
+      principalAmount: pkrAmount,
+      principalUSDAmount: 0,
       date: formData.date,
       repayments: [],
       description: formData.description,
@@ -356,31 +356,12 @@ const App: React.FC = () => {
   };
 
   const handleRepayLoan = async (loanId: string, data: LoanRepaymentFormData) => {
-    // Convert PKR to USD using the same conversion stored in forms: usdAmount is already provided/derived by form
     const pkrAmount = parseFloat(data.amount || '0');
-    let usdAmount = parseFloat(data.usdAmount || '0');
-    
-    // Validate PKR amount first (primary validation)
+
+    // Validate PKR amount (PKR-only app)
     if (isNaN(pkrAmount) || pkrAmount <= 0) {
       alert('Invalid repayment amount. Please enter a valid PKR amount.');
       return;
-    }
-    
-    // If USD amount is 0 or invalid (can happen with very small PKR amounts), recalculate it
-    if (usdAmount <= 0 || isNaN(usdAmount)) {
-      // Calculate USD from PKR using a standard rate (if form didn't provide valid USD)
-      // This handles edge cases where small PKR amounts round to 0 USD
-      const estimatedRate = pkrAmount > 0 ? (parseFloat(data.usdAmount || '0') / pkrAmount) : 280;
-      if (isNaN(estimatedRate) || estimatedRate <= 0) {
-        usdAmount = pkrAmount / 280; // Fallback to default rate
-      } else {
-        usdAmount = pkrAmount * estimatedRate;
-      }
-    }
-    
-    // Ensure minimum USD value for very small PKR amounts
-    if (usdAmount < 0.001) {
-      usdAmount = 0.001; // Set minimum to allow very small repayments
     }
 
     const loan = loans.find(l => l.id === loanId);
@@ -402,11 +383,11 @@ const App: React.FC = () => {
     const newDebit: Debit = {
       id: generateId(),
       amount: pkrAmount, // PKR amount
-      usdAmount: usdAmount, // USD amount
+      usdAmount: 0, // deprecated (PKR-only app)
       source: debitSource,
       date: data.date,
       description: repaymentDescription,
-      currentBalance: currentBalance + usdAmount, // Will be recalculated, but keeping for consistency
+      currentBalance: currentBalance + pkrAmount, // Will be recalculated, but keeping for consistency
       createdBy: { uid: currentUserId, email: currentUserEmail },
       updatedBy: { uid: currentUserId, email: currentUserEmail },
       createdAt: getPKRTimestamp(),
@@ -414,13 +395,12 @@ const App: React.FC = () => {
     };
 
     const newLoanAmount = Math.max(0, loan.amount - pkrAmount);
-    const newLoanUsdAmount = Math.max(0, loan.usdAmount - usdAmount);
 
     const repayment: LoanRepayment = {
       id: generateId(),
       loanId,
       amount: pkrAmount,
-      usdAmount: usdAmount,
+      usdAmount: 0, // deprecated (PKR-only app)
       date: data.date,
       description: data.description,
       createdBy: { uid: currentUserId, email: currentUserEmail },
@@ -431,7 +411,7 @@ const App: React.FC = () => {
     const updatedLoan: Loan = {
       ...loan,
       amount: newLoanAmount,
-      usdAmount: newLoanUsdAmount,
+      usdAmount: 0, // deprecated (PKR-only app)
       repayments: [...(loan.repayments || []), repayment],
       updatedAt: getPKRTimestamp(),
     };
@@ -483,7 +463,7 @@ const App: React.FC = () => {
       });
       recordAuditEvent(orgId, {
         action: 'repayment', entity: 'loan', actor: { email: currentUserEmail },
-        details: { loanId, name: loan.partnerName, amountPKR: pkrAmount, amountUSD: usdAmount },
+        details: { loanId, name: loan.partnerName, amountPKR: pkrAmount },
         timestamp: getPKRTimestamp(),
       });
     }
@@ -558,7 +538,7 @@ const App: React.FC = () => {
       const expenseToDelete = expenses.find(expense => expense.id === id);
       if (expenseToDelete) {
         // Add back the expense USD amount to the balance
-        setCurrentBalance(prev => prev + expenseToDelete.usdAmount);
+        setCurrentBalance(prev => prev + expenseToDelete.amount);
       }
       setExpenses(prev => prev.filter(expense => expense.id !== id));
       if (orgId) { dbDeleteExpense(orgId, id); recordAuditEvent(orgId, { action: 'delete', entity: 'expense', actor: { email: currentUserEmail }, details: { id, name: expenseToDelete?.name, amountPKR: expenseToDelete?.amount, amountUSD: expenseToDelete?.usdAmount }, timestamp: getPKRTimestamp() }); }
@@ -571,7 +551,7 @@ const App: React.FC = () => {
       const debitToDelete = debits.find(debit => debit.id === id);
       if (debitToDelete) {
         // Subtract the debit USD amount from the balance
-        setCurrentBalance(prev => prev - debitToDelete.usdAmount);
+        setCurrentBalance(prev => prev - debitToDelete.amount);
       }
       setDebits(prev => prev.filter(debit => debit.id !== id));
       if (orgId) { dbDeleteDebit(orgId, id); recordAuditEvent(orgId, { action: 'delete', entity: 'debit', actor: { email: currentUserEmail }, details: { id, name: debitToDelete?.source, amountPKR: debitToDelete?.amount, amountUSD: debitToDelete?.usdAmount }, timestamp: getPKRTimestamp() }); }
@@ -584,7 +564,7 @@ const App: React.FC = () => {
       const loanToDelete = loans.find(loan => loan.id === id);
       if (loanToDelete) {
         // Add back the loan USD amount to the balance (since loans reduce balance)
-        setCurrentBalance(prev => prev + loanToDelete.usdAmount);
+        setCurrentBalance(prev => prev + loanToDelete.amount);
       }
       setLoans(prev => prev.filter(loan => loan.id !== id));
       if (orgId) { dbDeleteLoan(orgId, id); recordAuditEvent(orgId, { action: 'delete', entity: 'loan', actor: { email: currentUserEmail }, details: { id, name: loanToDelete?.partnerName, amountPKR: loanToDelete?.amount, amountUSD: loanToDelete?.usdAmount }, timestamp: getPKRTimestamp() }); }
@@ -776,11 +756,10 @@ const App: React.FC = () => {
        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 dark:bg-gray-900">
         {currentView === 'dashboard' ? (
           <Dashboard 
-            expenses={expenses} 
+            expenses={expenses}
             debits={debits}
             loans={loans}
-            currentBalance={currentBalance}
-            onAddExpense={() => openExpenseForm()} 
+            onAddExpense={() => openExpenseForm()}
             onAddDebit={() => openDebitForm()}
             onDeleteExpense={handleDeleteExpense}
             onDeleteDebit={handleDeleteDebit}
@@ -823,12 +802,12 @@ const App: React.FC = () => {
               const repayment = loan?.repayments?.find(r => r.id === repaymentId);
               if (!loan || !repayment) return;
               if (!window.confirm('Delete this repayment?')) return;
-              const newBalance = currentBalance - repayment.usdAmount;
+              const newBalance = currentBalance - repayment.amount;
               setCurrentBalance(newBalance);
               const updatedRepayments = (loan.repayments || []).filter(r => r.id !== repaymentId);
               const updatedLoan: Loan = {
                 ...loan,
-                usdAmount: loan.usdAmount + repayment.usdAmount,
+                usdAmount: 0, // deprecated (PKR-only app)
                 amount: loan.amount + repayment.amount,
                 repayments: updatedRepayments,
                 updatedAt: getPKRTimestamp(),
@@ -929,40 +908,36 @@ const App: React.FC = () => {
           <LoanRepaymentForm
             key={`edit-repay-${editingRepayment.repaymentId}`}
             onSubmit={(data) => {
-              const oldUsd = repayment.usdAmount;
-              const newUsd = parseFloat(data.usdAmount || '0');
               const oldPkr = repayment.amount;
               const newPkr = parseFloat(data.amount || '0');
-              const deltaUsd = newUsd - oldUsd;
-              setCurrentBalance(prev => prev + deltaUsd);
-              const updatedRepayments = (loan.repayments || []).map(r => 
-                r.id === repayment.id 
-                  ? { ...r, amount: newPkr, usdAmount: newUsd, date: data.date, description: data.description, updatedAt: getPKRTimestamp() } 
+              const deltaPkr = newPkr - oldPkr;
+              setCurrentBalance(prev => prev + deltaPkr);
+              const updatedRepayments = (loan.repayments || []).map(r =>
+                r.id === repayment.id
+                  ? { ...r, amount: newPkr, usdAmount: 0, date: data.date, description: data.description, updatedAt: getPKRTimestamp() }
                   : r
               );
-              const usdOutstanding = Math.max(0, (loan.usdAmount + oldUsd) - newUsd);
               const pkrOutstanding = Math.max(0, (loan.amount + oldPkr) - newPkr);
-              const updatedLoan: Loan = { 
-                ...loan, 
-                usdAmount: usdOutstanding, 
-                amount: pkrOutstanding, 
-                repayments: updatedRepayments, 
-                updatedAt: getPKRTimestamp() 
+              const updatedLoan: Loan = {
+                ...loan,
+                usdAmount: 0,
+                amount: pkrOutstanding,
+                repayments: updatedRepayments,
+                updatedAt: getPKRTimestamp()
               };
               setLoans(prev => prev.map(l => (l.id === loan.id ? updatedLoan : l)));
-              if (orgId) { 
-                dbUpsertLoan(orgId, updatedLoan); 
-                dbSetBalance(orgId, currentBalance + deltaUsd); 
+              if (orgId) {
+                dbUpsertLoan(orgId, updatedLoan);
+                dbSetBalance(orgId, currentBalance + deltaPkr);
               }
               closeRepayModal();
             }}
             onCancel={closeRepayModal}
             maxPKR={loan.amount + repayment.amount}
-            initialData={{ 
-              amount: String(repayment.amount), 
-              usdAmount: String(repayment.usdAmount), 
-              date: repayment.date, 
-              description: repayment.description || '' 
+            initialData={{
+              amount: String(repayment.amount),
+              date: repayment.date,
+              description: repayment.description || ''
             }}
             title="Edit Repayment"
             submitText="Update Repayment"

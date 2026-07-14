@@ -1,15 +1,13 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { DollarSign, TrendingDown, Calendar, Trash2, Wallet, TrendingUp as TrendingUpIcon, UserCheck } from 'lucide-react';
 import { Expense, Debit, Loan } from '../types';
-import { calculateTotalExpenses } from '../utils/helpers';
-import { formatPKR, formatUSD } from '../utils/currencyConverter';
+import { formatPKR } from '../utils/currencyConverter';
 import DebitForm from './DebitForm';
 
 interface DashboardProps {
   expenses: Expense[];
   debits: Debit[];
   loans: Loan[];
-  currentBalance: number;
   onAddExpense: () => void;
   onAddDebit: () => void;
   onDeleteExpense: (id: string) => void;
@@ -21,11 +19,10 @@ interface DashboardProps {
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ 
-  expenses, 
-  debits, 
+  expenses,
+  debits,
   loans,
-  currentBalance, 
-  onAddExpense, 
+  onAddExpense,
   onAddDebit,
   onDeleteExpense, 
   onDeleteDebit,
@@ -34,29 +31,11 @@ const Dashboard: React.FC<DashboardProps> = ({
   audit,
 }) => {
   const [showDebitModal, setShowDebitModal] = useState(false);
-  // We no longer fetch exchange rate here; all USD totals are stored as USD
-  // and PKR totals are computed from original PKR amounts.
 
-  // Calculate PKR equivalent of current balance based on original PKR amounts
-  // This avoids rounding drift from converting USD back to PKR
-  // and ensures exact values when users input PKR amounts.
-  // We still fetch exchangeRate for other UI parts, but this value does not depend on it.
-  
-  const totalExpenses = calculateTotalExpenses(expenses);
-  const totalIncome = debits.reduce((sum, debit) => sum + debit.usdAmount, 0);
-  const totalLoans = loans.reduce((sum, loan) => sum + loan.usdAmount, 0);
   // Exclude loan-repayment debits from balance so repayment is counted once (via reduced loan only)
   const debitsExcludingRepayments = debits.filter(d => !d.source?.startsWith('Loan Repayment'));
-  const monthlyExpenses = expenses
-    .filter(expense => {
-      const expenseDate = new Date(expense.date);
-      const currentDate = new Date();
-      return expenseDate.getMonth() === currentDate.getMonth() && 
-             expenseDate.getFullYear() === currentDate.getFullYear();
-    })
-    .reduce((total, expense) => total + expense.usdAmount, 0);
 
-  // Calculate PKR totals using original PKR amounts (not converted from USD)
+  // PKR totals (this app is PKR-only)
   const totalExpensesPKR = expenses.reduce((sum, expense) => sum + expense.amount, 0);
   const totalIncomePKR = debits.reduce((sum, debit) => sum + debit.amount, 0);
   const totalLoansPKR = loans.reduce((sum, loan) => sum + loan.amount, 0);
@@ -73,22 +52,22 @@ const Dashboard: React.FC<DashboardProps> = ({
   // Exact PKR balance: same logic as App (exclude repayment debits to avoid double-count)
   const currentBalancePKRExact = totalIncomePKRExcludingRepayments - totalExpensesPKR - totalLoansPKR;
 
-  // Per-transaction running balance-after maps (USD + PKR), excluding loan-repayment
-  // debits so figures match the App balance and the Expenses/Income pages exactly.
-  const { usdBalanceAfterById, pkrBalanceAfterById } = useMemo(() => {
+  // Per-transaction running PKR balance-after map, excluding loan-repayment debits so
+  // figures match the App balance and the Expenses/Income pages exactly.
+  const pkrBalanceAfterById = useMemo(() => {
     const nonRepaymentDebits = debits.filter(d => !d.source?.startsWith('Loan Repayment'));
     const all = [
       ...expenses.map((x) => ({
         id: x.id, date: x.date, createdAt: x.createdAt || x.updatedAt || '',
-        deltaUSD: -(x.usdAmount || 0), deltaPKR: -(x.amount || 0), type: 'expense' as const,
+        deltaPKR: -(x.amount || 0), type: 'expense' as const,
       })),
       ...nonRepaymentDebits.map((x) => ({
         id: x.id, date: x.date, createdAt: x.createdAt || x.updatedAt || '',
-        deltaUSD: (x.usdAmount || 0), deltaPKR: (x.amount || 0), type: 'debit' as const,
+        deltaPKR: (x.amount || 0), type: 'debit' as const,
       })),
       ...loans.map((x) => ({
         id: x.id, date: x.date, createdAt: x.createdAt || x.updatedAt || '',
-        deltaUSD: -(x.usdAmount || 0), deltaPKR: -(x.amount || 0), type: 'loan' as const,
+        deltaPKR: -(x.amount || 0), type: 'loan' as const,
       })),
     ].sort((a, b) => {
       const dateDiff = new Date(a.date).getTime() - new Date(b.date).getTime();
@@ -99,17 +78,13 @@ const Dashboard: React.FC<DashboardProps> = ({
       if (a.type !== 'debit' && b.type === 'debit') return 1;
       return 0;
     });
-    const usd: Record<string, number> = {};
     const pkr: Record<string, number> = {};
-    let runUSD = 0;
     let runPKR = 0;
     for (const t of all) {
-      runUSD += t.deltaUSD;
       runPKR += t.deltaPKR;
-      usd[t.id] = runUSD;
       pkr[t.id] = runPKR;
     }
-    return { usdBalanceAfterById: usd, pkrBalanceAfterById: pkr };
+    return pkr;
   }, [expenses, debits, loans]);
 
   // Get only current month expenses for recent expenses
@@ -189,10 +164,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           <div className="flex items-center space-x-4">
             <div className="text-right">
               <div className="mb-2">
-                <p className="text-4xl font-bold">{formatUSD(currentBalance)}</p>
-                <p className="text-lg font-semibold text-success-100">
-                  {formatPKR(currentBalancePKRExact)}
-                </p>
+                <p className="text-4xl font-bold">{formatPKR(currentBalancePKRExact)}</p>
               </div>
               <p className="text-success-100 text-sm">
                 {expenses.length} expense{expenses.length !== 1 ? 's' : ''} • {debits.length} income{debits.length !== 1 ? 's' : ''} • {loans.length} loan{loans.length !== 1 ? 's' : ''}
@@ -213,9 +185,6 @@ const Dashboard: React.FC<DashboardProps> = ({
               <p className="text-sm font-medium text-gray-600">Total Expenses</p>
               <div>
                 <p className="text-2xl font-bold text-gray-900">
-                  {formatUSD(totalExpenses)}
-                </p>
-                <p className="text-sm font-medium text-gray-600">
                   {formatPKR(totalExpensesPKR)}
                 </p>
               </div>
@@ -232,9 +201,6 @@ const Dashboard: React.FC<DashboardProps> = ({
               <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Total Income</p>
               <div>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {formatUSD(totalIncome)}
-                </p>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
                   {formatPKR(totalIncomePKR)}
                 </p>
               </div>
@@ -251,9 +217,6 @@ const Dashboard: React.FC<DashboardProps> = ({
               <p className="text-sm font-medium text-gray-600 dark:text-gray-300">This Month</p>
               <div>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {formatUSD(monthlyExpenses)}
-                </p>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
                   {formatPKR(monthlyExpensesPKR)}
                 </p>
               </div>
@@ -270,9 +233,6 @@ const Dashboard: React.FC<DashboardProps> = ({
               <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Total Loans</p>
               <div>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {formatUSD(totalLoans)}
-                </p>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
                   {formatPKR(totalLoansPKR)}
                 </p>
               </div>
@@ -331,12 +291,9 @@ const Dashboard: React.FC<DashboardProps> = ({
                         <p className="font-semibold text-danger-600 dark:text-danger-400">
                           -{formatPKR(expense.amount)}
                         </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          ({formatUSD(expense.usdAmount)})
-                        </p>
                       </div>
                       <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Balance: {formatUSD(usdBalanceAfterById[expense.id] ?? 0)} / {formatPKR(pkrBalanceAfterById[expense.id] ?? 0)}
+                        Balance: {formatPKR(pkrBalanceAfterById[expense.id] ?? 0)}
                       </p>
                     </div>
                     <button
@@ -401,12 +358,9 @@ const Dashboard: React.FC<DashboardProps> = ({
                         <p className="font-semibold text-success-600 dark:text-success-400">
                           +{formatPKR(debit.amount)}
                         </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          ({formatUSD(debit.usdAmount)})
-                        </p>
                       </div>
                       <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Balance: {formatUSD(usdBalanceAfterById[debit.id] ?? 0)} / {formatPKR(pkrBalanceAfterById[debit.id] ?? 0)}
+                        Balance: {formatPKR(pkrBalanceAfterById[debit.id] ?? 0)}
                       </p>
                     </div>
                     <button
@@ -465,12 +419,9 @@ const Dashboard: React.FC<DashboardProps> = ({
                          <p className="font-semibold text-warning-600 dark:text-warning-400">
                            -{formatPKR(loan.amount)}
                          </p>
-                         <p className="text-xs text-gray-500 dark:text-gray-400">
-                           ({formatUSD(loan.usdAmount)})
-                         </p>
                        </div>
                         <p className="text-sm text-gray-500 dark:text-gray-400">
-                          Balance: {formatUSD(usdBalanceAfterById[loan.id] ?? 0)} / {formatPKR(pkrBalanceAfterById[loan.id] ?? 0)}
+                          Balance: {formatPKR(pkrBalanceAfterById[loan.id] ?? 0)}
                         </p>
                      </div>
                      <button
@@ -519,8 +470,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                         {e.details ? (
                           <span>
                             {e.details.name ? `${e.details.name} ` : ''}
-                            {typeof e.details.amountPKR === 'number' ? `PKR ${e.details.amountPKR.toLocaleString()} ` : ''}
-                            {typeof e.details.amountUSD === 'number' ? `(USD ${e.details.amountUSD.toFixed(2)})` : ''}
+                            {typeof e.details.amountPKR === 'number' ? `PKR ${e.details.amountPKR.toLocaleString()}` : ''}
                           </span>
                         ) : '-' }
                       </td>

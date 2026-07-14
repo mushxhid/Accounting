@@ -1,8 +1,8 @@
 import React, { useMemo, useState } from 'react';
 import { Plus, Trash2, DollarSign, Filter, Download, ChevronUp, ChevronDown, X, Edit, ChevronRight, Image as ImageIcon, Search } from 'lucide-react';
 import { Expense, Contact, Debit, Loan } from '../types';
-import { formatCurrency, exportToCSV, formatPKRDate, formatPKRTime } from '../utils/helpers';
-import { formatPKR, formatUSD } from '../utils/currencyConverter';
+import { exportToCSV, formatPKRDate, formatPKRTime } from '../utils/helpers';
+import { formatPKR } from '../utils/currencyConverter';
 import { sendAudit } from '../utils/audit';
 
 interface ExpenseListProps {
@@ -23,7 +23,6 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, debits, l
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [sortBy, setSortBy] = useState<'date' | 'amount' | 'name' | 'accountNumber'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
-  const [isLoadingRate] = useState<boolean>(false);
   const [dialogContent, setDialogContent] = useState<{ field: string; value: string; label: string } | null>(null);
 
   // Build exact PKR balance-after map from all transactions
@@ -102,82 +101,6 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, debits, l
       return map;
     } catch (error) {
       console.error('[ExpenseList] Error calculating PKR balance:', error);
-      return {} as Record<string, number>;
-    }
-  }, [expenses, debits, loans]);
-
-  // Build exact USD balance-after map from all transactions
-  // This matches Dashboard calculation: totalIncomeUSD - totalExpensesUSD - totalLoansUSD
-  const usdBalanceAfterById = useMemo(() => {
-    try {
-      // Exclude loan-repayment debits (counted via reduced loan), matching App/Dashboard.
-      const nonRepaymentDebits = debits.filter(d => !d.source?.startsWith('Loan Repayment'));
-      // Calculate final balance (matches Dashboard)
-      const totalIncomeUSD = nonRepaymentDebits.reduce((sum, d) => sum + (d.usdAmount || 0), 0);
-      const totalExpensesUSD = expenses.reduce((sum, e) => sum + (e.usdAmount || 0), 0);
-      const totalLoansUSD = loans.reduce((sum, l) => sum + (l.usdAmount || 0), 0);
-      const finalBalanceUSD = totalIncomeUSD - totalExpensesUSD - totalLoansUSD;
-
-      // Get all transactions sorted chronologically (same order as PKR calculation)
-      const all = [
-        ...expenses.map((x) => ({
-          id: x.id,
-          date: x.date,
-          createdAt: x.createdAt || x.updatedAt || '',
-          deltaUSD: -(x.usdAmount || 0),
-          type: 'expense' as const
-        })),
-        ...nonRepaymentDebits.map((x) => ({
-          id: x.id, 
-          date: x.date, 
-          createdAt: x.createdAt || x.updatedAt || '',
-          deltaUSD: x.usdAmount || 0,
-          type: 'debit' as const
-        })),
-        ...loans.map((x) => ({ 
-          id: x.id, 
-          date: x.date, 
-          createdAt: x.createdAt || x.updatedAt || '',
-          deltaUSD: -(x.usdAmount || 0),
-          type: 'loan' as const
-        })),
-      ].sort((a, b) => {
-        const dateDiff = new Date(a.date).getTime() - new Date(b.date).getTime();
-        if (dateDiff !== 0) return dateDiff;
-        // If same date, sort by createdAt to maintain chronological order
-        const createdAtDiff = (a.createdAt || '').localeCompare(b.createdAt || '');
-        if (createdAtDiff !== 0) return createdAtDiff;
-        // If same createdAt, prioritize debits (income) before expenses/loans
-        if (a.type === 'debit' && b.type !== 'debit') return -1;
-        if (a.type !== 'debit' && b.type === 'debit') return 1;
-        return 0;
-      });
-
-      // Calculate running balance from start (chronological order)
-      const map: Record<string, number> = {};
-      let running = 0;
-      for (const t of all) {
-        running += t.deltaUSD;
-        map[t.id] = running;
-      }
-
-      // Verify final balance matches Dashboard calculation
-      if (all.length > 0) {
-        const lastTransaction = all[all.length - 1];
-        const calculatedFinal = map[lastTransaction.id];
-        // If there's a discrepancy, it means we need to adjust (but this should match)
-        if (Math.abs(calculatedFinal - finalBalanceUSD) > 0.01) {
-          console.warn('[ExpenseList] USD balance mismatch:', {
-            calculated: calculatedFinal,
-            expected: finalBalanceUSD,
-            diff: calculatedFinal - finalBalanceUSD
-          });
-        }
-      }
-
-      return map;
-    } catch (error) {
-      console.error('[ExpenseList] Error calculating USD balance:', error);
       return {} as Record<string, number>;
     }
   }, [expenses, debits, loans]);
@@ -286,7 +209,6 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, debits, l
     }
   };
 
-  const totalExpenses = filteredExpenses.reduce((sum, expense) => sum + expense.usdAmount, 0);
   const totalExpensesPKR = filteredExpenses.reduce((sum, expense) => sum + expense.amount, 0);
 
   const handleExportCSV = () => {
@@ -304,8 +226,6 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, debits, l
         Contact: contactName || '',
         'Account Number': expense.accountNumber,
         'Amount (PKR)': expense.amount.toFixed(2),
-        'Amount (USD)': expense.usdAmount.toFixed(2),
-        'Balance After (USD)': (usdBalanceAfterById[expense.id] ?? 0).toFixed(2),
         'Balance After (PKR)': (pkrBalanceAfterById[expense.id] ?? 0).toFixed(2)
       };
     });
@@ -437,8 +357,6 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, debits, l
                 <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-right text-xs font-bold text-gray-800 dark:text-gray-200 cursor-pointer hover:bg-gray-300 dark:hover:bg-gray-600" onClick={() => handleSort('amount')} style={{ minWidth: '95px' }}>
                   <div className="flex items-center justify-end">Amount (PKR)<SortIcon field="amount" /></div>
                 </th>
-                <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-right text-xs font-bold text-gray-800 dark:text-gray-200" style={{ minWidth: '55px' }}>Amount (USD)</th>
-                <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-right text-xs font-bold text-gray-800 dark:text-gray-200" style={{ minWidth: '95px' }}>Balance (USD)</th>
                 <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-right text-xs font-bold text-gray-800 dark:text-gray-200" style={{ minWidth: '95px' }}>Balance (PKR)</th>
                 <th className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-center text-xs font-bold text-gray-800 dark:text-gray-200" style={{ minWidth: '70px' }}>Actions</th>
               </tr>
@@ -463,12 +381,8 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, debits, l
                       <TruncatedCell text={expense.accountNumber} maxLength={9} field={`account-${expense.id}`} label="Account Number" />
                     </td>
                     <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-red-600 dark:text-red-400 text-right font-medium whitespace-nowrap" style={{ minWidth: '95px' }}>-{formatPKR(expense.amount)}</td>
-                    <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-red-600 dark:text-red-400 text-right whitespace-nowrap" style={{ minWidth: '55px' }}>{formatUSD(expense.usdAmount)}</td>
                     <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-900 dark:text-white text-right font-medium whitespace-nowrap" style={{ minWidth: '95px' }}>
-                      {formatCurrency(usdBalanceAfterById[expense.id] ?? 0)}
-                    </td>
-                    <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-xs text-gray-600 dark:text-gray-400 text-right whitespace-nowrap" style={{ minWidth: '95px' }}>
-                      {!isLoadingRate && formatPKR(pkrBalanceAfterById[expense.id] ?? 0)}
+                      {formatPKR(pkrBalanceAfterById[expense.id] ?? 0)}
                     </td>
                     <td className="border border-gray-400 dark:border-gray-500 px-2 py-1.5 text-center" style={{ minWidth: '70px' }}>
                       {expense.receiptImageUrl ? (
@@ -499,12 +413,11 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, contacts, debits, l
             </tbody>
             <tfoot>
               <tr className="bg-gray-200 dark:bg-gray-700 font-bold">
-                <td colSpan={7} className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-xs text-gray-800 dark:text-gray-200 text-right">
+                <td colSpan={6} className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-xs text-gray-800 dark:text-gray-200 text-right">
                   Total ({filteredExpenses.length} records):
                 </td>
                 <td className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-xs text-red-600 dark:text-red-400 text-right font-bold">-{formatPKR(totalExpensesPKR)}</td>
-                <td className="border border-gray-400 dark:border-gray-500 px-2 py-2 text-xs text-red-600 dark:text-red-400 text-right font-bold">{formatUSD(totalExpenses)}</td>
-                <td colSpan={4} className="border border-gray-400 dark:border-gray-500"></td>
+                <td colSpan={3} className="border border-gray-400 dark:border-gray-500"></td>
               </tr>
             </tfoot>
           </table>

@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { X, UserCheck, RefreshCw } from 'lucide-react';
+import React, { useState } from 'react';
+import { X, UserCheck } from 'lucide-react';
 import { LoanFormData } from '../types';
-import { fetchPKRtoUSDRate, convertPKRtoUSD, formatUSD, formatExchangeRate } from '../utils/currencyConverter';
 import { getPKRDateString } from '../utils/helpers';
 
 interface LoanFormProps {
@@ -16,14 +15,9 @@ const LoanForm: React.FC<LoanFormProps> = ({ onSubmit, onCancel, initialData, ti
   const [formData, setFormData] = useState<LoanFormData>({
     partnerName: initialData?.partnerName ?? '',
     amount: initialData?.amount ?? '',
-    usdAmount: initialData?.usdAmount ?? '',
     date: initialData?.date ?? getPKRDateString(), // Use Pakistan timezone date
     description: initialData?.description ?? ''
   });
-
-  const [exchangeRate, setExchangeRate] = useState<number>(280); // Default fallback rate
-  const [isLoadingRate, setIsLoadingRate] = useState<boolean>(false);
-  const [lastRateUpdate, setLastRateUpdate] = useState<string>('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,41 +47,6 @@ const LoanForm: React.FC<LoanFormProps> = ({ onSubmit, onCancel, initialData, ti
       [name]: value
     }));
   };
-
-  // Fetch exchange rate on component mount
-  useEffect(() => {
-    fetchExchangeRate();
-  }, []);
-
-  const fetchExchangeRate = async () => {
-    setIsLoadingRate(true);
-    try {
-      const rate = await fetchPKRtoUSDRate();
-      setExchangeRate(rate);
-      setLastRateUpdate(new Date().toLocaleTimeString());
-    } catch (error) {
-      console.error('Failed to fetch exchange rate:', error);
-    } finally {
-      setIsLoadingRate(false);
-    }
-  };
-
-  // Auto-convert PKR to USD when amount changes
-  useEffect(() => {
-    if (formData.amount && !isNaN(parseFloat(formData.amount))) {
-      const pkrAmount = parseFloat(formData.amount);
-      const usdAmount = convertPKRtoUSD(pkrAmount, exchangeRate);
-      setFormData(prev => ({
-        ...prev,
-        usdAmount: usdAmount.toFixed(2)
-      }));
-    } else {
-      setFormData(prev => ({
-        ...prev,
-        usdAmount: ''
-      }));
-    }
-  }, [formData.amount, exchangeRate]);
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -127,21 +86,6 @@ const LoanForm: React.FC<LoanFormProps> = ({ onSubmit, onCancel, initialData, ti
               <label htmlFor="amount" className="block text-sm font-medium text-gray-700">
                 Loan Amount (PKR) *
               </label>
-              <div className="flex items-center space-x-2">
-                <button
-                  type="button"
-                  onClick={fetchExchangeRate}
-                  disabled={isLoadingRate}
-                  className="flex items-center text-xs text-primary-600 hover:text-primary-700 disabled:opacity-50"
-                  title="Refresh exchange rate"
-                >
-                  <RefreshCw size={12} className={`mr-1 ${isLoadingRate ? 'animate-spin' : ''}`} />
-                  {isLoadingRate ? 'Updating...' : 'Refresh Rate'}
-                </button>
-                <span className="text-xs text-gray-500">
-                  Rate: {formatExchangeRate(exchangeRate)} = $1.00
-                </span>
-              </div>
             </div>
             <div className="relative">
               <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm font-medium">PKR</span>
@@ -158,19 +102,6 @@ const LoanForm: React.FC<LoanFormProps> = ({ onSubmit, onCancel, initialData, ti
                 required
               />
             </div>
-            {formData.usdAmount && (
-              <div className="mt-2 p-2 bg-gray-50 rounded-md">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-600">USD Equivalent:</span>
-                  <span className="font-medium text-gray-900">{formatUSD(parseFloat(formData.usdAmount))}</span>
-                </div>
-                {lastRateUpdate && (
-                  <div className="text-xs text-gray-500 mt-1">
-                    Rate updated: {lastRateUpdate}
-                  </div>
-                )}
-              </div>
-            )}
           </div>
 
           <div>

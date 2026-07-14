@@ -1,7 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { X, RefreshCw } from 'lucide-react';
+import React, { useState } from 'react';
+import { X } from 'lucide-react';
 import { LoanRepaymentFormData } from '../types';
-import { fetchPKRtoUSDRate, convertPKRtoUSD, formatUSD, formatExchangeRate } from '../utils/currencyConverter';
 import { getPKRDateString } from '../utils/helpers';
 
 interface LoanRepaymentFormProps {
@@ -16,14 +15,9 @@ interface LoanRepaymentFormProps {
 const LoanRepaymentForm: React.FC<LoanRepaymentFormProps> = ({ onSubmit, onCancel, maxPKR, initialData, title, submitText }) => {
   const [formData, setFormData] = useState<LoanRepaymentFormData>({
     amount: initialData?.amount ?? '',
-    usdAmount: initialData?.usdAmount ?? '',
     date: initialData?.date ?? getPKRDateString(), // Use Pakistan timezone date
     description: initialData?.description ?? ''
   });
-
-  const [exchangeRate, setExchangeRate] = useState<number>(280);
-  const [isLoadingRate, setIsLoadingRate] = useState<boolean>(false);
-  const [lastRateUpdate, setLastRateUpdate] = useState<string>('');
 
   const handleInputChange = (field: keyof LoanRepaymentFormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -38,31 +32,6 @@ const LoanRepaymentForm: React.FC<LoanRepaymentFormProps> = ({ onSubmit, onCance
     }
     onSubmit(formData);
   };
-
-  useEffect(() => { fetchExchangeRate(); }, []);
-
-  const fetchExchangeRate = async () => {
-    setIsLoadingRate(true);
-    try {
-      const rate = await fetchPKRtoUSDRate();
-      setExchangeRate(rate);
-      setLastRateUpdate(new Date().toLocaleTimeString());
-    } catch (e) {
-      console.error('Failed to fetch exchange rate', e);
-    } finally {
-      setIsLoadingRate(false);
-    }
-  };
-
-  useEffect(() => {
-    if (formData.amount && !isNaN(parseFloat(formData.amount))) {
-      const pkr = parseFloat(formData.amount);
-      const usd = convertPKRtoUSD(pkr, exchangeRate);
-      setFormData(prev => ({ ...prev, usdAmount: usd.toFixed(2) }));
-    } else {
-      setFormData(prev => ({ ...prev, usdAmount: '' }));
-    }
-  }, [formData.amount, exchangeRate]);
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center p-4 z-50" onClick={onCancel}>
@@ -89,19 +58,6 @@ const LoanRepaymentForm: React.FC<LoanRepaymentFormProps> = ({ onSubmit, onCance
           <div className="border border-gray-400 dark:border-gray-500 bg-white dark:bg-gray-800 p-3">
             <div className="flex items-center justify-between mb-2">
               <label className="text-xs font-bold text-gray-800 dark:text-gray-200" style={{ fontFamily: 'Arial, sans-serif' }}>Amount Paid (PKR)</label>
-              <div className="flex items-center gap-2">
-                <button 
-                  type="button" 
-                  onClick={fetchExchangeRate} 
-                  disabled={isLoadingRate} 
-                  className="text-xs px-2 py-1 bg-white dark:bg-gray-700 border border-gray-400 dark:border-gray-500 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 disabled:opacity-50"
-                  style={{ fontFamily: 'Arial, sans-serif' }}
-                >
-                  <RefreshCw size={10} className={`inline mr-1 ${isLoadingRate ? 'animate-spin' : ''}`} />
-                  {isLoadingRate ? 'Updating...' : 'Refresh Rate'}
-                </button>
-                <span className="text-xs text-gray-600 dark:text-gray-400">Rate: {formatExchangeRate(exchangeRate)} = $1.00</span>
-              </div>
             </div>
             <div className="relative">
               <span className="absolute left-2 top-1/2 transform -translate-y-1/2 text-xs text-gray-600 dark:text-gray-400 font-medium" style={{ fontFamily: 'Arial, sans-serif' }}>PKR</span>
@@ -124,17 +80,6 @@ const LoanRepaymentForm: React.FC<LoanRepaymentFormProps> = ({ onSubmit, onCance
                   const remain = Math.max(0, (maxPKR || 0) - amt);
                   return `Rs ${remain.toLocaleString('en-PK')}`;
                 })()}
-              </div>
-            )}
-            {formData.usdAmount && (
-              <div className="mt-2 p-2 bg-gray-100 dark:bg-gray-700 border border-gray-400 dark:border-gray-500">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-gray-700 dark:text-gray-300" style={{ fontFamily: 'Arial, sans-serif' }}>USD Equivalent:</span>
-                  <span className="font-bold text-gray-900 dark:text-white" style={{ fontFamily: 'Arial, sans-serif' }}>{formatUSD(parseFloat(formData.usdAmount))}</span>
-                </div>
-                {lastRateUpdate && (
-                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-1" style={{ fontFamily: 'Arial, sans-serif' }}>Rate updated: {lastRateUpdate}</div>
-                )}
               </div>
             )}
           </div>
